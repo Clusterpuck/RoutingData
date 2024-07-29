@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Runtime.CompilerServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,7 +64,15 @@ app.MapPost("/Person", (Person person, ApplicationDbContext context) =>
 
 app.MapGet("/QuantumFact", (ApplicationDbContext context) =>
 {
-    return context.QuantumFacts.ToList()[0];
+    var facts = context.QuantumFacts.ToList();
+    if (facts.Count == 0)
+    {
+        return "No quantum facts found.";
+    }
+
+    var random = new Random();
+    int index = random.Next(facts.Count);
+    return facts[index].FactText;
 }
 ).WithName("GetQuantumFact")
 .WithOpenApi();
