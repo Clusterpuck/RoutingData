@@ -8,7 +8,7 @@ namespace RoutingData.Controllers
     {
         private static readonly string[] Summaries = new[]
         {
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+        "Updated 29/07/2024 7:45 PM"
     };
 
         private readonly ILogger<WeatherForecastController> _logger;
