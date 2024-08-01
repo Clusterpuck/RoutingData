@@ -8,4 +8,17 @@ Adviced to use Visual Studio for development after cloning repo and testing loca
 
 The first time running after long idle period will be delayed due to services needing to be re-activated. 
 
+Adding a new Data Entity:  
+- Add a new class to the Model folder. 
+- Add a context line to the ApplicationDBContext Class
+- Right click controllers folder, add scaffold item - select API with Entity Framework
+- From Package Manager Console Run 
+	- Add-Migration <MigrationName>
+	- Update-Database
+
+
+https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=vs
+
+
+
 

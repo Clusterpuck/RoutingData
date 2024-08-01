@@ -4,14 +4,15 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using RoutingData.Models;
 
 #nullable disable
 
 namespace RoutingData.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240729103557_Restart")]
-    partial class Restart
+    [Migration("20240801131128_CustomerAddition")]
+    partial class CustomerAddition
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -23,7 +24,28 @@ namespace RoutingData.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Person", b =>
+            modelBuilder.Entity("RoutingData.Models.Customer", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Customers");
+                });
+
+            modelBuilder.Entity("RoutingData.Models.Person", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -44,7 +66,7 @@ namespace RoutingData.Migrations
                     b.ToTable("Person");
                 });
 
-            modelBuilder.Entity("QuantumFacts", b =>
+            modelBuilder.Entity("RoutingData.Models.QuantumFacts", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()

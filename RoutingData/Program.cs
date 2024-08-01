@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Runtime.CompilerServices;
+using RoutingData.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,8 +11,6 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-
 
 var connection = String.Empty;
 
@@ -89,7 +88,7 @@ app.MapPost("/QuantumFact", (QuantumFacts fact, ApplicationDbContext context) =>
 app.Run();
 
 
-public class Person
+/*public class Person
 {
     public int Id { get; set; }
     public string FirstName { get; set; }
@@ -112,9 +111,12 @@ public class ApplicationDbContext : DbContext
     {
     }
 
-    public DbSet<Person> Person { get; set; }
-    public DbSet<QuantumFacts> QuantumFacts { get; set; }
-    
+    public DbSet<Person> Person { get; set; } = null!;
+    public DbSet<QuantumFacts> QuantumFacts { get; set; } = null!;
+
+    public DbSet<Customer> Customers { get; set; } = null!;
+
 
 }
 
+*/
