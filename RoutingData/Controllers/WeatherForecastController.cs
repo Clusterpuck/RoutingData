@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace RoutingData.Controllers
 {
+    // to be deleted
     [ApiController]
     [Route("[controller]")]
     public class WeatherForecastController : ControllerBase

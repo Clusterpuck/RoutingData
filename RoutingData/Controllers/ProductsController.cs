@@ -11,55 +11,55 @@ namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CustomersController : ControllerBase
+    public class ProductsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
 
-        public CustomersController(ApplicationDbContext context)
+        public ProductsController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: api/Customers
+        // GET: api/Products
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Customer>>> GetCustomers()
+        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-          if (_context.Customers == null)
+          if (_context.Products == null)
           {
               return NotFound();
           }
-            return await _context.Customers.ToListAsync();
+            return await _context.Products.ToListAsync();
         }
 
-        // GET: api/Customers/5
+        // GET: api/Products/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Customer>> GetCustomer(int id)
+        public async Task<ActionResult<Product>> GetProduct(int id)
         {
-          if (_context.Customers == null)
+          if (_context.Products == null)
           {
               return NotFound();
           }
-            var customer = await _context.Customers.FindAsync(id);
+            var product = await _context.Products.FindAsync(id);
 
-            if (customer == null)
+            if (product == null)
             {
                 return NotFound();
             }
 
-            return customer;
+            return product;
         }
 
-        // PUT: api/Customers/5
+        // PUT: api/Products/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCustomer(int id, Customer customer)
+        public async Task<IActionResult> PutProduct(int id, Product product)
         {
-            if (id != customer.Id)
+            if (id != product.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(customer).State = EntityState.Modified;
+            _context.Entry(product).State = EntityState.Modified;
 
             try
             {
@@ -67,7 +67,7 @@ namespace RoutingData.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!CustomerExists(id))
+                if (!ProductExists(id))
                 {
                     return NotFound();
                 }
@@ -80,44 +80,44 @@ namespace RoutingData.Controllers
             return NoContent();
         }
 
-        // POST: api/Customers
+        // POST: api/Products
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Customer>> PostCustomer(Customer customer)
+        public async Task<ActionResult<Product>> PostProduct(Product product)
         {
-          if (_context.Customers == null)
+          if (_context.Products == null)
           {
-              return Problem("Entity set 'ApplicationDbContext.Customers'  is null.");
+              return Problem("Entity set 'ApplicationDbContext.Products'  is null.");
           }
-            _context.Customers.Add(customer);
+            _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetCustomer", new { id = customer.Id }, customer);
+            return CreatedAtAction("GetProduct", new { id = product.Id }, product);
         }
 
-        // DELETE: api/Customers/5
+        // DELETE: api/Products/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCustomer(int id)
+        public async Task<IActionResult> DeleteProduct(int id)
         {
-            if (_context.Customers == null)
+            if (_context.Products == null)
             {
                 return NotFound();
             }
-            var customer = await _context.Customers.FindAsync(id);
-            if (customer == null)
+            var product = await _context.Products.FindAsync(id);
+            if (product == null)
             {
                 return NotFound();
             }
 
-            _context.Customers.Remove(customer);
+            _context.Products.Remove(product);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool CustomerExists(int id)
+        private bool ProductExists(int id)
         {
-            return (_context.Customers?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.Products?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }
