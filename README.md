@@ -12,6 +12,9 @@ Adding a new Data Entity:
 - Add a new class to the Model folder. 
 - Add a context line to the ApplicationDBContext Class
 - Right click controllers folder, add scaffold item - select API with Entity Framework
+Syncing the database:
+- Make sure Azure CLI is installed.
+- In the Azure portal (quantumsqlserver), search Microsoft Entra ID and make yourself Microsoft Entra admin.
 - From Package Manager Console Run 
 	- Add-Migration <MigrationName>
 	- Update-Database
