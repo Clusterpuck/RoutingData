@@ -2,7 +2,7 @@
 
 namespace RoutingData.Models
 {
-    public class Course
+    public class DeliveryRoute
     {
         [Key]
         public int Id { get; set; }

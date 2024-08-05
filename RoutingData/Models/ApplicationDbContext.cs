@@ -14,7 +14,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Location> Locations { get; set; } = null!;
     public DbSet<Vehicle> Vehicles { get; set; } = null!;
     public DbSet<Order> Orders { get; set; } = null!;
-    public DbSet<Course> Courses { get; set; } = null!;
+    public DbSet<DeliveryRoute> Courses { get; set; } = null!;
     public DbSet<Product> Products { get; set; } = null!;
     public DbSet<Driver> Drivers { get; set; } = null!;
     public DbSet<Admin> Admins { get; set; } = null!;

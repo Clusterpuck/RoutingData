@@ -10,7 +10,7 @@ namespace RoutingData.Models
         public string OrderNotes { get; set; }
         public int CustomerId { get; set; }
         public int LocationId { get; set; }
-        public int Course { get; set; }
+        public int DeliveryRouteId { get; set; }
         public int PositionNumber { get; set; }
 
     }

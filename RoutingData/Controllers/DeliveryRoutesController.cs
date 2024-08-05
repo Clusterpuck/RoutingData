@@ -11,18 +11,18 @@ namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CoursesController : ControllerBase
+    public class DeliveryRoutesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
 
-        public CoursesController(ApplicationDbContext context)
+        public DeliveryRoutesController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: api/Courses
+        // GET: api/DeliveryRoutes
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Course>>> GetCourses()
+        public async Task<ActionResult<IEnumerable<DeliveryRoute>>> GetCourses()
         {
           if (_context.Courses == null)
           {
@@ -31,35 +31,35 @@ namespace RoutingData.Controllers
             return await _context.Courses.ToListAsync();
         }
 
-        // GET: api/Courses/5
+        // GET: api/DeliveryRoutes/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Course>> GetCourse(int id)
+        public async Task<ActionResult<DeliveryRoute>> GetDeliveryRoute(int id)
         {
           if (_context.Courses == null)
           {
               return NotFound();
           }
-            var course = await _context.Courses.FindAsync(id);
+            var deliveryRoute = await _context.Courses.FindAsync(id);
 
-            if (course == null)
+            if (deliveryRoute == null)
             {
                 return NotFound();
             }
 
-            return course;
+            return deliveryRoute;
         }
 
-        // PUT: api/Courses/5
+        // PUT: api/DeliveryRoutes/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCourse(int id, Course course)
+        public async Task<IActionResult> PutDeliveryRoute(int id, DeliveryRoute deliveryRoute)
         {
-            if (id != course.Id)
+            if (id != deliveryRoute.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(course).State = EntityState.Modified;
+            _context.Entry(deliveryRoute).State = EntityState.Modified;
 
             try
             {
@@ -67,7 +67,7 @@ namespace RoutingData.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!CourseExists(id))
+                if (!DeliveryRouteExists(id))
                 {
                     return NotFound();
                 }
@@ -80,42 +80,42 @@ namespace RoutingData.Controllers
             return NoContent();
         }
 
-        // POST: api/Courses
+        // POST: api/DeliveryRoutes
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Course>> PostCourse(Course course)
+        public async Task<ActionResult<DeliveryRoute>> PostDeliveryRoute(DeliveryRoute deliveryRoute)
         {
           if (_context.Courses == null)
           {
               return Problem("Entity set 'ApplicationDbContext.Courses'  is null.");
           }
-            _context.Courses.Add(course);
+            _context.Courses.Add(deliveryRoute);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetCourse", new { id = course.Id }, course);
+            return CreatedAtAction("GetDeliveryRoute", new { id = deliveryRoute.Id }, deliveryRoute);
         }
 
-        // DELETE: api/Courses/5
+        // DELETE: api/DeliveryRoutes/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCourse(int id)
+        public async Task<IActionResult> DeleteDeliveryRoute(int id)
         {
             if (_context.Courses == null)
             {
                 return NotFound();
             }
-            var course = await _context.Courses.FindAsync(id);
-            if (course == null)
+            var deliveryRoute = await _context.Courses.FindAsync(id);
+            if (deliveryRoute == null)
             {
                 return NotFound();
             }
 
-            _context.Courses.Remove(course);
+            _context.Courses.Remove(deliveryRoute);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool CourseExists(int id)
+        private bool DeliveryRouteExists(int id)
         {
             return (_context.Courses?.Any(e => e.Id == id)).GetValueOrDefault();
         }
