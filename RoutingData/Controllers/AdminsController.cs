@@ -11,55 +11,55 @@ namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CustomersController : ControllerBase
+    public class AdminsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
 
-        public CustomersController(ApplicationDbContext context)
+        public AdminsController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: api/Customers
+        // GET: api/Admins
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Customer>>> GetCustomers()
+        public async Task<ActionResult<IEnumerable<Admin>>> GetAdmins()
         {
-          if (_context.Customers == null)
+          if (_context.Admins == null)
           {
               return NotFound();
           }
-            return await _context.Customers.ToListAsync();
+            return await _context.Admins.ToListAsync();
         }
 
-        // GET: api/Customers/5
+        // GET: api/Admins/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Customer>> GetCustomer(int id)
+        public async Task<ActionResult<Admin>> GetAdmin(int id)
         {
-          if (_context.Customers == null)
+          if (_context.Admins == null)
           {
               return NotFound();
           }
-            var customer = await _context.Customers.FindAsync(id);
+            var admin = await _context.Admins.FindAsync(id);
 
-            if (customer == null)
+            if (admin == null)
             {
                 return NotFound();
             }
 
-            return customer;
+            return admin;
         }
 
-        // PUT: api/Customers/5
+        // PUT: api/Admins/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCustomer(int id, Customer customer)
+        public async Task<IActionResult> PutAdmin(int id, Admin admin)
         {
-            if (id != customer.Id)
+            if (id != admin.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(customer).State = EntityState.Modified;
+            _context.Entry(admin).State = EntityState.Modified;
 
             try
             {
@@ -67,7 +67,7 @@ namespace RoutingData.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!CustomerExists(id))
+                if (!AdminExists(id))
                 {
                     return NotFound();
                 }
@@ -80,44 +80,44 @@ namespace RoutingData.Controllers
             return NoContent();
         }
 
-        // POST: api/Customers
+        // POST: api/Admins
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Customer>> PostCustomer(Customer customer)
+        public async Task<ActionResult<Admin>> PostAdmin(Admin admin)
         {
-          if (_context.Customers == null)
+          if (_context.Admins == null)
           {
-              return Problem("Entity set 'ApplicationDbContext.Customers'  is null.");
+              return Problem("Entity set 'ApplicationDbContext.Admins'  is null.");
           }
-            _context.Customers.Add(customer);
+            _context.Admins.Add(admin);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetCustomer", new { id = customer.Id }, customer);
+            return CreatedAtAction("GetAdmin", new { id = admin.Id }, admin);
         }
 
-        // DELETE: api/Customers/5
+        // DELETE: api/Admins/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCustomer(int id)
+        public async Task<IActionResult> DeleteAdmin(int id)
         {
-            if (_context.Customers == null)
+            if (_context.Admins == null)
             {
                 return NotFound();
             }
-            var customer = await _context.Customers.FindAsync(id);
-            if (customer == null)
+            var admin = await _context.Admins.FindAsync(id);
+            if (admin == null)
             {
                 return NotFound();
             }
 
-            _context.Customers.Remove(customer);
+            _context.Admins.Remove(admin);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool CustomerExists(int id)
+        private bool AdminExists(int id)
         {
-            return (_context.Customers?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.Admins?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

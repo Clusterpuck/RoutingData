@@ -2,11 +2,10 @@
 
 namespace RoutingData.Models
 {
-    public class Customer
+    public class Vehicle
     {
         [Key]
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string Phone { get; set; }
+        public string LicensePlate { get; set; }
     }
 }

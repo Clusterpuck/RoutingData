@@ -11,55 +11,55 @@ namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CustomersController : ControllerBase
+    public class VehiclesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
 
-        public CustomersController(ApplicationDbContext context)
+        public VehiclesController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: api/Customers
+        // GET: api/Vehicles
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Customer>>> GetCustomers()
+        public async Task<ActionResult<IEnumerable<Vehicle>>> GetVehicles()
         {
-          if (_context.Customers == null)
+          if (_context.Vehicles == null)
           {
               return NotFound();
           }
-            return await _context.Customers.ToListAsync();
+            return await _context.Vehicles.ToListAsync();
         }
 
-        // GET: api/Customers/5
+        // GET: api/Vehicles/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Customer>> GetCustomer(int id)
+        public async Task<ActionResult<Vehicle>> GetVehicle(int id)
         {
-          if (_context.Customers == null)
+          if (_context.Vehicles == null)
           {
               return NotFound();
           }
-            var customer = await _context.Customers.FindAsync(id);
+            var vehicle = await _context.Vehicles.FindAsync(id);
 
-            if (customer == null)
+            if (vehicle == null)
             {
                 return NotFound();
             }
 
-            return customer;
+            return vehicle;
         }
 
-        // PUT: api/Customers/5
+        // PUT: api/Vehicles/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCustomer(int id, Customer customer)
+        public async Task<IActionResult> PutVehicle(int id, Vehicle vehicle)
         {
-            if (id != customer.Id)
+            if (id != vehicle.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(customer).State = EntityState.Modified;
+            _context.Entry(vehicle).State = EntityState.Modified;
 
             try
             {
@@ -67,7 +67,7 @@ namespace RoutingData.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!CustomerExists(id))
+                if (!VehicleExists(id))
                 {
                     return NotFound();
                 }
@@ -80,44 +80,44 @@ namespace RoutingData.Controllers
             return NoContent();
         }
 
-        // POST: api/Customers
+        // POST: api/Vehicles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Customer>> PostCustomer(Customer customer)
+        public async Task<ActionResult<Vehicle>> PostVehicle(Vehicle vehicle)
         {
-          if (_context.Customers == null)
+          if (_context.Vehicles == null)
           {
-              return Problem("Entity set 'ApplicationDbContext.Customers'  is null.");
+              return Problem("Entity set 'ApplicationDbContext.Vehicles'  is null.");
           }
-            _context.Customers.Add(customer);
+            _context.Vehicles.Add(vehicle);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetCustomer", new { id = customer.Id }, customer);
+            return CreatedAtAction("GetVehicle", new { id = vehicle.Id }, vehicle);
         }
 
-        // DELETE: api/Customers/5
+        // DELETE: api/Vehicles/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCustomer(int id)
+        public async Task<IActionResult> DeleteVehicle(int id)
         {
-            if (_context.Customers == null)
+            if (_context.Vehicles == null)
             {
                 return NotFound();
             }
-            var customer = await _context.Customers.FindAsync(id);
-            if (customer == null)
+            var vehicle = await _context.Vehicles.FindAsync(id);
+            if (vehicle == null)
             {
                 return NotFound();
             }
 
-            _context.Customers.Remove(customer);
+            _context.Vehicles.Remove(vehicle);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool CustomerExists(int id)
+        private bool VehicleExists(int id)
         {
-            return (_context.Customers?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.Vehicles?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }
