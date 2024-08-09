@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RoutingData.Models;
+using RoutingData.DTO;
 
 namespace RoutingData.Controllers
 {
@@ -83,13 +84,24 @@ namespace RoutingData.Controllers
         // POST: api/Orders
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Order>> PostOrder(Order order)
+        public async Task<ActionResult<Order>> PostOrder(OrderWithProductsDTO orderDTO)
         {
-          if (_context.Orders == null)
-          {
-              return Problem("Entity set 'ApplicationDbContext.Orders'  is null.");
-          }
+            if (_context.Orders == null || _context.OrderProducts == null)
+            {
+                return Problem("Entity sets 'ApplicationDbContext.Orders' or 'ApplicationDbContext.OrderProducts' are null.");
+            }
+
+            // Add the Order
+            var order = orderDTO.Order;
             _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
+
+            foreach (var product in orderDTO.Products)
+            {
+                product.OrderId = order.Id;
+                _context.OrderProducts.Add(product);
+            }
+
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetOrder", new { id = order.Id }, order);
