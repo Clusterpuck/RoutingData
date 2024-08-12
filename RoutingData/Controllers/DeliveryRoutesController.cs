@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RoutingData.DTO;
 using RoutingData.Models;
 
 namespace RoutingData.Controllers
@@ -83,12 +84,19 @@ namespace RoutingData.Controllers
         // POST: api/DeliveryRoutes
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<DeliveryRoute>> PostDeliveryRoute(DeliveryRoute deliveryRoute)
+        public async Task<ActionResult<DeliveryRoute>> PostDeliveryRoute(RouteRequestListDTO routeRequestList )
         {
           if (_context.Courses == null)
           {
               return Problem("Entity set 'ApplicationDbContext.Courses'  is null.");
           }
+
+          foreach( int orderID in routeRequestList.orders)
+            {//create an from each order id for each order id sent
+
+
+
+            }
             _context.Courses.Add(deliveryRoute);
             await _context.SaveChangesAsync();
 
