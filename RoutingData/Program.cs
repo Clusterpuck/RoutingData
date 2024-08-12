@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Runtime.CompilerServices;
 using RoutingData.Models;
+using RoutingData.DTO;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,8 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+//Adding offline database singleton
+builder.Services.AddSingleton<OfflineDatabase>();
 
 var connection = String.Empty;
 
@@ -45,78 +48,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapGet("/Person", (ApplicationDbContext context) =>
-{
-    return context.Person.ToList();
-})
-.WithName("GetPersons")
-.WithOpenApi();
-
-app.MapPost("/Person", (Person person, ApplicationDbContext context) =>
-{
-    context.Add(person);
-    context.SaveChanges();
-})
-.WithName("CreatePerson")
-.WithOpenApi();
-
-
-app.MapGet("/QuantumFact", (ApplicationDbContext context) =>
-{
-    var facts = context.QuantumFacts.ToList();
-    if (facts.Count == 0)
-    {
-        return "No quantum facts found.";
-    }
-
-    var random = new Random();
-    int index = random.Next(facts.Count);
-    return facts[index].FactText;
-}
-).WithName("GetQuantumFact")
-.WithOpenApi();
-
-app.MapPost("/QuantumFact", (QuantumFacts fact, ApplicationDbContext context) =>
-{
-    context.Add(fact);
-    context.SaveChanges();
-})
-.WithName("CreateFact")
-.WithOpenApi();
-
 
 app.Run();
 
-
-/*public class Person
-{
-    public int Id { get; set; }
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-}
-
-
-public class QuantumFacts
-{
-    public int Id { get; set; }
-    public string FactText { get; set; }
-}
-
-
-
-public class ApplicationDbContext : DbContext
-{
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
-    {
-    }
-
-    public DbSet<Person> Person { get; set; } = null!;
-    public DbSet<QuantumFacts> QuantumFacts { get; set; } = null!;
-
-    public DbSet<Customer> Customers { get; set; } = null!;
-
-
-}
-
-*/

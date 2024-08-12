@@ -8,8 +8,6 @@ public class ApplicationDbContext : DbContext
     {
     }
 
-    public DbSet<Person> Person { get; set; } = null!; // to be deleted
-    public DbSet<QuantumFacts> QuantumFacts { get; set; } = null!; // to be deleted
     public DbSet<Customer> Customers { get; set; } = null!;
     public DbSet<Location> Locations { get; set; } = null!;
     public DbSet<Vehicle> Vehicles { get; set; } = null!;
