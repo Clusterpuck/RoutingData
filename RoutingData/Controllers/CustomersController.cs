@@ -5,14 +5,26 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RoutingData.DTO;
 using RoutingData.Models;
 
 namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+
     public class CustomersController : ControllerBase
     {
+
+#if OFFLINE_DATA
+    private readonly OfflineDatabase _offlineDatabase;
+
+        public CustomersController(OfflineDatabase offlineDatabase)
+        {
+            _offlineDatabase = offlineDatabase;
+        }
+
+#else
         private readonly ApplicationDbContext _context;
 
         public CustomersController(ApplicationDbContext context)
@@ -20,11 +32,33 @@ namespace RoutingData.Controllers
             _context = context;
         }
 
+#endif
+
+#if OFFLINE_DATA
         // GET: api/Customers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Customer>>> GetCustomers()
         {
-          if (_context.Customers == null)
+
+            return _offlineDatabase.Customers;
+        }
+
+        // POST: api/Customers
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<Customer>> PostCustomer(Customer customer)
+        {
+            int newID = _offlineDatabase.Customers.Last().Id + 1;
+            customer.Id = newID;
+            _offlineDatabase.Customers.Add(customer);
+
+            return Created("", customer);
+        }
+#else
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Customer>>> GetCustomers()
+        {
+            if (_context.Customers == null)
           {
               return NotFound();
           }
@@ -35,7 +69,8 @@ namespace RoutingData.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Customer>> GetCustomer(int id)
         {
-          if (_context.Customers == null)
+
+            if (_context.Customers == null)
           {
               return NotFound();
           }
@@ -47,7 +82,8 @@ namespace RoutingData.Controllers
             }
 
             return customer;
-        }
+    }
+
 
         // PUT: api/Customers/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -85,10 +121,10 @@ namespace RoutingData.Controllers
         [HttpPost]
         public async Task<ActionResult<Customer>> PostCustomer(Customer customer)
         {
-          if (_context.Customers == null)
-          {
-              return Problem("Entity set 'ApplicationDbContext.Customers'  is null.");
-          }
+            if (_context.Customers == null)
+            {
+                return Problem("Entity set 'ApplicationDbContext.Customers'  is null.");
+            }
             _context.Customers.Add(customer);
             await _context.SaveChangesAsync();
 
@@ -119,5 +155,6 @@ namespace RoutingData.Controllers
         {
             return (_context.Customers?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+#endif
     }
 }

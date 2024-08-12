@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RoutingData.DTO;
 using RoutingData.Models;
 
 namespace RoutingData.Controllers
@@ -13,13 +14,40 @@ namespace RoutingData.Controllers
     [ApiController]
     public class LocationsController : ControllerBase
     {
+#if OFFLINE_DATA
+        private readonly OfflineDatabase _offlineDatabase;
+
+        public LocationsController(OfflineDatabase offlineDatabase)
+        {
+            _offlineDatabase = offlineDatabase;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Location>>> GetLocations()
+        {
+
+            return _offlineDatabase.Locations;
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<Location>> PostLocation(Location location)
+        {
+            int newID = _offlineDatabase.Locations.Last().Id + 1;
+            location.Id = newID;
+            _offlineDatabase.Locations.Add(location);
+
+            return Created("", location);
+        }
+
+
+
+#else
         private readonly ApplicationDbContext _context;
 
         public LocationsController(ApplicationDbContext context)
         {
             _context = context;
         }
-
         // GET: api/Locations
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Location>>> GetLocations()
@@ -119,5 +147,6 @@ namespace RoutingData.Controllers
         {
             return (_context.Locations?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+#endif
     }
 }

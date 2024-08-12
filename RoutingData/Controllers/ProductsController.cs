@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RoutingData.DTO;
 using RoutingData.Models;
 
 namespace RoutingData.Controllers
@@ -13,6 +14,32 @@ namespace RoutingData.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
+#if OFFLINE_DATA
+        private readonly OfflineDatabase _offlineDatabase;
+
+        public ProductsController(OfflineDatabase offlineDatabase)
+        {
+            _offlineDatabase = offlineDatabase;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        {
+            return _offlineDatabase.Products;
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<Location>> PostProduct(Product product)
+        {
+            int newID = _offlineDatabase.Products.Last().Id + 1;
+            product.Id = newID;
+            _offlineDatabase.Products.Add(product);
+
+            return Created("", product);
+        }
+
+#else
+
         private readonly ApplicationDbContext _context;
 
         public ProductsController(ApplicationDbContext context)
@@ -119,5 +146,6 @@ namespace RoutingData.Controllers
         {
             return (_context.Products?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+#endif
     }
 }

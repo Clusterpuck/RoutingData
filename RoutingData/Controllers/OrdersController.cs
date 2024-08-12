@@ -14,6 +14,45 @@ namespace RoutingData.Controllers
     [ApiController]
     public class OrdersController : ControllerBase
     {
+#if OFFLINE_DATA
+        private readonly OfflineDatabase _offlineDatabase;
+
+        public OrdersController(OfflineDatabase offlineDatabase)
+        {
+            _offlineDatabase = offlineDatabase;
+        }
+
+        // GET: api/Orders
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
+        {
+         
+            return _offlineDatabase.Orders;
+        }
+
+        // POST: api/Orders
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<Order>> PostOrder(OrderWithProductsDTO orderDTO)
+        {
+            
+
+            // Add the Order
+            var order = orderDTO.Order;
+            int orderID = _offlineDatabase.Orders.Last().Id + 1;
+            order.Id = orderID;
+            _offlineDatabase.Orders.Add(order);
+
+            foreach (var product in orderDTO.Products)
+            {
+                product.OrderId = order.Id;
+                _offlineDatabase.OrderProducts.Add(product);
+            }
+
+            return Created("", order);
+        }
+
+#else
         private readonly ApplicationDbContext _context;
 
         public OrdersController(ApplicationDbContext context)
@@ -131,5 +170,6 @@ namespace RoutingData.Controllers
         {
             return (_context.Orders?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+#endif
     }
 }

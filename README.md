@@ -25,4 +25,6 @@ https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=vs
 
 
 
-
+Offline Database
+In csproj comment and uncomment the COnditional COmpilation value OFFLINE_DATA 
+to switch between using a singleton as a backup database, and using the live database. 
