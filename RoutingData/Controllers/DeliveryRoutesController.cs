@@ -162,6 +162,28 @@ namespace RoutingData.Controllers
                 // Convert routeRequestListDTO to CalcRouteOutput
                 List<CalcRouteOutput> allRoutesCalced = pythonOutputToFront(routeRequestListDTO, orderDetailsDict);
 
+                //Need to now save these routes to the database.
+                //Therefore first assign a DeliveryRoute an autoincrement ID.
+                //Then each order in routeRequest is assigned this id. 
+                //Make as many new Routes as there are vehicles. Assign in order provided.
+                //
+                Dictionary<int, Order> ordersDict = _offlineDatabase.Orders.ToDictionary(o => o.Id);
+
+                for( int i = 0; i < routeRequest.NumVehicle; i++ )
+                {
+                    DeliveryRoute newRoute = new DeliveryRoute();
+                    newRoute.Id = _offlineDatabase.deliveryRoutes.Count + 1;
+                    //for each orderID in the List of Order Details in the corresponding CalcRouteOutput object in allRoutesCalced
+                    //need to find the matching order object in offlinedatabase and assign the routeID
+                    _offlineDatabase.deliveryRoutes.Add(newRoute);
+                    foreach( OrderDetail order in allRoutesCalced[i].Orders)
+                    {
+                        int orderID = order.OrderId;
+                        ordersDict[orderID].DeliveryRouteId = newRoute.Id;
+                    }
+
+                }
+
                 return Ok(allRoutesCalced);
             }
             catch (HttpRequestException ex)
@@ -182,6 +204,19 @@ namespace RoutingData.Controllers
                 Console.WriteLine($"Unexpected error: {ex.Message}");
                 return StatusCode(StatusCodes.Status500InternalServerError, $"An unexpected error occurred: {ex.Message}");
             }
+        }
+
+
+
+        // GET: api/DeliveryRoutes
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<DeliveryRoute>>> GetCourses()
+        {
+            if (_offlineDatabase.deliveryRoutes.Count == 0)
+            {
+                return NotFound();
+            }
+            return _offlineDatabase.deliveryRoutes;
         }
 
 

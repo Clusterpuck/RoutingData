@@ -11,13 +11,14 @@ namespace RoutingData.DTO
             BuildProducts();
             BuildOrders();
             BuildProductOrders();
-        
+            deliveryRoutes = new List<DeliveryRoute>();
         }
         public List<Customer> Customers { get; set; }
         public List<Location> Locations { get; set; }
         public List<Order> Orders { get; set; }
         public List<Product> Products { get; set; }
         public List<OrderProduct> OrderProducts { get; set; }
+        public List<DeliveryRoute> deliveryRoutes { get; set; }
 
         private void BuildCustomers()
         {
