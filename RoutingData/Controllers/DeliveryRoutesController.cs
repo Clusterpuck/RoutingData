@@ -173,13 +173,18 @@ namespace RoutingData.Controllers
                 {
                     DeliveryRoute newRoute = new DeliveryRoute();
                     newRoute.Id = _offlineDatabase.deliveryRoutes.Count + 1;
+                    //also need to add position number for each order. 
                     //for each orderID in the List of Order Details in the corresponding CalcRouteOutput object in allRoutesCalced
                     //need to find the matching order object in offlinedatabase and assign the routeID
                     _offlineDatabase.deliveryRoutes.Add(newRoute);
+                    int pos = 1;
                     foreach( OrderDetail order in allRoutesCalced[i].Orders)
                     {
                         int orderID = order.OrderId;
-                        ordersDict[orderID].DeliveryRouteId = newRoute.Id;
+                        Order dbOrder = ordersDict[orderID];
+                        dbOrder.DeliveryRouteId = newRoute.Id;
+                        dbOrder.PositionNumber = pos;
+                        pos++;
                     }
 
                 }
