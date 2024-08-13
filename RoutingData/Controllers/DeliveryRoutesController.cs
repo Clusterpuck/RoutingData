@@ -25,7 +25,7 @@ namespace RoutingData.Controllers
         private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn)
         {
             string pythonBackendUrl = "https://quantumdeliverybackend.azurewebsites.net/generate-routes";
-
+            //string pythonBackendUrl = "http://127.0.0.1:8000/generate-routes";
             using (var httpClient = new HttpClient())
             {
                 try
@@ -101,7 +101,20 @@ namespace RoutingData.Controllers
 
             CalculatingRoutesDTO calcRoute = new CalculatingRoutesDTO();
             calcRoute.orders = routesForPython;
-            calcRoute.num_vehicle = frontEndData.NumVehicle;
+            SubCalcSetting vehicleCluster = new SubCalcSetting();
+            vehicleCluster.type = "kmeans";
+            vehicleCluster.k = frontEndData.NumVehicle;
+            calcRoute.vehicle_cluster_config = vehicleCluster;
+
+            SubCalcSetting subclusterSetting = new SubCalcSetting();
+            subclusterSetting.type = "kmeans";
+            subclusterSetting.k = 3;
+            calcRoute.subcluster_config = subclusterSetting;
+
+            SolverCalcSetting solverCalcSetting = new SolverCalcSetting();
+            solverCalcSetting.type = "brute";
+            solverCalcSetting.distance = "cartesian";
+            calcRoute.solver_config = solverCalcSetting;
 
             return calcRoute;
 

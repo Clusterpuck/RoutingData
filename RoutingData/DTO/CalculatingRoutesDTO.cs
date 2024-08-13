@@ -7,7 +7,9 @@ namespace RoutingData.DTO
     //The object that python accepts
     public class CalculatingRoutesDTO
     {
-        public int num_vehicle {  get; set; }
+        public SubCalcSetting vehicle_cluster_config {  get; set; }
+        public SubCalcSetting subcluster_config { get; set; }
+        public SolverCalcSetting solver_config { get; set; }
         public List<OrderInRouteDTO> orders { get; set; }
     }
 
@@ -17,6 +19,20 @@ namespace RoutingData.DTO
         public int order_id { get; set; }
         public double lat { get; set; }
         public double lon { get; set; }
+    }
+
+
+    //Class for the subclass settings
+    public class SubCalcSetting
+    {
+        public string type { get; set; }
+        public int k { get; set; }
+    }
+
+    public class  SolverCalcSetting
+    {
+        public string type { get; set; }
+        public string distance { get; set; }
     }
 
 
