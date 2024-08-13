@@ -162,32 +162,7 @@ namespace RoutingData.Controllers
                 // Convert routeRequestListDTO to CalcRouteOutput
                 List<CalcRouteOutput> allRoutesCalced = pythonOutputToFront(routeRequestListDTO, orderDetailsDict);
 
-                //Need to now save these routes to the database.
-                //Therefore first assign a DeliveryRoute an autoincrement ID.
-                //Then each order in routeRequest is assigned this id. 
-                //Make as many new Routes as there are vehicles. Assign in order provided.
-                //
-                Dictionary<int, Order> ordersDict = _offlineDatabase.Orders.ToDictionary(o => o.Id);
-
-                for( int i = 0; i < routeRequest.NumVehicle; i++ )
-                {
-                    DeliveryRoute newRoute = new DeliveryRoute();
-                    newRoute.Id = _offlineDatabase.deliveryRoutes.Count + 1;
-                    //also need to add position number for each order. 
-                    //for each orderID in the List of Order Details in the corresponding CalcRouteOutput object in allRoutesCalced
-                    //need to find the matching order object in offlinedatabase and assign the routeID
-                    _offlineDatabase.deliveryRoutes.Add(newRoute);
-                    int pos = 1;
-                    foreach( OrderDetail order in allRoutesCalced[i].Orders)
-                    {
-                        int orderID = order.OrderId;
-                        Order dbOrder = ordersDict[orderID];
-                        dbOrder.DeliveryRouteId = newRoute.Id;
-                        dbOrder.PositionNumber = pos;
-                        pos++;
-                    }
-
-                }
+                AssignPosAndDelivery(allRoutesCalced, routeRequest);
 
                 return Ok(allRoutesCalced);
             }
@@ -225,6 +200,36 @@ namespace RoutingData.Controllers
         }
 
 
+        private void AssignPosAndDelivery(List<CalcRouteOutput> allRoutesCalced, RouteRequest routeRequest)
+        {
+            //Need to now save these routes to the database.
+            //Therefore first assign a DeliveryRoute an autoincrement ID.
+            //Then each order in routeRequest is assigned this id. 
+            //Make as many new Routes as there are vehicles. Assign in order provided.
+            //
+            Dictionary<int, Order> ordersDict = _offlineDatabase.Orders.ToDictionary(o => o.Id);
+
+            for (int i = 0; i < routeRequest.NumVehicle; i++)
+            {
+                DeliveryRoute newRoute = new DeliveryRoute();
+                newRoute.Id = _offlineDatabase.deliveryRoutes.Count + 1;
+                //also need to add position number for each order. 
+                //for each orderID in the List of Order Details in the corresponding CalcRouteOutput object in allRoutesCalced
+                //need to find the matching order object in offlinedatabase and assign the routeID
+                _offlineDatabase.deliveryRoutes.Add(newRoute);
+                int pos = 1;
+                foreach (OrderDetail order in allRoutesCalced[i].Orders)
+                {
+                    int orderID = order.OrderId;
+                    Order dbOrder = ordersDict[orderID];
+                    dbOrder.DeliveryRouteId = newRoute.Id;
+                    dbOrder.PositionNumber = pos;
+                    pos++;
+                }
+
+            }
+
+        }
 
 
         //this is the offline version, will also need an online version. 
