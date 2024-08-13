@@ -1,14 +1,17 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using RoutingData.DTO;
 using RoutingData.Models;
+using static NuGet.Packaging.PackagingConstants;
 
 namespace RoutingData.Controllers
 {
@@ -16,6 +19,228 @@ namespace RoutingData.Controllers
     [ApiController]
     public class DeliveryRoutesController : ControllerBase
     {
+
+
+        //Method to request quantum routes
+        private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn)
+        {
+            string pythonBackendUrl = "https://quantumdeliverybackend.azurewebsites.net/generate-routes";
+
+            using (var httpClient = new HttpClient())
+            {
+                try
+                {
+                    // Serialize the object to JSON
+                    string jsonContent = JsonConvert.SerializeObject(routesIn);
+
+                    // Log the JSON payload
+                    Console.WriteLine("JSON Payload Sent to Python:");
+                    Console.WriteLine(jsonContent);
+
+                    var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                    // Send the POST request
+                    HttpResponseMessage response = await httpClient.PostAsync(pythonBackendUrl, content);
+
+                    // Check if the request was successful
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Read and deserialize the response content
+                        string responseContent = await response.Content.ReadAsStringAsync();
+                        RouteRequestListDTO routeResponse = JsonConvert.DeserializeObject<RouteRequestListDTO>(responseContent);
+
+                        // Return the deserialized response
+                        return routeResponse;
+                    }
+                    else
+                    {
+                        // Handle non-successful responses by extracting the error details
+                        string errorContent = await response.Content.ReadAsStringAsync();
+                        throw new HttpRequestException($"Error from Python backend: {response.ReasonPhrase}. Details: {errorContent}");
+                    }
+                }
+                catch (HttpRequestException httpEx)
+                {
+                    // Log the exception and throw a custom error
+                    Console.WriteLine($"HTTP error: {httpEx.Message}");
+                    throw new Exception($"Failed to communicate with the Python backend. {httpEx.Message}.");
+                }
+                catch (JsonSerializationException jsonEx)
+                {
+                    // Log JSON serialization/deserialization errors
+                    Console.WriteLine($"JSON error: {jsonEx.Message}");
+                    throw new Exception("Failed to process the data for the Python backend. Please ensure the data format is correct.");
+                }
+                catch (Exception ex)
+                {
+                    // Log any other exceptions
+                    Console.WriteLine($"General error: {ex.Message}");
+                    throw new Exception($"An unexpected error occurred: {ex.Message}");
+                }
+            }
+        }
+
+
+
+        //converts front end data to the required input for python end point
+        private CalculatingRoutesDTO frontDataToPythonData( RouteRequest frontEndData, Dictionary<int, OrderDetail> orderDetailsDict)
+        {
+            //From routerequest need to make a list of OrderInRoute
+            List<OrderInRouteDTO> routesForPython = new List<OrderInRouteDTO>();
+
+            foreach (int orderID in frontEndData.Orders)
+            {
+                OrderDetail orderDetail = orderDetailsDict[orderID];
+                OrderInRouteDTO routeDTO = new OrderInRouteDTO();
+                routeDTO.lat = orderDetail.Lat;
+                routeDTO.lon = orderDetail.Lon;
+                routeDTO.order_id = orderID;
+
+                routesForPython.Add(routeDTO);
+            }
+
+            CalculatingRoutesDTO calcRoute = new CalculatingRoutesDTO();
+            calcRoute.orders = routesForPython;
+            calcRoute.num_vehicle = frontEndData.NumVehicle;
+
+            return calcRoute;
+
+        }
+
+        private List<CalcRouteOutput> pythonOutputToFront(RouteRequestListDTO routeList, Dictionary<int, OrderDetail> orderDetailsDict)
+        {
+            //Has a list of list of orderIDs, representing one vehicles routes
+            //Full list object to send to frontend, giving all vehicles routes. 
+            List<CalcRouteOutput> allRoutesCalced = new List<CalcRouteOutput>();
+
+            foreach (List<int> route in routeList)
+            {
+                CalcRouteOutput routeForFrontend = new CalcRouteOutput();
+                List<OrderDetail> routeDetails = new List<OrderDetail>();
+                //For loops generates an ordered and detailed list of routes for each vehicle
+                foreach (int orderID in route)
+                {
+                    OrderDetail referenceDetails = orderDetailsDict[orderID];
+                    routeDetails.Add(referenceDetails);
+                    Console.WriteLine("Added order detail of " + referenceDetails.Addr);
+                }
+                //Vehicle ID assigned by front end after recieving route. 
+                routeForFrontend.VehicleId = 0;
+                routeForFrontend.Orders = routeDetails;
+                allRoutesCalced.Add(routeForFrontend);
+                Console.WriteLine("Added a route to front end output " + routeForFrontend.ToString());
+            }
+            return allRoutesCalced;
+
+        }
+
+#if OFFLINE_DATA
+
+        private readonly OfflineDatabase _offlineDatabase;
+
+        public DeliveryRoutesController(OfflineDatabase offlineDatabase)
+        {
+            _offlineDatabase = offlineDatabase;
+        }
+
+
+        [HttpPost]
+        public async Task<ActionResult<List<CalcRouteOutput>>> PostDeliveryRoute(RouteRequest routeRequest)
+        {
+            try
+            {
+                Dictionary<int, OrderDetail> orderDetailsDict = MakeOrdersDictionary();
+
+                // Convert data input to type for Python input
+                CalculatingRoutesDTO calcRoute = frontDataToPythonData(routeRequest, orderDetailsDict);
+
+                // Make the request to the Python backend
+                RouteRequestListDTO routeRequestListDTO = await PythonRequest(calcRoute);
+
+                Console.WriteLine("Returned object from Python is " + routeRequestListDTO.ToString());
+
+                // Convert routeRequestListDTO to CalcRouteOutput
+                List<CalcRouteOutput> allRoutesCalced = pythonOutputToFront(routeRequestListDTO, orderDetailsDict);
+
+                return Ok(allRoutesCalced);
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle HTTP-specific exceptions and include detailed error from response
+                Console.WriteLine($"HTTP error while processing the route request: {ex.Message}");
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, ex.Message);
+            }
+            catch (JsonSerializationException ex)
+            {
+                // Handle JSON-specific exceptions
+                Console.WriteLine($"JSON processing error: {ex.Message}");
+                return BadRequest("Invalid data format received. Please check the request.");
+            }
+            catch (Exception ex)
+            {
+                // Handle any other exceptions
+                Console.WriteLine($"Unexpected error: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An unexpected error occurred: {ex.Message}");
+            }
+        }
+
+
+
+
+        //this is the offline version, will also need an online version. 
+        private Dictionary<int, OrderDetail> MakeOrdersDictionary()
+        {
+
+            Dictionary<int, RoutingData.Models.Location> locationDict =
+                _offlineDatabase.Locations.ToDictionary(l => l.Id);
+            Dictionary<int, Customer> customerDict =
+                _offlineDatabase.Customers.ToDictionary(c => c.Id);
+            Dictionary<int, Product> productDict =
+                _offlineDatabase.Products.ToDictionary(p => p.Id);
+
+            Dictionary<int, OrderDetail> orderDetailsDict = 
+                new Dictionary<int, OrderDetail>();
+
+            foreach (Order order in _offlineDatabase.Orders)
+            {
+                // Get the location, customer, and order products associated with this order
+                RoutingData.Models.Location location = locationDict[order.LocationId];
+                Customer customer = customerDict[order.CustomerId];
+
+                // Get all products associated with this order
+                var orderProductList =
+                    _offlineDatabase.OrderProducts.Where(op => op.OrderId == order.Id).ToList();
+                List<string> productNames = new List<string>();
+
+                foreach (var orderProduct in orderProductList)
+                {
+                    if (productDict.ContainsKey(orderProduct.ProductId))
+                    {
+                        productNames.Add(productDict[orderProduct.ProductId].Name);
+                    }
+                }
+
+                // Create an OrderDetail object
+                OrderDetail orderDetail = new OrderDetail
+                {
+                    OrderId = order.Id,
+                    Addr = location.Address,
+                    Lat = location.Latitude,
+                    Lon = location.Longitude,
+                    Status = "Pending",
+                    CustomerName = customer.Name,
+                    ProdNames = productNames
+                };
+
+                // Add the orderDetail to the Hashtable using the OrderId as the key
+                orderDetailsDict.Add(order.Id, orderDetail);
+            }
+                return orderDetailsDict;
+        }
+
+
+
+#else
         private readonly ApplicationDbContext _context;
 
         public DeliveryRoutesController(ApplicationDbContext context)
@@ -277,5 +502,6 @@ namespace RoutingData.Controllers
         {
             return (_context.Courses?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+#endif
     }
 }
