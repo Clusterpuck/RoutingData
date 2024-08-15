@@ -126,19 +126,21 @@ namespace RoutingData.Controllers
             //Full list object to send to frontend, giving all vehicles routes. 
             List<CalcRouteOutput> allRoutesCalced = new List<CalcRouteOutput>();
 
-            foreach (List<int> route in routeList)
+            for( int i = 0; i < routeList.Count; i++ )
+            //foreach (List<int> route in routeList)
             {
+                List<int> route = routeList[i];
                 CalcRouteOutput routeForFrontend = new CalcRouteOutput();
                 List<OrderDetail> routeDetails = new List<OrderDetail>();
+                routeForFrontend.VehicleId = i+1;
                 //For loops generates an ordered and detailed list of routes for each vehicle
-                foreach (int orderID in route)
+                foreach(int orderID in route )
                 {
                     OrderDetail referenceDetails = orderDetailsDict[orderID];
                     routeDetails.Add(referenceDetails);
                     Console.WriteLine("Added order detail of " + referenceDetails.Addr);
                 }
                 //Vehicle ID assigned by front end after recieving route. 
-                routeForFrontend.VehicleId = 0;
                 routeForFrontend.Orders = routeDetails;
                 allRoutesCalced.Add(routeForFrontend);
                 Console.WriteLine("Added a route to front end output " + routeForFrontend.ToString());
