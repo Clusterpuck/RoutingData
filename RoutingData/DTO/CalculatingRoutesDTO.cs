@@ -33,6 +33,7 @@ namespace RoutingData.DTO
     {
         public string type { get; set; }
         public string distance { get; set; }
+        public int max_solve_size { get; set; }
     }
 
 
