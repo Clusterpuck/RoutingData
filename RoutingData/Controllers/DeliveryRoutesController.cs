@@ -101,6 +101,7 @@ namespace RoutingData.Controllers
 
             CalculatingRoutesDTO calcRoute = new CalculatingRoutesDTO();
             calcRoute.orders = routesForPython;
+
             SubCalcSetting vehicleCluster = new SubCalcSetting();
             vehicleCluster.type = "kmeans";
             vehicleCluster.k = frontEndData.NumVehicle;
@@ -114,6 +115,7 @@ namespace RoutingData.Controllers
             SolverCalcSetting solverCalcSetting = new SolverCalcSetting();
             solverCalcSetting.type = "brute";
             solverCalcSetting.distance = "cartesian";
+            solverCalcSetting.max_solve_size = 3;
             calcRoute.solver_config = solverCalcSetting;
 
             return calcRoute;
