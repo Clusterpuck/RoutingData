@@ -8,7 +8,6 @@ namespace RoutingData.DTO
     public class CalculatingRoutesDTO
     {
         public SubCalcSetting vehicle_cluster_config {  get; set; }
-        public SubCalcSetting subcluster_config { get; set; }
         public SolverCalcSetting solver_config { get; set; }
         public List<OrderInRouteDTO> orders { get; set; }
     }

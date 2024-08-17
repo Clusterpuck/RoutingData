@@ -105,17 +105,14 @@ namespace RoutingData.Controllers
             SubCalcSetting vehicleCluster = new SubCalcSetting();
             vehicleCluster.type = "kmeans";
             vehicleCluster.k = frontEndData.NumVehicle;
-            calcRoute.vehicle_cluster_config = vehicleCluster;
 
-            SubCalcSetting subclusterSetting = new SubCalcSetting();
-            subclusterSetting.type = "kmeans";
-            subclusterSetting.k = 3;
-            calcRoute.subcluster_config = subclusterSetting;
+            calcRoute.vehicle_cluster_config = vehicleCluster;
 
             SolverCalcSetting solverCalcSetting = new SolverCalcSetting();
             solverCalcSetting.type = "brute";
             solverCalcSetting.distance = "cartesian";
-            solverCalcSetting.max_solve_size = 3;
+            solverCalcSetting.max_solve_size = 5;
+
             calcRoute.solver_config = solverCalcSetting;
 
             return calcRoute;
