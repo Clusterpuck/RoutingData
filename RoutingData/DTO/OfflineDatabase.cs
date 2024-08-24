@@ -38,7 +38,7 @@ namespace RoutingData.DTO
         {
             Locations = new List<Location>
             {
-                new Location { Id = 1, Longitude = 101, Latitude = 80, Address = "42 Wallaby Way", Suburb = "Bertram", State = "WA", Country = "Australia", Description = "Fake Address" },
+                new Location { Id = 1, Longitude = 115.8146751, Latitude = -32.1375223, Address = "42 Wallaby Way", Suburb = "Bertram", State = "WA", Country = "Australia", Description = "Fake Address" },
                 new Location { Id = 2, Longitude = 115.8146732, Latitude = -32.1375187, Address = "21 Peregrine Circle", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", Description = "No Description" },
                 new Location { Id = 3, Longitude = 115.8130603, Latitude = -32.1404435, Address = "66 Mannikin Heights", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", Description = "No Description" },
                 new Location { Id = 4, Longitude = 115.79835, Latitude = -32.13816, Address = "128 Fanstone Avenue", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", Description = "No Description" },
