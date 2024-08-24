@@ -6,11 +6,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace TestRoutingData
 {
-    public class CustomerControllersTests
+    public class CustomerTests
     {
         private readonly CustomersController _customerController;
 
-        public CustomerControllersTests()
+
+        public CustomerTests()
         {
             _customerController = new CustomersController(TestServiceProvider.OfflineDatabaseInstance);
         }
