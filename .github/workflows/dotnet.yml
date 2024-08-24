@@ -6,7 +6,7 @@ name: build_test_route
 on:
   pull_request:
     branches:
-      - main
+      - master
   workflow_dispatch:
 
 jobs:
