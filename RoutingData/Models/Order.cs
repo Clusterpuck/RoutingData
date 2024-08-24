@@ -2,7 +2,8 @@
 
 namespace RoutingData.Models
 {
-    public class Order
+   //removed to test build fail on merge
+   //public class Order
     {
         [Key]
         public int Id { get; set; }
