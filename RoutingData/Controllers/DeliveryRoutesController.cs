@@ -24,8 +24,8 @@ namespace RoutingData.Controllers
         //Method to request quantum routes
         private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn)
         {
-            string pythonBackendUrl = "https://quantumdeliverybackend.azurewebsites.net/generate-routes";
-            //string pythonBackendUrl = "http://127.0.0.1:8000/generate-routes";
+            //string pythonBackendUrl = "https://quantumdeliverybackend.azurewebsites.net/generate-routes";
+            string pythonBackendUrl = "http://127.0.0.1:8000/generate-routes";
             using (var httpClient = new HttpClient())
             {
                 try
@@ -39,8 +39,18 @@ namespace RoutingData.Controllers
 
                     var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
+                    var request = new HttpRequestMessage(HttpMethod.Post, pythonBackendUrl)
+                    {
+                        Content = content
+                    };
+
+                    // Add a custom header
+                    string backend_token = Environment.GetEnvironmentVariable("BACKEND_TOKEN");
+                    request.Headers.Add("authorisation", "Bearer " + backend_token);
+
                     // Send the POST request
-                    HttpResponseMessage response = await httpClient.PostAsync(pythonBackendUrl, content);
+                    Console.WriteLine(request.Headers);
+                    HttpResponseMessage response = await httpClient.SendAsync(request);
 
                     // Check if the request was successful
                     if (response.IsSuccessStatusCode)
@@ -157,7 +167,6 @@ namespace RoutingData.Controllers
             _offlineDatabase = offlineDatabase;
         }
 
-        //Test Commit
         [HttpPost]
         public async Task<ActionResult<List<CalcRouteOutput>>> PostDeliveryRoute(RouteRequest routeRequest)
         {
