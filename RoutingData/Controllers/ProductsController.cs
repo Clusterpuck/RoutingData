@@ -29,7 +29,7 @@ namespace RoutingData.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Location>> PostProduct(Product product)
+        public async Task<ActionResult<Product>> PostProduct(Product product)
         {
             int newID = _offlineDatabase.Products.Last().Id + 1;
             product.Id = newID;
