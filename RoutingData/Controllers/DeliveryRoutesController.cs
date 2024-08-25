@@ -24,8 +24,8 @@ namespace RoutingData.Controllers
         //Method to request quantum routes
         private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn)
         {
-            //string pythonBackendUrl = "https://quantumdeliverybackend.azurewebsites.net/generate-routes";
-            string pythonBackendUrl = "http://127.0.0.1:8000/generate-routes";
+            string pythonBackendUrl = "https://quantumdeliverybackend.azurewebsites.net/generate-routes";
+            //string pythonBackendUrl = "http://127.0.0.1:8000/generate-routes";
             using (var httpClient = new HttpClient())
             {
                 try
