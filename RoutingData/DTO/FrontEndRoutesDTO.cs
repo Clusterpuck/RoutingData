@@ -7,6 +7,7 @@ namespace RoutingData.DTO
     public class RouteRequest
     {
         public int NumVehicle { get; set; }
+        public string calcType { get; set; }
         public List<int> Orders { get; set; }
     }
 
