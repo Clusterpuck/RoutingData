@@ -119,7 +119,7 @@ namespace RoutingData.Controllers
             calcRoute.vehicle_cluster_config = vehicleCluster;
 
             SolverCalcSetting solverCalcSetting = new SolverCalcSetting();
-            solverCalcSetting.type = "brute";
+            solverCalcSetting.type = frontEndData.calcType; // "brute";
             solverCalcSetting.distance = "cartesian";
             solverCalcSetting.max_solve_size = 5;
 
