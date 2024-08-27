@@ -12,6 +12,7 @@ namespace RoutingData.DTO
             BuildOrders();
             BuildProductOrders();
             BuildDrivers();
+            BuildVehicles();
             deliveryRoutes = new List<DeliveryRoute>();
         }
         public List<Customer> Customers { get; set; }
