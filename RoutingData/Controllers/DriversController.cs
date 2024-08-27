@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RoutingData.DTO;
 using RoutingData.Models;
 
 namespace RoutingData.Controllers
@@ -13,6 +14,62 @@ namespace RoutingData.Controllers
     [ApiController]
     public class DriversController : ControllerBase
     {
+
+#if OFFLINE_DATA
+        private readonly OfflineDatabase _offlineDatabase;
+
+
+        public DriversController(OfflineDatabase offlineDatabase)
+        {
+            _offlineDatabase = offlineDatabase;
+        }
+
+        // GET: api/Drivers
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Driver>>> GetDrivers()
+        {
+            if (_offlineDatabase.Drivers == null)
+            {
+                return NotFound();
+            }
+            return _offlineDatabase.Drivers;
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<Driver>> PostDriver(Driver driver)
+        {
+            if (_offlineDatabase.Drivers == null)
+            {
+                return Problem("Entity set 'ApplicationDbContext.Drivers'  is null.");
+            }
+            int newId = _offlineDatabase.Drivers.Last().Id + 1;
+            driver.Id = newId;
+            _offlineDatabase.Drivers.Add(driver);
+
+            return Ok(driver);
+        }
+
+        // DELETE: api/Drivers/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteDriver(int id)
+        {
+            if (_offlineDatabase.Drivers == null)
+            {
+                return NotFound();
+            }
+            var driver = _offlineDatabase.Drivers.FirstOrDefault(x => x.Id == id);
+            if (driver == null)
+            {
+                return NotFound();
+            }
+
+            _offlineDatabase.Drivers.Remove(driver);
+
+            return NoContent();
+        }
+
+
+#else
         private readonly ApplicationDbContext _context;
 
         public DriversController(ApplicationDbContext context)
@@ -119,5 +176,6 @@ namespace RoutingData.Controllers
         {
             return (_context.Drivers?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+#endif
     }
 }
