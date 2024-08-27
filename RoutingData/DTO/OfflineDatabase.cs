@@ -55,14 +55,14 @@ namespace RoutingData.DTO
         {
             Drivers = new List<Driver>
             {
-                new Driver { Id = 1, Name = "Bob", AccountUsername = "Bob1", Phone = "555 123 456" },
-                new Driver { Id = 2, Name = "Alice", AccountUsername = "Alice1", Phone = "555 234 567" },
-                new Driver { Id = 3, Name = "Charlie", AccountUsername = "Charlie1", Phone = "555 345 678" },
-                new Driver { Id = 4, Name = "Diana", AccountUsername = "Diana1", Phone = "555 456 789" },
-                new Driver { Id = 5, Name = "Eve", AccountUsername = "Eve1", Phone = "555 567 890" },
-                new Driver { Id = 6, Name = "Frank", AccountUsername = "Frank1", Phone = "555 678 901" },
-
+                new Driver { Username = "Bob1", Name = "Bob", Phone = "555 123 456", Password = "password123" },
+                new Driver { Username = "Alice1", Name = "Alice", Phone = "555 234 567", Password = "password456" },
+                new Driver { Username = "Charlie1", Name = "Charlie", Phone = "555 345 678", Password = "password789" },
+                new Driver { Username = "Diana1", Name = "Diana", Phone = "555 456 789", Password = "password101" },
+                new Driver { Username = "Eve1", Name = "Eve", Phone = "555 567 890", Password = "password102" },
+                new Driver { Username = "Frank1", Name = "Frank", Phone = "555 678 901", Password = "password103" },
             };
+
         }
 
         private void BuildLocations()

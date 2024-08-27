@@ -16,7 +16,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<Product> Products { get; set; } = null!;
     public DbSet<Driver> Drivers { get; set; } = null!;
     public DbSet<Admin> Admins { get; set; } = null!;
-    public DbSet<DriverAccount> DriverAccounts { get; set; } = null!;
     public DbSet<AdminAccount> AdminAccounts { get; set; } = null!;
     public DbSet<OrderProduct> OrderProducts { get; set; } = null!;
 

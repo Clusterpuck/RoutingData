@@ -42,22 +42,20 @@ namespace RoutingData.Controllers
             {
                 return Problem("Entity set 'ApplicationDbContext.Drivers'  is null.");
             }
-            int newId = _offlineDatabase.Drivers.Last().Id + 1;
-            driver.Id = newId;
             _offlineDatabase.Drivers.Add(driver);
 
             return Ok(driver);
         }
 
         // DELETE: api/Drivers/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteDriver(int id)
+        [HttpDelete("{username}")]
+        public async Task<IActionResult> DeleteDriver(String username)
         {
             if (_offlineDatabase.Drivers == null)
             {
                 return NotFound();
             }
-            var driver = _offlineDatabase.Drivers.FirstOrDefault(x => x.Id == id);
+            var driver = _offlineDatabase.Drivers.FirstOrDefault(x => x.Username.Equals(username));
             if (driver == null)
             {
                 return NotFound();
