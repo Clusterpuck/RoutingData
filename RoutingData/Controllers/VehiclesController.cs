@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RoutingData.DTO;
 using RoutingData.Models;
 
 namespace RoutingData.Controllers
@@ -13,6 +14,63 @@ namespace RoutingData.Controllers
     [ApiController]
     public class VehiclesController : ControllerBase
     {
+#if OFFLINE_DATA
+        private readonly OfflineDatabase _offlineDatabase;
+
+        public VehiclesController(OfflineDatabase offlineDatabase)
+        {
+            _offlineDatabase = offlineDatabase;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Vehicle>>> GetVehicles()
+        {
+            if (_offlineDatabase.Vehicles == null)
+            {
+                return NotFound();
+            }
+            return _offlineDatabase.Vehicles;
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<Vehicle>> PostVehicle(Vehicle vehicle)
+        {
+            if (_offlineDatabase.Vehicles == null)
+            {
+                return Problem("Entity set 'ApplicationDbContext.Drivers'  is null.");
+            }
+            int newId = _offlineDatabase.Vehicles.Last().Id + 1;
+            vehicle.Id = newId;
+            _offlineDatabase.Vehicles.Add(vehicle);
+
+            return Ok(vehicle);
+        }
+
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteVehicle(int id)
+        {
+            if (_offlineDatabase.Vehicles == null)
+            {
+                return NotFound();
+            }
+            var vehicle = _offlineDatabase.Vehicles.FirstOrDefault(x => x.Id == id);
+            if (vehicle == null)
+            {
+                return NotFound();
+            }
+
+            _offlineDatabase.Vehicles.Remove(vehicle);
+
+            return NoContent();
+        }
+
+
+
+
+
+
+#else
         private readonly ApplicationDbContext _context;
 
         public VehiclesController(ApplicationDbContext context)
@@ -119,5 +177,6 @@ namespace RoutingData.Controllers
         {
             return (_context.Vehicles?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+#endif
     }
 }
