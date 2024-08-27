@@ -28,7 +28,7 @@ namespace RoutingData.DTO
             {
                 Customer customer = new Customer();
                 customer.Name = "Test Customer " + i;
-                customer.Phone = i.ToString();
+                customer.Phone = $"{i:D10}";
                 customer.Id = i;
                 Customers.Add(customer);
             }

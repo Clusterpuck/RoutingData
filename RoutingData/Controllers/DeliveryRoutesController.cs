@@ -297,6 +297,7 @@ namespace RoutingData.Controllers
                     Lon = location.Longitude,
                     Status = "Pending",
                     CustomerName = customer.Name,
+                    Phone = customer.Phone,
                     ProdNames = productNames
                 };
 

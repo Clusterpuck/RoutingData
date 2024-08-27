@@ -16,6 +16,7 @@ namespace RoutingData.DTO
     //Object structure that frontend expects back from a route calc
     public class CalcRouteOutput
     {
+        // has vehicle id and list of OrderDetails
         public int VehicleId { get; set; }
         public List<OrderDetail> Orders { get; set; }
 
@@ -41,7 +42,10 @@ namespace RoutingData.DTO
         public double Lon { get; set; }
         public string Status { get; set; }
         public string CustomerName { get; set; }
+        public string Phone { get; set; }
         public List<string> ProdNames { get; set; }
+
+        
 
 
         public override string ToString()
@@ -53,6 +57,7 @@ namespace RoutingData.DTO
             sb.AppendLine($"Lon: {Lon}");
             sb.AppendLine($"Status: {Status}");
             sb.AppendLine($"CustomerName: {CustomerName}");
+            sb.AppendLine($"Phone: {Phone}");
             sb.Append("ProdNames: ");
             sb.AppendLine(ProdNames != null ? string.Join(", ", ProdNames) : "None");
             return sb.ToString();
