@@ -37,6 +37,19 @@ namespace RoutingData.DTO
             }
         }
 
+        private void BuildVehicles()
+        {
+            Vehicles = new List<Vehicle>
+            {
+                new Vehicle { Id = 1, LicensePlate = "Terminator" },
+                new Vehicle { Id = 2, LicensePlate = "RoadRunner" },
+                new Vehicle { Id = 3, LicensePlate = "Thunderbolt" },
+                new Vehicle { Id = 4, LicensePlate = "SilverBullet" },
+                new Vehicle { Id = 5, LicensePlate = "Falcon" },
+                new Vehicle { Id = 6, LicensePlate = "Lightning" },
+            };
+        }
+
         private void BuildDrivers()
         {
             Drivers = new List<Driver>
