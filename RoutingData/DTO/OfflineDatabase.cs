@@ -11,6 +11,7 @@ namespace RoutingData.DTO
             BuildProducts();
             BuildOrders();
             BuildProductOrders();
+            BuildDrivers();
             deliveryRoutes = new List<DeliveryRoute>();
         }
         public List<Customer> Customers { get; set; }
@@ -19,6 +20,8 @@ namespace RoutingData.DTO
         public List<Product> Products { get; set; }
         public List<OrderProduct> OrderProducts { get; set; }
         public List<DeliveryRoute> deliveryRoutes { get; set; }
+        public List<Driver> Drivers { get; set; }
+        public List<Vehicle> Vehicles { get; set; }
 
         private void BuildCustomers()
         {
@@ -32,6 +35,20 @@ namespace RoutingData.DTO
                 customer.Id = i;
                 Customers.Add(customer);
             }
+        }
+
+        private void BuildDrivers()
+        {
+            Drivers = new List<Driver>
+            {
+                new Driver { Id = 1, Name = "Bob", AccountUsername = "Bob1", Phone = "555 123 456" },
+                new Driver { Id = 2, Name = "Alice", AccountUsername = "Alice1", Phone = "555 234 567" },
+                new Driver { Id = 3, Name = "Charlie", AccountUsername = "Charlie1", Phone = "555 345 678" },
+                new Driver { Id = 4, Name = "Diana", AccountUsername = "Diana1", Phone = "555 456 789" },
+                new Driver { Id = 5, Name = "Eve", AccountUsername = "Eve1", Phone = "555 567 890" },
+                new Driver { Id = 6, Name = "Frank", AccountUsername = "Frank1", Phone = "555 678 901" },
+
+            };
         }
 
         private void BuildLocations()
