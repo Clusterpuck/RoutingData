@@ -90,16 +90,11 @@ namespace RoutingData.DTO
         {
             Products = new List<Product>
             {
-                new Product { Id = 1, Name = "Product A" },
-                new Product { Id = 2, Name = "Product B" },
-                new Product { Id = 3, Name = "Product C" },
-                new Product { Id = 4, Name = "Product D" },
-                new Product { Id = 5, Name = "Product E" },
-                new Product { Id = 6, Name = "Product F" },
-                new Product { Id = 7, Name = "Product G" },
-                new Product { Id = 8, Name = "Product H" },
-                new Product { Id = 9, Name = "Product I" },
-                new Product { Id = 10, Name = "Product J" }
+                new Product { Id = 1, Name = "Apples", UnitOfMeasure = "Kilograms" },
+                new Product { Id = 2, Name = "Milk", UnitOfMeasure = "Liters" },
+                new Product { Id = 3, Name = "Steel Beams", UnitOfMeasure = "Meters" },
+                new Product { Id = 4, Name = "Nails", UnitOfMeasure = "Kilograms" },
+                new Product { Id = 5, Name = "Pallets", UnitOfMeasure = "Pallets" }
             };
         }
 
