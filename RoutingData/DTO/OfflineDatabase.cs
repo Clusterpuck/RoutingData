@@ -147,5 +147,58 @@ namespace RoutingData.DTO
             };
         }
 
+        //this is the offline version, will also need an online version. 
+        public Dictionary<int, OrderDetail> MakeOrdersDictionary()
+        {
+
+            Dictionary<int, RoutingData.Models.Location> locationDict =
+                Locations.ToDictionary(l => l.Id);
+            Dictionary<int, Customer> customerDict =
+                Customers.ToDictionary(c => c.Id);
+            Dictionary<int, Product> productDict =
+                Products.ToDictionary(p => p.Id);
+
+            Dictionary<int, OrderDetail> orderDetailsDict =
+                new Dictionary<int, OrderDetail>();
+
+            foreach (Order order in Orders)
+            {
+                // Get the location, customer, and order products associated with this order
+                RoutingData.Models.Location location = locationDict[order.LocationId];
+                Customer customer = customerDict[order.CustomerId];
+
+                // Get all products associated with this order
+                var orderProductList =
+                    OrderProducts.Where(op => op.OrderId == order.Id).ToList();
+                List<string> productNames = new List<string>();
+
+                foreach (var orderProduct in orderProductList)
+                {
+                    if (productDict.ContainsKey(orderProduct.ProductId))
+                    {
+                        productNames.Add(productDict[orderProduct.ProductId].Name);
+                    }
+                }
+
+                // Create an OrderDetail object
+                OrderDetail orderDetail = new OrderDetail
+                {
+                    OrderId = order.Id,
+                    Addr = location.Address,
+                    Lat = location.Latitude,
+                    Lon = location.Longitude,
+                    Status = "Pending",
+                    CustomerName = customer.Name,
+                    Phone = customer.Phone,
+                    ProdNames = productNames,
+                    Position = order.PositionNumber,
+                };
+
+                // Add the orderDetail to the Hashtable using the OrderId as the key
+                orderDetailsDict.Add(order.Id, orderDetail);
+            }
+            return orderDetailsDict;
+        }
+
     }
 }
