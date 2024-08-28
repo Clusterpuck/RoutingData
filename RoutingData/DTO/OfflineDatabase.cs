@@ -192,6 +192,8 @@ namespace RoutingData.DTO
                     Phone = customer.Phone,
                     ProdNames = productNames,
                     Position = order.PositionNumber,
+                    DeliveryDate = order.DeliveryDate,
+                    Notes = order.OrderNotes,
                 };
 
                 // Add the orderDetail to the Hashtable using the OrderId as the key
