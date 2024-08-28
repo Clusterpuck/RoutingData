@@ -158,6 +158,18 @@ namespace RoutingData.Controllers
 
         }
 
+        private void checkRouteMax(RouteRequest routeRequest)
+        {
+            // Find the minimum of the driver count and vehicle count
+            int maxVehicles = Math.Min(_offlineDatabase.Drivers.Count, _offlineDatabase.Vehicles.Count);
+
+            // Only assign the minimum value if the current NumVehicle exceeds it
+            if (routeRequest.NumVehicle > maxVehicles)
+            {
+                routeRequest.NumVehicle = maxVehicles;
+            }
+        }
+
 #if OFFLINE_DATA
 
         private readonly OfflineDatabase _offlineDatabase;
@@ -170,6 +182,8 @@ namespace RoutingData.Controllers
         [HttpPost]
         public async Task<ActionResult<List<CalcRouteOutput>>> PostDeliveryRoute(RouteRequest routeRequest)
         {
+            //ensures route doesn't out number the available vehicles or drivers
+            checkRouteMax(routeRequest);
             try
             {
                 Dictionary<int, OrderDetail> orderDetailsDict = MakeOrdersDictionary();
