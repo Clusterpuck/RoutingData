@@ -20,6 +20,10 @@ namespace RoutingData.DTO
         public int VehicleId { get; set; }
         public List<OrderDetail> Orders { get; set; }
 
+        public CalcRouteOutput() {
+            Orders = new List<OrderDetail>();
+        }
+
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
@@ -43,6 +47,7 @@ namespace RoutingData.DTO
         public string Status { get; set; }
         public string CustomerName { get; set; }
         public string Phone { get; set; }
+        public int Position { get; set; }
         public List<string> ProdNames { get; set; }
 
         
