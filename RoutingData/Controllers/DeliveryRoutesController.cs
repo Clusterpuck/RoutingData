@@ -302,6 +302,8 @@ namespace RoutingData.Controllers
                 newRoute.Id = _offlineDatabase.deliveryRoutes.Any() ?
                                 _offlineDatabase.deliveryRoutes.Last().Id + 1 : 1;
 
+                newRoute.DeliveryDate = DateTime.Today;
+
                 newRoute.VehicleId = _offlineDatabase.Vehicles[i].Id;
                 newRoute.DriverUsername = _offlineDatabase.Drivers[i].Username;
 
