@@ -11,6 +11,7 @@ namespace RoutingData.Models
         public string Address { get; set; }
         public string Suburb { get; set; }
         public string State { get; set; }
+        public int PostCode { get; set; }
         public string Country { get; set; }
         public string Description { get; set; }
 
