@@ -186,7 +186,7 @@ namespace RoutingData.Controllers
             checkRouteMax(routeRequest);
             try
             {
-                Dictionary<int, OrderDetail> orderDetailsDict = MakeOrdersDictionary();
+                Dictionary<int, OrderDetail> orderDetailsDict = _offlineDatabase.MakeOrdersDictionary();
 
                 // Convert data input to type for Python input
                 CalculatingRoutesDTO calcRoute = frontDataToPythonData(routeRequest, orderDetailsDict);
@@ -264,7 +264,7 @@ namespace RoutingData.Controllers
             //TODO Add conversion
 
             //dictionary to reference each order to get details
-            Dictionary<int, OrderDetail> orderDetailsDict = MakeOrdersDictionary();
+            Dictionary<int, OrderDetail> orderDetailsDict = _offlineDatabase.MakeOrdersDictionary();
             //This is a dictionary that gets order details from order IDs
             //Now need match orderIDs to the deliveryRoute ID, building a list of order
             //In that route, then converting those to OrderDetails. 
@@ -326,58 +326,7 @@ namespace RoutingData.Controllers
         }
 
 
-        //this is the offline version, will also need an online version. 
-        private Dictionary<int, OrderDetail> MakeOrdersDictionary()
-        {
-
-            Dictionary<int, RoutingData.Models.Location> locationDict =
-                _offlineDatabase.Locations.ToDictionary(l => l.Id);
-            Dictionary<int, Customer> customerDict =
-                _offlineDatabase.Customers.ToDictionary(c => c.Id);
-            Dictionary<int, Product> productDict =
-                _offlineDatabase.Products.ToDictionary(p => p.Id);
-
-            Dictionary<int, OrderDetail> orderDetailsDict = 
-                new Dictionary<int, OrderDetail>();
-
-            foreach (Order order in _offlineDatabase.Orders)
-            {
-                // Get the location, customer, and order products associated with this order
-                RoutingData.Models.Location location = locationDict[order.LocationId];
-                Customer customer = customerDict[order.CustomerId];
-
-                // Get all products associated with this order
-                var orderProductList =
-                    _offlineDatabase.OrderProducts.Where(op => op.OrderId == order.Id).ToList();
-                List<string> productNames = new List<string>();
-
-                foreach (var orderProduct in orderProductList)
-                {
-                    if (productDict.ContainsKey(orderProduct.ProductId))
-                    {
-                        productNames.Add(productDict[orderProduct.ProductId].Name);
-                    }
-                }
-
-                // Create an OrderDetail object
-                OrderDetail orderDetail = new OrderDetail
-                {
-                    OrderId = order.Id,
-                    Addr = location.Address,
-                    Lat = location.Latitude,
-                    Lon = location.Longitude,
-                    Status = "Pending",
-                    CustomerName = customer.Name,
-                    Phone = customer.Phone,
-                    ProdNames = productNames,
-                    Position = order.PositionNumber,
-                };
-
-                // Add the orderDetail to the Hashtable using the OrderId as the key
-                orderDetailsDict.Add(order.Id, orderDetail);
-            }
-                return orderDetailsDict;
-        }
+        
 
 
 

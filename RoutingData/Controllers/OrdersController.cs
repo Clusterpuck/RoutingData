@@ -24,10 +24,17 @@ namespace RoutingData.Controllers
 
         // GET: api/Orders
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
+        public async Task<ActionResult<IEnumerable<OrderDetail>>> GetOrders()
         {
+            Dictionary<int, OrderDetail> detailDict = _offlineDatabase.MakeOrdersDictionary();
+            List<Order> orders = _offlineDatabase.Orders;
+            List<OrderDetail> orderDetails = new List<OrderDetail>();
+            foreach (var order in orders)
+            {
+                orderDetails.Add(detailDict[order.Id]);
+            }
          
-            return _offlineDatabase.Orders;
+            return orderDetails;
         }
 
         // POST: api/Orders
