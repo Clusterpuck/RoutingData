@@ -50,7 +50,8 @@ namespace RoutingData.DTO
         public string Phone { get; set; }
         public int Position { get; set; }
         public List<string> ProdNames { get; set; }
-
+        public string Notes { get; set; }
+        public DateTime DeliveryDate { get; set; }
         
 
 
