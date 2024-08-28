@@ -30,11 +30,11 @@ namespace TestRoutingData
             // Act
             var result = await _orderController.GetOrders();
 
-            var actionResult = Assert.IsType<ActionResult<IEnumerable<Order>>>(result);
+            var actionResult = Assert.IsType<ActionResult<IEnumerable<OrderDetail>>>(result);
 
             Assert.NotNull(actionResult.Value);
 
-            var orders = Assert.IsAssignableFrom<IEnumerable<Order>>(actionResult.Value);
+            var orders = Assert.IsAssignableFrom<IEnumerable<OrderDetail>>(actionResult.Value);
 
         }
 
