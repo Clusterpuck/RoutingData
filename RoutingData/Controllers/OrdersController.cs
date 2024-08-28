@@ -37,7 +37,7 @@ namespace RoutingData.Controllers
         {
             
             // Add the Order
-            var order = orderDTO.Order;
+            Order order = orderDTO.Order;
             int orderID = _offlineDatabase.Orders.Last().Id + 1;
             order.Id = orderID;
             _offlineDatabase.Orders.Add(order);
@@ -49,6 +49,27 @@ namespace RoutingData.Controllers
             }
 
             return Created("", order);
+        }
+
+
+        // PUT: api/Order/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("DeliveryDate/{id}")]
+        public async Task<IActionResult> PutOrder(int id, DateTime deliveryDate)
+        {
+            Order orderToUpdate = _offlineDatabase.Orders.FirstOrDefault(o => o.Id == id);
+
+            // Check if the order was found
+            if (orderToUpdate == null)
+            {
+                return NotFound($"Order with Id {id} not found.");
+            }
+            else
+            {
+                orderToUpdate.DeliveryDate = deliveryDate;
+                return NoContent();
+            }
+
         }
 
 #else
