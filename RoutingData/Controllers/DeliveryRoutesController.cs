@@ -238,6 +238,54 @@ namespace RoutingData.Controllers
             return _offlineDatabase.deliveryRoutes;
         }
 
+        // GET: api/DeliveryRoutes/driver/{driverUsername}
+        [HttpGet("driver/{driverUsername}")]
+        public async Task<ActionResult<CalcRouteOutput>> GetDeliveryRoutesByDriver(string driverUsername)
+        {
+            DeliveryRoute driverRoute = _offlineDatabase.deliveryRoutes
+                                               .FirstOrDefault(r => r.DriverUsername == driverUsername);
+
+            if (driverRoute == null)
+            {
+                return NotFound($"No delivery routes found for driver with username {driverUsername}");
+            }
+
+            CalcRouteOutput calcOutput = deliveryToCalcRouteOutput(driverRoute);
+
+            //Now need to build the CalcRouteOutput and return that object 
+
+            return calcOutput;
+        }
+
+        private CalcRouteOutput deliveryToCalcRouteOutput( DeliveryRoute deliveryRoute )
+        {
+            CalcRouteOutput calcRouteOutput = new CalcRouteOutput();
+            calcRouteOutput.VehicleId = deliveryRoute.VehicleId;
+            //TODO Add conversion
+
+            //dictionary to reference each order to get details
+            Dictionary<int, OrderDetail> orderDetailsDict = MakeOrdersDictionary();
+            //This is a dictionary that gets order details from order IDs
+            //Now need match orderIDs to the deliveryRoute ID, building a list of order
+            //In that route, then converting those to OrderDetails. 
+
+            List<Order> orders = _offlineDatabase.Orders;
+            int routeID = deliveryRoute.Id;
+
+            foreach (Order order in orders)
+            {
+                if( order.DeliveryRouteId == routeID )
+                {//Finding the matching orderDetail that belongs to the route
+                    //Adding to the calcRouteOutput
+                    OrderDetail orderDetail = orderDetailsDict[order.Id];
+                    calcRouteOutput.Orders.Add(orderDetail);
+                }
+
+            }
+            return calcRouteOutput;
+
+        }
+
 
         private void AssignPosAndDelivery(List<CalcRouteOutput> allRoutesCalced, RouteRequest routeRequest)
         {
@@ -319,7 +367,8 @@ namespace RoutingData.Controllers
                     Status = "Pending",
                     CustomerName = customer.Name,
                     Phone = customer.Phone,
-                    ProdNames = productNames
+                    ProdNames = productNames,
+                    Position = order.PositionNumber,
                 };
 
                 // Add the orderDetail to the Hashtable using the OrderId as the key
