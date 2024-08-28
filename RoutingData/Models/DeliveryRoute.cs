@@ -11,6 +11,6 @@ namespace RoutingData.Models
         public int CreatorAdminId { get; set; }
         public DateTime TimeCreated { get; set; }
         public int VehicleId { get; set; }
-        public int DriverId { get; set; }
+        public String DriverUsername { get; set; }
     }
 }

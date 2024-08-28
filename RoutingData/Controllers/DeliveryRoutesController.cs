@@ -185,6 +185,8 @@ namespace RoutingData.Controllers
                 // Convert routeRequestListDTO to CalcRouteOutput
                 List<CalcRouteOutput> allRoutesCalced = pythonOutputToFront(routeRequestListDTO, orderDetailsDict);
 
+                Console.WriteLine("All routes calced object is " + allRoutesCalced.ToString() );
+
                 AssignPosAndDelivery(allRoutesCalced, routeRequest);
 
                 return Ok(allRoutesCalced);
@@ -230,12 +232,17 @@ namespace RoutingData.Controllers
             //Then each order in routeRequest is assigned this id. 
             //Make as many new Routes as there are vehicles. Assign in order provided.
             //
+            Console.WriteLine("Starting assign pos and delivery");
             Dictionary<int, Order> ordersDict = _offlineDatabase.Orders.ToDictionary(o => o.Id);
-
             for (int i = 0; i < routeRequest.NumVehicle; i++)
             {
                 DeliveryRoute newRoute = new DeliveryRoute();
-                newRoute.Id = _offlineDatabase.deliveryRoutes.Count + 1;
+                newRoute.Id = _offlineDatabase.deliveryRoutes.Any() ?
+                                _offlineDatabase.deliveryRoutes.Last().Id + 1 : 1;
+
+                newRoute.VehicleId = _offlineDatabase.Vehicles[i].Id;
+                newRoute.DriverUsername = _offlineDatabase.Drivers[i].Username;
+
                 //also need to add position number for each order. 
                 //for each orderID in the List of Order Details in the corresponding CalcRouteOutput object in allRoutesCalced
                 //need to find the matching order object in offlinedatabase and assign the routeID
