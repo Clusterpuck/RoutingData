@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using RoutingData.Models;
 
 namespace RoutingData.Controllers
@@ -14,10 +18,12 @@ namespace RoutingData.Controllers
     public class AdminAccountsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration;
 
-        public AdminAccountsController(ApplicationDbContext context)
+        public AdminAccountsController(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         // GET: api/AdminAccounts
@@ -107,6 +113,40 @@ namespace RoutingData.Controllers
             }
 
             return CreatedAtAction("GetAdminAccount", new { id = adminAccount.Username }, adminAccount);
+        }
+
+        // POST: api/AdminAccounts/authenticate
+        [HttpPost("authenticate")]
+        public async Task<IActionResult> Authenticate([FromBody] AdminAccount adminAccount)
+        {
+            if (adminAccount == null || string.IsNullOrEmpty(adminAccount.Username) || string.IsNullOrEmpty(adminAccount.Password))
+            {
+                return BadRequest("Invalid client request");
+            }
+
+            var user = await _context.AdminAccounts.FirstOrDefaultAsync(u => u.Username == adminAccount.Username && u.Password == adminAccount.Password);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            // Generate JWT Token
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes("YourSecretKeyGoesHere"); // Use the same key as in Program.cs
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.Name, user.Username)
+                }),
+                Expires = DateTime.UtcNow.AddHours(1),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var tokenString = tokenHandler.WriteToken(token);
+
+            return Ok(new { Token = tokenString });
         }
 
         // DELETE: api/AdminAccounts/5
