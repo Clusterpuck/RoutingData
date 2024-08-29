@@ -296,6 +296,8 @@ namespace RoutingData.Controllers
             //
             Console.WriteLine("Starting assign pos and delivery");
             Dictionary<int, Order> ordersDict = _offlineDatabase.Orders.ToDictionary(o => o.Id);
+            //Clear all previous routes
+            _offlineDatabase.deliveryRoutes.Clear();
             for (int i = 0; i < routeRequest.NumVehicle; i++)
             {
                 DeliveryRoute newRoute = new DeliveryRoute();
