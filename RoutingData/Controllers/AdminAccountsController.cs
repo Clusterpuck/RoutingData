@@ -132,7 +132,7 @@ namespace RoutingData.Controllers
 
             // Generate JWT Token
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes("YourSecretKeyGoesHere"); // Use the same key as in Program.cs
+            var key = Encoding.ASCII.GetBytes("gFcJCxAlDKg8G5i06vEFk2aee7L6fk8O"); // Use the same key as in Program.cs
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
