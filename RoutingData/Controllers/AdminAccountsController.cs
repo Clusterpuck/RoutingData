@@ -98,8 +98,8 @@ namespace RoutingData.Controllers
             return CreatedAtAction("GetAdminAccount", new { id = adminAccount.Username }, adminAccount);
         }
 
-    // POST: api/AdminAccounts/authenticate
-    [HttpPost("authenticate")]
+        // POST: api/AdminAccounts/authenticate
+        [HttpPost("authenticate")]
         public async Task<IActionResult> Authenticate([FromBody] AdminAccount adminAccount)
         {
             if (adminAccount == null || string.IsNullOrEmpty(adminAccount.Username) || string.IsNullOrEmpty(adminAccount.Password))
@@ -115,7 +115,7 @@ namespace RoutingData.Controllers
 
             // Generate JWT Token
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes("gFcJCxAlDKg8G5i06vEFk2aee7L6fk8O"); // Use the same key as in Program.cs
+            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]); // Use the same key as in Program.cs
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
@@ -155,6 +155,36 @@ namespace RoutingData.Controllers
         private bool AdminAccountExists(string id)
         {
             return (_offlineDatabase.AdminAccounts?.Any(e => e.Username == id)).GetValueOrDefault();
+        }
+
+        [ApiController]
+        [Route("api/[controller]")]
+        public class AuthController : ControllerBase
+        {
+            private readonly OfflineDatabase _offlineDatabase;
+
+            public AuthController(OfflineDatabase offlineDatabase)
+            {
+                _offlineDatabase = offlineDatabase;
+            }
+
+            [HttpPost("login")]
+            public async Task<IActionResult> Login([FromBody] LoginRequest request)
+            {
+                var admin = await _offlineDatabase.FindAdminAccountAsync(request.Username);
+                if (admin != null && admin.Password == request.Password)
+                {
+                    // Generate and return a token
+                    return Ok(new { Token = "your-generated-token" });
+                }
+                return Unauthorized();
+            }
+        }
+
+        public class LoginRequest
+        {
+            public string Username { get; set; }
+            public string Password { get; set; }
         }
     }
 }
