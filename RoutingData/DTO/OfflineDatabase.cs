@@ -44,9 +44,9 @@ namespace RoutingData.DTO
         {
             AdminAccounts = new List<AdminAccount>
             {
-                new AdminAccount { Username = "admin1", Password = "password1" },
-                new AdminAccount { Username = "admin2", Password = "password2" },
-                new AdminAccount { Username = "admin3", Password = "password3" },
+                new AdminAccount { Username = "admin1@email.com", Password = "password1" },
+                new AdminAccount { Username = "admin2@email.com", Password = "password2" },
+                new AdminAccount { Username = "admin3@email.com", Password = "password3" },
             };
         }
 
