@@ -13,6 +13,7 @@ namespace RoutingData.DTO
             BuildProductOrders();
             BuildDrivers();
             BuildVehicles();
+            BuildAdminAccounts();
             deliveryRoutes = new List<DeliveryRoute>();
         }
         public List<Customer> Customers { get; set; }
@@ -23,6 +24,7 @@ namespace RoutingData.DTO
         public List<DeliveryRoute> deliveryRoutes { get; set; }
         public List<Driver> Drivers { get; set; }
         public List<Vehicle> Vehicles { get; set; }
+        public List<AdminAccount> AdminAccounts { get; set; }   
 
         private void BuildCustomers()
         {
@@ -36,6 +38,16 @@ namespace RoutingData.DTO
                 customer.Id = i;
                 Customers.Add(customer);
             }
+        }
+
+        private void BuildAdminAccounts()
+        {
+            AdminAccounts = new List<AdminAccount>
+            {
+                new AdminAccount { Username = "admin1", Password = "password1" },
+                new AdminAccount { Username = "admin2", Password = "password2" },
+                new AdminAccount { Username = "admin3", Password = "password3" },
+            };
         }
 
         private void BuildVehicles()
@@ -145,6 +157,33 @@ namespace RoutingData.DTO
                 new OrderProduct { OrderId = 3, ProductId = 5, Quantity = 5 }
                 // Additional OrderProduct objects...
             };
+        }
+
+        public Task<List<AdminAccount>> GetAdminAccountsAsync()
+        {
+            return Task.FromResult(AdminAccounts);
+        }
+
+        public Task<AdminAccount> FindAdminAccountAsync(string username)
+        {
+            return Task.FromResult(AdminAccounts.FirstOrDefault(a => a.Username == username));
+        }
+
+        public Task AddAdminAccountAsync(AdminAccount adminAccount)
+        {
+            AdminAccounts.Add(adminAccount);
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveAdminAccountAsync(AdminAccount adminAccount)
+        {
+            AdminAccounts.Remove(adminAccount);
+            return Task.CompletedTask;
+        }
+
+        public void Entry(AdminAccount adminAccount)
+        {
+            // a placeholder for Entity Framework's Entry method to change state
         }
 
         //this is the offline version, will also need an online version. 
