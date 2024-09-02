@@ -179,7 +179,7 @@ namespace RoutingData.Controllers
             _offlineDatabase = offlineDatabase;
         }
 
-        [HttpPost]
+        [HttpPost("calculate")]
         public async Task<ActionResult<List<CalcRouteOutput>>> PostDeliveryRoute(RouteRequest routeRequest)
         {
             //ensures route doesn't out number the available vehicles or drivers
@@ -226,6 +226,54 @@ namespace RoutingData.Controllers
         }
 
 
+        [HttpPost("update-status")]
+        public async Task<ActionResult<CalcRouteOutput>> UpdateOrderStatus(OrderStatusDTO orderStatusDTO)
+        {//given, username, orderID and new status. 
+         //Change the status of the order, then return the updated deliveryroute for that driver.
+
+            //first check orderID is in the correct delivery route
+            DeliveryRoute driverRoute = _offlineDatabase.deliveryRoutes
+                                               .FirstOrDefault(r => r.DriverUsername == orderStatusDTO.Username);
+            if (driverRoute == null)
+            {
+                return NotFound("No route assigned to provided driver");
+            }
+            Order order = _offlineDatabase.Orders.FirstOrDefault( order => order.Id == orderStatusDTO.OrderId );
+            if (order == null)
+            {
+                return NotFound(" No matching order in that drivers route ");
+            }
+            //Confirmed both IDs accurate at this point
+
+            //updating order to requested status
+            order.Status = orderStatusDTO.Status;
+
+            //Now just get the driversRoute again to return. Which is a CalcRouteOutput
+            //Previously created by pythonOutputToFront from an oderDetailsDict and routeRequestListDTO, just a List of List of orderIDs
+
+            //Perhaps better to do deliveryRoute dictionary, get all orders for a delivery route. 
+            //But less work to simply do in N time, get all orders matching the delivery route
+            List<OrderDetail> ordersInRoute = new List<OrderDetail>();
+            Dictionary<int, OrderDetail> orderDetailsDict = _offlineDatabase.MakeOrdersDictionary();
+            foreach (Order orderDB in _offlineDatabase.Orders)
+            {
+                if( orderDB.DeliveryRouteId == driverRoute.Id )
+                {
+                    ordersInRoute.Add( orderDetailsDict[orderDB.Id] );
+                }
+            }
+            //Now with a list of ordersDetails that belong to the driver route. 
+            CalcRouteOutput routeForFrontend = new CalcRouteOutput();
+            routeForFrontend.Orders = ordersInRoute;
+            routeForFrontend.VehicleId = driverRoute.VehicleId;
+            
+
+            return Ok(routeForFrontend);
+            
+        }
+
+
+
 
         // GET: api/DeliveryRoutes
         [HttpGet]
@@ -256,6 +304,33 @@ namespace RoutingData.Controllers
 
             return calcOutput;
         }
+
+
+        // PUT: api/DeliveryRoutes/Start/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("start/{id}")]
+        public async Task<IActionResult> PutDeliveryRoute(int id)
+        {
+            //Get the delivery route matching the id
+            DeliveryRoute startRoute = _offlineDatabase.deliveryRoutes.
+                FirstOrDefault(route => route.Id == id);
+            if (startRoute == null)
+            {
+                return NotFound("Delivery route id not in database");
+            }
+            //Get all the orders in the route, then set their status to on-route
+            foreach (Order order in _offlineDatabase.Orders)
+            {
+                if (order.DeliveryRouteId == id)
+                {
+                    order.Status = "on-route";
+                }
+            }
+
+            return Ok();
+        }
+
+
 
         private CalcRouteOutput deliveryToCalcRouteOutput( DeliveryRoute deliveryRoute )
         {

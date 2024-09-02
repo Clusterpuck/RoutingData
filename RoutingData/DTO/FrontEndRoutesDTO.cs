@@ -71,4 +71,10 @@ namespace RoutingData.DTO
         }
     }
 
+    public class OrderStatusDTO
+    {
+        public string Username { get; set; }
+        public int OrderId { get; set; }
+        public string Status { get; set; }
+    }
 }

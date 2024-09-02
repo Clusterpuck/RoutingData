@@ -13,6 +13,7 @@ namespace RoutingData.Models
         public int LocationId { get; set; }
         public int DeliveryRouteId { get; set; }
         public int PositionNumber { get; set; }
+        public string Status { get; set; }
         public DateTime DeliveryDate {  get; set; } = DateTime.Today;
 
     }
