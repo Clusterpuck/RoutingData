@@ -230,7 +230,7 @@ namespace RoutingData.DTO
                     Addr = location.Address,
                     Lat = location.Latitude,
                     Lon = location.Longitude,
-                    Status = "Pending",
+                    Status = order.Status,
                     CustomerName = customer.Name,
                     Phone = customer.Phone,
                     ProdNames = productNames,
