@@ -45,6 +45,10 @@ namespace RoutingData.Controllers
             
             // Add the Order
             Order order = orderDTO.Order;
+            if( order.Status == null )
+            {
+                order.Status = "planned";
+            }
             int orderID = _offlineDatabase.Orders.Last().Id + 1;
             order.Id = orderID;
             _offlineDatabase.Orders.Add(order);

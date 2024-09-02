@@ -122,7 +122,8 @@ namespace RoutingData.DTO
                     CustomerId = 1,
                     LocationId = 1,
                     DeliveryRouteId = 1,
-                    PositionNumber = 1
+                    PositionNumber = 1,
+                    Status = "planned"
                 },
                 new Order
                 {
@@ -132,7 +133,8 @@ namespace RoutingData.DTO
                     CustomerId = 2,
                     LocationId = 2,
                     DeliveryRouteId = 1,
-                    PositionNumber = 2
+                    PositionNumber = 2,
+                    Status = "planned"
                 },
                 new Order
                 {
@@ -142,7 +144,8 @@ namespace RoutingData.DTO
                     CustomerId = 3,
                     LocationId = 3,
                     DeliveryRouteId = 2,
-                    PositionNumber = 3
+                    PositionNumber = 3,
+                    Status = "planned"
                 }
             };
         }
