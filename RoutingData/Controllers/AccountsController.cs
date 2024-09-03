@@ -16,40 +16,40 @@ namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AdminAccountsController : ControllerBase
+    public class AccountsController : ControllerBase
     {
         // private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly OfflineDatabase _offlineDatabase;
 
-        public AdminAccountsController(OfflineDatabase offlineDatabase, IConfiguration configuration)
+        public AccountsController(OfflineDatabase offlineDatabase, IConfiguration configuration)
         {
             _offlineDatabase = offlineDatabase;
             _configuration = configuration;
 
         }
 
-        // GET: api/AdminAccounts
+        // GET: api/Accounts
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AdminAccount>>> GetAdminAccounts()
+        public async Task<ActionResult<IEnumerable<Account>>> GetAccounts()
         {
-            if (_offlineDatabase.AdminAccounts == null)
+            if (_offlineDatabase.Accounts == null)
             {
                 return NotFound();
             }
-            var adminAccounts = await _offlineDatabase.GetAdminAccountsAsync();
+            var adminAccounts = await _offlineDatabase.GetAccountsAsync();
             return Ok(adminAccounts);
         }
 
-        // GET: api/AdminAccounts/5
+        // GET: api/Accounts/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<AdminAccount>> GetAdminAccount(string id)
+        public async Task<ActionResult<Account>> GetAccount(string id)
         {
-            if (_offlineDatabase.AdminAccounts == null)
+            if (_offlineDatabase.Accounts == null)
             {
                 return NotFound();
             }
-            var adminAccount = await _offlineDatabase.FindAdminAccountAsync(id);
+            var adminAccount = await _offlineDatabase.FindAccountAsync(id);
 
             if (adminAccount == null)
             {
@@ -59,17 +59,17 @@ namespace RoutingData.Controllers
             return Ok(adminAccount);
         }
 
-        // PUT: api/AdminAccounts/5
+        // PUT: api/Accounts/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAdminAccount(string id, AdminAccount adminAccount)
+        public async Task<IActionResult> PutAccount(string id, Account adminAccount)
         {
             if (id != adminAccount.Username)
             {
                 return BadRequest();
             }
 
-            var existingAccount = await _offlineDatabase.FindAdminAccountAsync(id);
+            var existingAccount = await _offlineDatabase.FindAccountAsync(id);
             if (existingAccount == null)
             {
                 return NotFound();
@@ -82,32 +82,32 @@ namespace RoutingData.Controllers
             return NoContent();
         }
 
-        // POST: api/AdminAccounts
+        // POST: api/Accounts
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<AdminAccount>> PostAdminAccount(AdminAccount adminAccount)
+        public async Task<ActionResult<Account>> PostAccount(Account adminAccount)
         {
-            if (_offlineDatabase.AdminAccounts == null)
+            if (_offlineDatabase.Accounts == null)
             {
-                return Problem("Entity set 'ApplicationDbContext.AdminAccounts' is null.");
+                return Problem("Entity set 'ApplicationDbContext.Accounts' is null.");
             }
 
-            await _offlineDatabase.AddAdminAccountAsync(adminAccount);
+            await _offlineDatabase.AddAccountAsync(adminAccount);
            //await _offlineDatabase.SaveChangesAsync();
 
-            return CreatedAtAction("GetAdminAccount", new { id = adminAccount.Username }, adminAccount);
+            return CreatedAtAction("GetAccount", new { id = adminAccount.Username }, adminAccount);
         }
 
-        // POST: api/AdminAccounts/authenticate
+        // POST: api/Accounts/authenticate
         [HttpPost("authenticate")]
-        public async Task<IActionResult> Authenticate([FromBody] AdminAccount adminAccount)
+        public async Task<IActionResult> Authenticate([FromBody] AuthenticateRequestDTO loginDetails)
         {
-            if (adminAccount == null || string.IsNullOrEmpty(adminAccount.Username) || string.IsNullOrEmpty(adminAccount.Password))
+            if (loginDetails == null || string.IsNullOrEmpty(loginDetails.Username) || string.IsNullOrEmpty(loginDetails.Password))
             {
                 return BadRequest("Invalid client request");
             }
 
-            var user = _offlineDatabase.AdminAccounts.FirstOrDefault(u => u.Username == adminAccount.Username && u.Password == adminAccount.Password);
+            var user = _offlineDatabase.Accounts.FirstOrDefault(u => u.Username == loginDetails.Username && u.Password == loginDetails.Password);
             if (user == null)
             {
                 return Unauthorized();
@@ -132,29 +132,29 @@ namespace RoutingData.Controllers
             return Ok(new { Token = tokenString });
         }
 
-        // DELETE: api/AdminAccounts/5
+        // DELETE: api/Accounts/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAdminAccount(string id)
+        public async Task<IActionResult> DeleteAccount(string id)
         {
-            if (_offlineDatabase.AdminAccounts == null)
+            if (_offlineDatabase.Accounts == null)
             {
                 return NotFound();
             }
-            var adminAccount = await _offlineDatabase.FindAdminAccountAsync(id);
+            var adminAccount = await _offlineDatabase.FindAccountAsync(id);
             if (adminAccount == null)
             {
                 return NotFound();
             }
 
-            await _offlineDatabase.RemoveAdminAccountAsync(adminAccount);
+            await _offlineDatabase.RemoveAccountAsync(adminAccount);
             //await _offlineDatabase.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool AdminAccountExists(string id)
+        private bool AccountExists(string id)
         {
-            return (_offlineDatabase.AdminAccounts?.Any(e => e.Username == id)).GetValueOrDefault();
+            return (_offlineDatabase.Accounts?.Any(e => e.Username == id)).GetValueOrDefault();
         }
 
         [ApiController]
@@ -171,7 +171,7 @@ namespace RoutingData.Controllers
             [HttpPost("login")]
             public async Task<IActionResult> Login([FromBody] LoginRequest request)
             {
-                var admin = await _offlineDatabase.FindAdminAccountAsync(request.Username);
+                var admin = await _offlineDatabase.FindAccountAsync(request.Username);
                 if (admin != null && admin.Password == request.Password)
                 {
                     // Generate and return a token

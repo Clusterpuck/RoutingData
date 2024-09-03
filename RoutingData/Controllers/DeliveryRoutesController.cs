@@ -161,7 +161,8 @@ namespace RoutingData.Controllers
         private void checkRouteMax(RouteRequest routeRequest)
         {
             // Find the minimum of the driver count and vehicle count
-            int maxVehicles = Math.Min(_offlineDatabase.Drivers.Count, _offlineDatabase.Vehicles.Count);
+            int driverCount = _offlineDatabase.Accounts.Count(account => account.Role == "Driver");
+            int maxVehicles = Math.Min(driverCount, _offlineDatabase.Vehicles.Count);
 
             // Only assign the minimum value if the current NumVehicle exceeds it
             if (routeRequest.NumVehicle > maxVehicles)
@@ -373,6 +374,7 @@ namespace RoutingData.Controllers
             Dictionary<int, Order> ordersDict = _offlineDatabase.Orders.ToDictionary(o => o.Id);
             //Clear all previous routes
             _offlineDatabase.deliveryRoutes.Clear();
+            List<Account> drivers = _offlineDatabase.Accounts.Where(account => account.Role == "Driver").ToList();
             for (int i = 0; i < routeRequest.NumVehicle; i++)
             {
                 DeliveryRoute newRoute = new DeliveryRoute();
@@ -382,7 +384,7 @@ namespace RoutingData.Controllers
                 newRoute.DeliveryDate = DateTime.Today;
 
                 newRoute.VehicleId = _offlineDatabase.Vehicles[i].Id;
-                newRoute.DriverUsername = _offlineDatabase.Drivers[i].Username;
+                newRoute.DriverUsername = drivers[i].Username;
 
                 //also need to add position number for each order. 
                 //for each orderID in the List of Order Details in the corresponding CalcRouteOutput object in allRoutesCalced
