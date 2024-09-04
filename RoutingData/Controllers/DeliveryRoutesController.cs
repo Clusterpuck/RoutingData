@@ -601,6 +601,71 @@ namespace RoutingData.Controllers
             return groupedOrderDetails.ToDictionary( order => order.OrderID);
         }
 
+        public async Task CheckRouteMax(RouteRequest routeRequest)
+        {
+            // Get the count of drivers (Accounts with Role "Driver")
+            var driverCount = await _context.Accounts
+                .Where(account => account.Role == "Driver")
+                .CountAsync();
+
+            // Get the count of vehicles
+            var vehicleCount = await _context.Vehicles.CountAsync();
+
+            // Find the minimum of the driver count and vehicle count
+            int maxVehicles = Math.Min(driverCount, vehicleCount);
+
+            // Only assign the minimum value if the current NumVehicle exceeds it
+            if (routeRequest.NumVehicle > maxVehicles)
+            {
+                routeRequest.NumVehicle = maxVehicles;
+            }
+        }
+
+
+        public async Task AssignPosAndDeliveryAsync(List<CalcRouteOutput> allRoutesCalced, RouteRequest routeRequest)
+        {
+            // Fetch all necessary data from the database
+
+            var ordersDict = await _context.Orders.ToDictionaryAsync(o => o.Id);
+            var drivers = await _context.Accounts.Where(account => account.Role == "Driver").ToListAsync();
+            var vehicles = await _context.Vehicles.ToListAsync();
+
+            for (int i = 0; i < routeRequest.NumVehicle; i++)
+            {
+                // Create a new DeliveryRoute object
+                var newRoute = new DeliveryRoute
+                {
+                    DeliveryDate = DateTime.Today,
+                    VehicleId = vehicles[i].Id,
+                    DriverUsername = drivers[i].Username,
+                    TimeCreated = DateTime.Now,
+                    //CreatorAdminId = routeRequest.CreatorAdminId // Need to add this field in the RouteRequest
+                };
+
+                // Add the new route to the database and save it to generate the ID
+                _context.DeliveryRoutes.Add(newRoute);
+                await _context.SaveChangesAsync();
+
+                // Assign position number and DeliveryRouteId for each order
+                int pos = 1;
+                foreach (var orderDetail in allRoutesCalced[i].Orders)
+                {
+                    if (ordersDict.TryGetValue(orderDetail.OrderID, out var dbOrder))
+                    {
+                        dbOrder.DeliveryRouteId = newRoute.Id;  // Assign the newly generated DeliveryRouteId
+                        dbOrder.PositionNumber = pos;           // Assign the position number
+                        pos++;
+                    }
+                }
+
+                // Save all updated orders in the current route
+                await _context.SaveChangesAsync();
+            }
+
+            Console.WriteLine("Routes and orders updated successfully.");
+
+        }
+
 
         // DELETE: api/DeliveryRoutes/5
         [HttpDelete("{id}")]
@@ -633,7 +698,7 @@ namespace RoutingData.Controllers
         public async Task<ActionResult<List<CalcRouteOutput>>> PostDeliveryRoute(RouteRequest routeRequest)
         {
             //ensures route doesn't out number the available vehicles or drivers
-            checkRouteMax(routeRequest);
+            CheckRouteMax(routeRequest);
             try
             {
                 Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrders();
@@ -651,7 +716,7 @@ namespace RoutingData.Controllers
 
                 Console.WriteLine("All routes calced object is " + allRoutesCalced.ToString());
 
-                AssignPosAndDelivery(allRoutesCalced, routeRequest);
+                await AssignPosAndDeliveryAsync(allRoutesCalced, routeRequest);
 
                 return Ok(allRoutesCalced);
             }
