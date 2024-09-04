@@ -13,7 +13,7 @@ namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class OrdersController : ControllerBase
     {
 #if OFFLINE_DATA
@@ -105,7 +105,7 @@ namespace RoutingData.Controllers
 
         // GET: api/Orders
         [HttpGet]
-        public async Task<List<OrderDetailsDto>> GetOrders()
+        public async Task<List<OrderDetailsDTO>> GetOrders()
         {
             var orderDetails = await _context.Orders
                 .Join(_context.Locations,
@@ -123,9 +123,11 @@ namespace RoutingData.Controllers
                 .Join(_context.Products,
                     combined => combined.orderProduct.ProductId,
                     product => product.Id,
-                    (combined, product) => new { combined.order, combined.location, combined.customer, product })
+                    (combined, product) => new { combined.order, combined.location, combined.customer, product }).ToListAsync();
+
+            var groupedOrderDetails = orderDetails
                 .GroupBy(g => new { g.order, g.location, g.customer })
-                .Select(g => new OrderDetailsDto
+                .Select(g => new OrderDetailsDTO
                 {
                     OrderID = g.Key.order.Id,
                     OrderNotes = g.Key.order.OrderNotes,
@@ -137,9 +139,9 @@ namespace RoutingData.Controllers
                     CustomerPhone = g.Key.customer.Phone,
                     ProductNames = g.Select(x => x.product.Name).ToList()
                 })
-                .ToListAsync();
+                .ToList();
 
-            return orderDetails;
+            return groupedOrderDetails;
         }
 
         // GET: api/Orders/5

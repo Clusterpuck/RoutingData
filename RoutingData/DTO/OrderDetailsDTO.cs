@@ -1,6 +1,6 @@
 ﻿namespace RoutingData.DTO
 {
-    public class OrderDetailsDto
+    public class OrderDetailsDTO
     {
         public int OrderID { get; set; }
         public string OrderNotes { get; set; }
