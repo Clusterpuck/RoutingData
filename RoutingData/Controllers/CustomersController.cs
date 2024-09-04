@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +38,7 @@ namespace RoutingData.Controllers
 #if OFFLINE_DATA
         // GET: api/Customers
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Customer>>> GetCustomers()
         {
 
@@ -46,6 +48,7 @@ namespace RoutingData.Controllers
         // POST: api/Customers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Customer>> PostCustomer(Customer customer)
         {
             int newID = _offlineDatabase.Customers.Last().Id + 1;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class LocationsController : ControllerBase
     {
 #if OFFLINE_DATA
@@ -22,6 +24,7 @@ namespace RoutingData.Controllers
             _offlineDatabase = offlineDatabase;
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Location>>> GetLocations()
         {
@@ -29,6 +32,7 @@ namespace RoutingData.Controllers
             return _offlineDatabase.Locations;
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<Location>> PostLocation(Location location)
         {

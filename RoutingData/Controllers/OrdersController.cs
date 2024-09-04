@@ -7,23 +7,28 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RoutingData.Models;
 using RoutingData.DTO;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class OrdersController : ControllerBase
     {
 #if OFFLINE_DATA
         private readonly OfflineDatabase _offlineDatabase;
+        //private readonly ApplicationDbContext _context;
 
-        public OrdersController(OfflineDatabase offlineDatabase)
+        public OrdersController(OfflineDatabase offlineDatabase) //, ApplicationDbContext context)
         {
             _offlineDatabase = offlineDatabase;
+           // _context = context;
         }
 
         // GET: api/Orders
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<OrderDetail>>> GetOrders()
         {
             Dictionary<int, OrderDetail> detailDict = _offlineDatabase.MakeOrdersDictionary();
@@ -40,6 +45,7 @@ namespace RoutingData.Controllers
         // POST: api/Orders
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Order>> PostOrder(OrderWithProductsDTO orderDTO)
         {
             
@@ -62,6 +68,7 @@ namespace RoutingData.Controllers
         // PUT: api/Order/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("DeliveryDate/{id}")]
+        [Authorize]
         public async Task<IActionResult> PutOrder(int id, DateTime deliveryDate)
         {
             Order orderToUpdate = _offlineDatabase.Orders.FirstOrDefault(o => o.Id == id);
@@ -78,6 +85,45 @@ namespace RoutingData.Controllers
             }
 
         }
+
+/*        public async Task<List<OrderDetailsDto>> GetOrderDetailsAsync()
+        {
+            var orderDetails = await _context.Orders
+                .Join(_context.Locations,
+                    order => order.LocationId,
+                    location => location.Id,
+                    (order, location) => new { order, location })
+                .Join(_context.Customers,
+                    combined => combined.order.CustomerId,
+                    customer => customer.Id,
+                    (combined, customer) => new { combined.order, combined.location, customer })
+                .Join(_context.OrderProducts,
+                    combined => combined.order.Id,
+                    orderProduct => orderProduct.OrderId,
+                    (combined, orderProduct) => new { combined.order, combined.location, combined.customer, orderProduct })
+                .Join(_context.Products,
+                    combined => combined.orderProduct.ProductId,
+                    product => product.Id,
+                    (combined, product) => new { combined.order, combined.location, combined.customer, product })
+                .GroupBy(g => new { g.order, g.location, g.customer })
+                .Select(g => new OrderDetailsDto
+                {
+                    OrderID = g.Key.order.Id,
+                    OrderNotes = g.Key.order.OrderNotes,
+                    DateOrdered = g.Key.order.DateOrdered,
+                    Address = g.Key.location.Address,
+                    Latitude = g.Key.location.Latitude,
+                    Longitude = g.Key.location.Longitude,
+                    CustomerName = g.Key.customer.Name,
+                    CustomerPhone = g.Key.customer.Phone,
+                    ProductNames = g.Select(x => x.product.Name).ToList()
+                })
+                .ToListAsync();
+
+            return orderDetails;
+        }*/
+    }
+
 
 #else
         private readonly ApplicationDbContext _context;
@@ -198,5 +244,4 @@ namespace RoutingData.Controllers
             return (_context.Orders?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 #endif
-    }
 }

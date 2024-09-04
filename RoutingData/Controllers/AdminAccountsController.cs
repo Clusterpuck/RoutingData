@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class AdminAccountsController : ControllerBase
     {
         // private readonly ApplicationDbContext _context;
@@ -31,6 +33,7 @@ namespace RoutingData.Controllers
 
         // GET: api/AdminAccounts
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<AdminAccount>>> GetAdminAccounts()
         {
             if (_offlineDatabase.AdminAccounts == null)
@@ -43,6 +46,7 @@ namespace RoutingData.Controllers
 
         // GET: api/AdminAccounts/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<AdminAccount>> GetAdminAccount(string id)
         {
             if (_offlineDatabase.AdminAccounts == null)
@@ -62,6 +66,7 @@ namespace RoutingData.Controllers
         // PUT: api/AdminAccounts/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> PutAdminAccount(string id, AdminAccount adminAccount)
         {
             if (id != adminAccount.Username)
@@ -85,6 +90,7 @@ namespace RoutingData.Controllers
         // POST: api/AdminAccounts
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<AdminAccount>> PostAdminAccount(AdminAccount adminAccount)
         {
             if (_offlineDatabase.AdminAccounts == null)
@@ -100,6 +106,7 @@ namespace RoutingData.Controllers
 
         // POST: api/AdminAccounts/authenticate
         [HttpPost("authenticate")]
+        [Authorize]
         public async Task<IActionResult> Authenticate([FromBody] AdminAccount adminAccount)
         {
             if (adminAccount == null || string.IsNullOrEmpty(adminAccount.Username) || string.IsNullOrEmpty(adminAccount.Password))
@@ -134,6 +141,7 @@ namespace RoutingData.Controllers
 
         // DELETE: api/AdminAccounts/5
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteAdminAccount(string id)
         {
             if (_offlineDatabase.AdminAccounts == null)
@@ -159,6 +167,7 @@ namespace RoutingData.Controllers
 
         [ApiController]
         [Route("api/[controller]")]
+        [Authorize]
         public class AuthController : ControllerBase
         {
             private readonly OfflineDatabase _offlineDatabase;

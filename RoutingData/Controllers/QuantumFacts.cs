@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace RoutingData.Controllers
@@ -5,6 +6,7 @@ namespace RoutingData.Controllers
     // to be deleted
     [ApiController]
     [Route("[controller]")]
+    [Authorize]
     public class QuantumFactsController : ControllerBase
     {
         private static readonly string[] Summaries = new[]

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,7 @@ namespace RoutingData.Controllers
 
         // GET: api/OrderProducts
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<OrderProduct>>> GetOrderProducts()
         {
           if (_context.OrderProducts == null)
@@ -33,6 +35,7 @@ namespace RoutingData.Controllers
 
         // GET: api/OrderProducts/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<OrderProduct>> GetOrderProduct(int id)
         {
           if (_context.OrderProducts == null)
@@ -52,6 +55,7 @@ namespace RoutingData.Controllers
         // PUT: api/OrderProducts/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> PutOrderProduct(int id, OrderProduct orderProduct)
         {
             if (id != orderProduct.OrderId)
@@ -83,6 +87,7 @@ namespace RoutingData.Controllers
         // POST: api/OrderProducts
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<OrderProduct>> PostOrderProduct(OrderProduct orderProduct)
         {
           if (_context.OrderProducts == null)
@@ -111,6 +116,7 @@ namespace RoutingData.Controllers
 
         // DELETE: api/OrderProducts/5
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteOrderProduct(int id)
         {
             if (_context.OrderProducts == null)

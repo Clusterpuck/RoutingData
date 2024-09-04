@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class DriversController : ControllerBase
     {
 
@@ -26,6 +28,7 @@ namespace RoutingData.Controllers
 
         // GET: api/Drivers
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Driver>>> GetDrivers()
         {
             if (_offlineDatabase.Drivers == null)
@@ -49,6 +52,7 @@ namespace RoutingData.Controllers
 
         // DELETE: api/Drivers/5
         [HttpDelete("{username}")]
+        [Authorize]
         public async Task<IActionResult> DeleteDriver(String username)
         {
             if (_offlineDatabase.Drivers == null)

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
@@ -17,6 +18,7 @@ namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class DeliveryRoutesController : ControllerBase
     {
 
@@ -180,6 +182,7 @@ namespace RoutingData.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<List<CalcRouteOutput>>> PostDeliveryRoute(RouteRequest routeRequest)
         {
             //ensures route doesn't out number the available vehicles or drivers
@@ -229,6 +232,7 @@ namespace RoutingData.Controllers
 
         // GET: api/DeliveryRoutes
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<DeliveryRoute>>> GetCourses()
         {
             if (_offlineDatabase.deliveryRoutes.Count == 0)
@@ -240,6 +244,7 @@ namespace RoutingData.Controllers
 
         // GET: api/DeliveryRoutes/driver/{driverUsername}
         [HttpGet("driver/{driverUsername}")]
+        [Authorize]
         public async Task<ActionResult<CalcRouteOutput>> GetDeliveryRoutesByDriver(string driverUsername)
         {
             DeliveryRoute driverRoute = _offlineDatabase.deliveryRoutes

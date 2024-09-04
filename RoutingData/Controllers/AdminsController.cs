@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,7 @@ namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class AdminsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -22,6 +24,7 @@ namespace RoutingData.Controllers
 
         // GET: api/Admins
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Admin>>> GetAdmins()
         {
           if (_context.Admins == null)
@@ -33,6 +36,7 @@ namespace RoutingData.Controllers
 
         // GET: api/Admins/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Admin>> GetAdmin(int id)
         {
           if (_context.Admins == null)
@@ -52,6 +56,7 @@ namespace RoutingData.Controllers
         // PUT: api/Admins/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> PutAdmin(int id, Admin admin)
         {
             if (id != admin.Id)
@@ -83,6 +88,7 @@ namespace RoutingData.Controllers
         // POST: api/Admins
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Admin>> PostAdmin(Admin admin)
         {
           if (_context.Admins == null)
@@ -97,6 +103,7 @@ namespace RoutingData.Controllers
 
         // DELETE: api/Admins/5
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteAdmin(int id)
         {
             if (_context.Admins == null)
