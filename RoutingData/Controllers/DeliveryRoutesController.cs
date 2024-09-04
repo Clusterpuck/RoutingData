@@ -562,7 +562,7 @@ namespace RoutingData.Controllers
 
 
 
-        public async Task<Dictionary<int, OrderDetailsDTO>> GetOrders()
+        private async Task<Dictionary<int, OrderDetailsDTO>> GetOrderDetails()
         {
             var orderDetails = await _context.Orders
                 .Join(_context.Locations,
@@ -601,7 +601,7 @@ namespace RoutingData.Controllers
             return groupedOrderDetails.ToDictionary( order => order.OrderID);
         }
 
-        public async Task CheckRouteMax(RouteRequest routeRequest)
+        private async Task CheckRouteMax(RouteRequest routeRequest)
         {
             // Get the count of drivers (Accounts with Role "Driver")
             var driverCount = await _context.Accounts
@@ -622,7 +622,7 @@ namespace RoutingData.Controllers
         }
 
 
-        public async Task AssignPosAndDeliveryAsync(List<CalcRouteOutput> allRoutesCalced, RouteRequest routeRequest)
+        private async Task AssignPosAndDeliveryAsync(List<CalcRouteOutput> allRoutesCalced)
         {
             // Fetch all necessary data from the database
 
@@ -630,7 +630,7 @@ namespace RoutingData.Controllers
             var drivers = await _context.Accounts.Where(account => account.Role == "Driver").ToListAsync();
             var vehicles = await _context.Vehicles.ToListAsync();
 
-            for (int i = 0; i < routeRequest.NumVehicle; i++)
+            for (int i = 0; i < allRoutesCalced.Count; i++)
             {
                 // Create a new DeliveryRoute object
                 var newRoute = new DeliveryRoute
@@ -693,19 +693,19 @@ namespace RoutingData.Controllers
         }
 
 
-        private CalcRouteOutput deliveryToCalcRouteOutput(DeliveryRoute deliveryRoute)
+        private async Task<CalcRouteOutput> deliveryToCalcRouteOutput(DeliveryRoute deliveryRoute)
         {
             CalcRouteOutput calcRouteOutput = new CalcRouteOutput();
             calcRouteOutput.VehicleId = deliveryRoute.VehicleId;
             //TODO Add conversion
 
             //dictionary to reference each order to get details
-            Dictionary<int, OrderDetailsDTO> orderDetailsDict = _offlineDatabase.MakeOrdersDictionary();
+            Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrderDetails();
             //This is a dictionary that gets order details from order IDs
             //Now need match orderIDs to the deliveryRoute ID, building a list of order
             //In that route, then converting those to OrderDetails. 
 
-            List<Order> orders = _offlineDatabase.Orders;
+            List<Order> orders = await _context.Orders.ToListAsync();
             int routeID = deliveryRoute.Id;
 
             foreach (Order order in orders)
@@ -738,7 +738,7 @@ namespace RoutingData.Controllers
                 return NotFound($"No delivery routes found for driver with username {driverUsername}");
             }
 
-            CalcRouteOutput calcOutput = deliveryToCalcRouteOutput(driverRoute);
+            CalcRouteOutput calcOutput = await deliveryToCalcRouteOutput(driverRoute);
 
             //Now need to build the CalcRouteOutput and return that object 
 
@@ -757,7 +757,7 @@ namespace RoutingData.Controllers
                 Dictionary<int, OrderDetailsDTO> orderDetailsDict = _offlineDatabase.MakeOrdersDictionary();
             
 #else
-                Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrders();
+                Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrderDetails();
 #endif
                 // Convert data input to type for Python input
                 CalculatingRoutesDTO calcRoute = frontDataToPythonData(routeRequest, orderDetailsDict);
@@ -772,7 +772,7 @@ namespace RoutingData.Controllers
 
                 Console.WriteLine("All routes calced object is " + allRoutesCalced.ToString());
 
-                await AssignPosAndDeliveryAsync(allRoutesCalced, routeRequest);
+                await AssignPosAndDeliveryAsync(allRoutesCalced);
 
                 return Ok(allRoutesCalced);
             }
