@@ -19,10 +19,10 @@ namespace RoutingData.DTO
     {
         // has vehicle id and list of OrderDetails
         public int VehicleId { get; set; }
-        public List<OrderDetail> Orders { get; set; }
+        public List<OrderDetailsDTO> Orders { get; set; }
 
         public CalcRouteOutput() {
-            Orders = new List<OrderDetail>();
+            Orders = new List<OrderDetailsDTO>();
         }
 
         public override string ToString()
@@ -35,38 +35,6 @@ namespace RoutingData.DTO
                 sb.AppendLine(order.ToString());
                 sb.AppendLine(new string('-', 20)); // Separator between orders
             }
-            return sb.ToString();
-        }
-    }
-
-    public class OrderDetail
-    {
-        public int OrderId { get; set; }
-        public string Addr { get; set; }
-        public double Lat { get; set; }
-        public double Lon { get; set; }
-        public string Status { get; set; }
-        public string CustomerName { get; set; }
-        public string Phone { get; set; }
-        public int Position { get; set; }
-        public List<string> ProdNames { get; set; }
-        public string Notes { get; set; }
-        public DateTime DeliveryDate { get; set; }
-        
-
-
-        public override string ToString()
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"OrderId: {OrderId}");
-            sb.AppendLine($"Addr: {Addr}");
-            sb.AppendLine($"Lat: {Lat}");
-            sb.AppendLine($"Lon: {Lon}");
-            sb.AppendLine($"Status: {Status}");
-            sb.AppendLine($"CustomerName: {CustomerName}");
-            sb.AppendLine($"Phone: {Phone}");
-            sb.Append("ProdNames: ");
-            sb.AppendLine(ProdNames != null ? string.Join(", ", ProdNames) : "None");
             return sb.ToString();
         }
     }

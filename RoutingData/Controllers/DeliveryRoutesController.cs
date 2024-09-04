@@ -95,17 +95,17 @@ namespace RoutingData.Controllers
 
 
         //converts front end data to the required input for python end point
-        private CalculatingRoutesDTO frontDataToPythonData( RouteRequest frontEndData, Dictionary<int, OrderDetail> orderDetailsDict)
+        private CalculatingRoutesDTO frontDataToPythonData( RouteRequest frontEndData, Dictionary<int, OrderDetailsDTO> orderDetailsDict)
         {
             //From routerequest need to make a list of OrderInRoute
             List<OrderInRouteDTO> routesForPython = new List<OrderInRouteDTO>();
 
             foreach (int orderID in frontEndData.Orders)
             {
-                OrderDetail orderDetail = orderDetailsDict[orderID];
+                OrderDetailsDTO orderDetail = orderDetailsDict[orderID];
                 OrderInRouteDTO routeDTO = new OrderInRouteDTO();
-                routeDTO.lat = orderDetail.Lat;
-                routeDTO.lon = orderDetail.Lon;
+                routeDTO.lat = orderDetail.Latitude;
+                routeDTO.lon = orderDetail.Longitude;
                 routeDTO.order_id = orderID;
 
                 routesForPython.Add(routeDTO);
@@ -131,25 +131,25 @@ namespace RoutingData.Controllers
 
         }
 
-        private List<CalcRouteOutput> pythonOutputToFront(RouteRequestListDTO routeList, Dictionary<int, OrderDetail> orderDetailsDict)
+        private List<CalcRouteOutput> pythonOutputToFront(RouteRequestListDTO routeList, Dictionary<int, OrderDetailsDTO> orderDetailsDict)
         {
             //Has a list of list of orderIDs, representing one vehicles routes
+
             //Full list object to send to frontend, giving all vehicles routes. 
             List<CalcRouteOutput> allRoutesCalced = new List<CalcRouteOutput>();
 
             for( int i = 0; i < routeList.Count; i++ )
-            //foreach (List<int> route in routeList)
             {
                 List<int> route = routeList[i];
                 CalcRouteOutput routeForFrontend = new CalcRouteOutput();
-                List<OrderDetail> routeDetails = new List<OrderDetail>();
+                List<OrderDetailsDTO> routeDetails = new List<OrderDetailsDTO>();
                 routeForFrontend.VehicleId = i+1;
                 //For loops generates an ordered and detailed list of routes for each vehicle
                 foreach(int orderID in route )
                 {
-                    OrderDetail referenceDetails = orderDetailsDict[orderID];
+                    OrderDetailsDTO referenceDetails = orderDetailsDict[orderID];
                     routeDetails.Add(referenceDetails);
-                    Console.WriteLine("Added order detail of " + referenceDetails.Addr);
+                    Console.WriteLine("Added order detail of " + referenceDetails.Address);
                 }
                 //Vehicle ID assigned by front end after recieving route. 
                 routeForFrontend.Orders = routeDetails;
@@ -168,52 +168,6 @@ namespace RoutingData.Controllers
         public DeliveryRoutesController(OfflineDatabase offlineDatabase)
         {
             _offlineDatabase = offlineDatabase;
-        }
-
-        [HttpPost]
-        public async Task<ActionResult<List<CalcRouteOutput>>> PostDeliveryRoute(RouteRequest routeRequest)
-        {
-            //ensures route doesn't out number the available vehicles or drivers
-            checkRouteMax(routeRequest);
-            try
-            {
-                Dictionary<int, OrderDetail> orderDetailsDict = _offlineDatabase.MakeOrdersDictionary();
-
-                // Convert data input to type for Python input
-                CalculatingRoutesDTO calcRoute = frontDataToPythonData(routeRequest, orderDetailsDict);
-
-                // Make the request to the Python backend
-                RouteRequestListDTO routeRequestListDTO = await PythonRequest(calcRoute);
-
-                Console.WriteLine("Returned object from Python is " + routeRequestListDTO.ToString());
-
-                // Convert routeRequestListDTO to CalcRouteOutput
-                List<CalcRouteOutput> allRoutesCalced = pythonOutputToFront(routeRequestListDTO, orderDetailsDict);
-
-                Console.WriteLine("All routes calced object is " + allRoutesCalced.ToString() );
-
-                AssignPosAndDelivery(allRoutesCalced, routeRequest);
-
-                return Ok(allRoutesCalced);
-            }
-            catch (HttpRequestException ex)
-            {
-                // Handle HTTP-specific exceptions and include detailed error from response
-                Console.WriteLine($"HTTP error while processing the route request: {ex.Message}");
-                return StatusCode(StatusCodes.Status503ServiceUnavailable, ex.Message);
-            }
-            catch (JsonSerializationException ex)
-            {
-                // Handle JSON-specific exceptions
-                Console.WriteLine($"JSON processing error: {ex.Message}");
-                return BadRequest("Invalid data format received. Please check the request.");
-            }
-            catch (Exception ex)
-            {
-                // Handle any other exceptions
-                Console.WriteLine($"Unexpected error: {ex.Message}");
-                return StatusCode(StatusCodes.Status500InternalServerError, $"An unexpected error occurred: {ex.Message}");
-            }
         }
 
 
@@ -484,131 +438,168 @@ namespace RoutingData.Controllers
 
         // POST: api/DeliveryRoutes
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-     /*   [HttpPost]
-        public async Task<ActionResult<DeliveryRoute>> PostDeliveryRoute(RouteRequest routeRequest )
-        {
-          if (_context.DeliveryRoutes == null)
+        /*   [HttpPost]
+           public async Task<ActionResult<DeliveryRoute>> PostDeliveryRoute(RouteRequest routeRequest )
+           {
+             if (_context.DeliveryRoutes == null)
+             {
+                 return Problem("Entity set 'ApplicationDbContext.DeliveryRoutes'  is null.");
+             }
+
+
+               // Create the object list for Python. Need to assign lat and lon from
+               // list of orderIDs
+               // Fetch all orders asynchronously
+               List<Order> allOrders = await _context.Orders.ToListAsync();
+               List<RoutingData.Models.Location> locations = await _context.Locations.ToListAsync();
+               List<OrderProduct> orderProducts = await _context.OrderProducts.ToListAsync();
+               List<Product> products = await _context.Products.ToListAsync();
+
+               List<OrderInRouteDTO> ordersInRoute = new List<OrderInRouteDTO>();
+
+               //This is very cringe and would ideally be handled by database calls
+               //However need to try to limit usage
+               foreach ( int orderID in routeRequest.Orders)
+               {//create an from each order id for each order id sent
+                   OrderInRouteDTO order = new OrderInRouteDTO();
+                   order.order_id = orderID;
+                   Order matchOrder = allOrders.FirstOrDefault(o => o.Id == orderID);
+                   int locationID = matchOrder.LocationId;
+                   RoutingData.Models.Location orderLocation = locations.FirstOrDefault(o => o.Id == locationID);
+                   order.lat = orderLocation.Latitude;
+                   order.lon = orderLocation.Longitude;
+
+                   ordersInRoute.Add(order);
+               }
+
+               //Now built a list of OrderInROute, can make object to send to python
+               CalculatingRoutesDTO routeToCalc = new CalculatingRoutesDTO();
+               routeToCalc.orders = ordersInRoute;
+               routeToCalc.num_vehicle = routeToCalc.num_vehicle;
+               //Send to python, await response which should be a RouteRequestListDTO object
+               //using endpoint https://quantumdeliverybackend.azurewebsites.net/generate-routes
+
+               // Send to Python, await response which should be a RouteRequestListDTO object
+
+               try
+               {
+                   RouteRequestListDTO routeResponse = await PythonRequest(routeToCalc);
+                   //need to now convert routeResponse to the FrontEndInput function
+                   //So needs orderdetail objects
+                   List<CalcRouteOutput> calcRouteOutputs = convertToFrontEndOutput(locations, allOrders, orderProducts, products, routeResponse);
+                   return CreatedAtAction("GetDeliveryRoute", calcRouteOutputs);
+               }
+               catch (Exception ex)
+               {
+                   return StatusCode(500, ex.Message);
+               }
+
+           *//*Add later to also save to database
+            * _context.DeliveryRoutes.Add(deliveryRoute);
+               await _context.SaveChangesAsync();
+
+               return CreatedAtAction("GetDeliveryRoute", new { id = deliveryRoute.Id }, deliveryRoute);*//*
+
+
+           }
+   */
+        /*  private List<CalcRouteOutput> convertToFrontEndOutput( List<RoutingData.Models.Location> locations, List<Order> orders, 
+                                                                 List<OrderProduct> orderProducts, List<Product> products,
+                                                                 RouteRequestListDTO routes )
           {
-              return Problem("Entity set 'ApplicationDbContext.DeliveryRoutes'  is null.");
-          }
+              List<CalcRouteOutput> output = new List<CalcRouteOutput>();
+              //Iterate through the list of lists. For each list create a new CalcRouteOutput object, with a list of order details
+              foreach (List<int> orderList in routes.orders)
+              {
+                  List<OrderDetail> orderDetailList = new List<OrderDetail>();
+                  foreach (int orderID in orderList)
+                  {
+                      OrderDetail orderDetail = new OrderDetail();
+                      Order matchOrder = orders.FirstOrDefault(o => o.Id == orderID);
+                      int locationID = matchOrder.LocationId;
+                      RoutingData.Models.Location orderLocation = locations.FirstOrDefault(o => o.Id == locationID);
+
+                      orderDetail.OrderId = orderID;
+
+                      //Details from location list
+                      orderDetail.Addr = orderLocation.Address;
+                      orderDetail.Lat = orderLocation.Latitude;
+                      orderDetail.Lon = orderLocation.Longitude;
+                      orderDetail.Status = "Planned";
+
+                      //Details from OrderProductList
+                      //Need to first get the order product list
+
+                      //For each orderproduct that matches the orderID
+                      //Find the product name from the products list
+                      //Add to a List<String> to then store as ProdNames
+
+                      List<string> prodNames = new List<string>();
+
+                      foreach (OrderProduct orderProduct in orderProducts) {
+                          if (orderProduct.OrderId == orderID)
+                          {
+                              int productID = orderProduct.ProductId;
+                              Product product = products.FirstOrDefault(o => o.Id == productID);
+
+                              prodNames.Add(product.Name);
+                          }
+                      }
+
+                      orderDetail.ProdNames = prodNames;
+
+                      orderDetailList.Add(orderDetail);
+
+                  }
+                  CalcRouteOutput newRoute = new CalcRouteOutput();
+                  newRoute.Orders = orderDetailList;
+                  newRoute.VehicleId = 1;
+                  output.Add(newRoute);
+              }
+
+              return output;
+          }*/
 
 
-            // Create the object list for Python. Need to assign lat and lon from
-            // list of orderIDs
-            // Fetch all orders asynchronously
-            List<Order> allOrders = await _context.Orders.ToListAsync();
-            List<RoutingData.Models.Location> locations = await _context.Locations.ToListAsync();
-            List<OrderProduct> orderProducts = await _context.OrderProducts.ToListAsync();
-            List<Product> products = await _context.Products.ToListAsync();
 
-            List<OrderInRouteDTO> ordersInRoute = new List<OrderInRouteDTO>();
-
-            //This is very cringe and would ideally be handled by database calls
-            //However need to try to limit usage
-            foreach ( int orderID in routeRequest.Orders)
-            {//create an from each order id for each order id sent
-                OrderInRouteDTO order = new OrderInRouteDTO();
-                order.order_id = orderID;
-                Order matchOrder = allOrders.FirstOrDefault(o => o.Id == orderID);
-                int locationID = matchOrder.LocationId;
-                RoutingData.Models.Location orderLocation = locations.FirstOrDefault(o => o.Id == locationID);
-                order.lat = orderLocation.Latitude;
-                order.lon = orderLocation.Longitude;
-
-                ordersInRoute.Add(order);
-            }
-
-            //Now built a list of OrderInROute, can make object to send to python
-            CalculatingRoutesDTO routeToCalc = new CalculatingRoutesDTO();
-            routeToCalc.orders = ordersInRoute;
-            routeToCalc.num_vehicle = routeToCalc.num_vehicle;
-            //Send to python, await response which should be a RouteRequestListDTO object
-            //using endpoint https://quantumdeliverybackend.azurewebsites.net/generate-routes
-
-            // Send to Python, await response which should be a RouteRequestListDTO object
-
-            try
-            {
-                RouteRequestListDTO routeResponse = await PythonRequest(routeToCalc);
-                //need to now convert routeResponse to the FrontEndInput function
-                //So needs orderdetail objects
-                List<CalcRouteOutput> calcRouteOutputs = convertToFrontEndOutput(locations, allOrders, orderProducts, products, routeResponse);
-                return CreatedAtAction("GetDeliveryRoute", calcRouteOutputs);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-
-        *//*Add later to also save to database
-         * _context.DeliveryRoutes.Add(deliveryRoute);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetDeliveryRoute", new { id = deliveryRoute.Id }, deliveryRoute);*//*
-
-           
-        }
-*/
-      /*  private List<CalcRouteOutput> convertToFrontEndOutput( List<RoutingData.Models.Location> locations, List<Order> orders, 
-                                                               List<OrderProduct> orderProducts, List<Product> products,
-                                                               RouteRequestListDTO routes )
+        public async Task<Dictionary<int, OrderDetailsDTO>> GetOrders()
         {
-            List<CalcRouteOutput> output = new List<CalcRouteOutput>();
-            //Iterate through the list of lists. For each list create a new CalcRouteOutput object, with a list of order details
-            foreach (List<int> orderList in routes.orders)
-            {
-                List<OrderDetail> orderDetailList = new List<OrderDetail>();
-                foreach (int orderID in orderList)
+            var orderDetails = await _context.Orders
+                .Join(_context.Locations,
+                    order => order.LocationId,
+                    location => location.Id,
+                    (order, location) => new { order, location })
+                .Join(_context.Customers,
+                    combined => combined.order.CustomerId,
+                    customer => customer.Id,
+                    (combined, customer) => new { combined.order, combined.location, customer })
+                .Join(_context.OrderProducts,
+                    combined => combined.order.Id,
+                    orderProduct => orderProduct.OrderId,
+                    (combined, orderProduct) => new { combined.order, combined.location, combined.customer, orderProduct })
+                .Join(_context.Products,
+                    combined => combined.orderProduct.ProductId,
+                    product => product.Id,
+                    (combined, product) => new { combined.order, combined.location, combined.customer, product }).ToListAsync();
+
+            var groupedOrderDetails = orderDetails
+                .GroupBy(g => new { g.order, g.location, g.customer })
+                .Select(g => new OrderDetailsDTO
                 {
-                    OrderDetail orderDetail = new OrderDetail();
-                    Order matchOrder = orders.FirstOrDefault(o => o.Id == orderID);
-                    int locationID = matchOrder.LocationId;
-                    RoutingData.Models.Location orderLocation = locations.FirstOrDefault(o => o.Id == locationID);
+                    OrderID = g.Key.order.Id,
+                    OrderNotes = g.Key.order.OrderNotes,
+                    DateOrdered = g.Key.order.DateOrdered,
+                    Address = g.Key.location.Address,
+                    Latitude = g.Key.location.Latitude,
+                    Longitude = g.Key.location.Longitude,
+                    CustomerName = g.Key.customer.Name,
+                    CustomerPhone = g.Key.customer.Phone,
+                    ProductNames = g.Select(x => x.product.Name).ToList()
+                })
+                .ToList();
 
-                    orderDetail.OrderId = orderID;
-
-                    //Details from location list
-                    orderDetail.Addr = orderLocation.Address;
-                    orderDetail.Lat = orderLocation.Latitude;
-                    orderDetail.Lon = orderLocation.Longitude;
-                    orderDetail.Status = "Planned";
-
-                    //Details from OrderProductList
-                    //Need to first get the order product list
-
-                    //For each orderproduct that matches the orderID
-                    //Find the product name from the products list
-                    //Add to a List<String> to then store as ProdNames
-
-                    List<string> prodNames = new List<string>();
-
-                    foreach (OrderProduct orderProduct in orderProducts) {
-                        if (orderProduct.OrderId == orderID)
-                        {
-                            int productID = orderProduct.ProductId;
-                            Product product = products.FirstOrDefault(o => o.Id == productID);
-
-                            prodNames.Add(product.Name);
-                        }
-                    }
-
-                    orderDetail.ProdNames = prodNames;
-
-                    orderDetailList.Add(orderDetail);
-
-                }
-                CalcRouteOutput newRoute = new CalcRouteOutput();
-                newRoute.Orders = orderDetailList;
-                newRoute.VehicleId = 1;
-                output.Add(newRoute);
-            }
-
-            return output;
-        }*/
-
-
-
-
+            return groupedOrderDetails.ToDictionary( order => order.OrderID);
+        }
 
 
         // DELETE: api/DeliveryRoutes/5
@@ -636,5 +627,53 @@ namespace RoutingData.Controllers
             return (_context.DeliveryRoutes?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 #endif
+
+
+        [HttpPost]
+        public async Task<ActionResult<List<CalcRouteOutput>>> PostDeliveryRoute(RouteRequest routeRequest)
+        {
+            //ensures route doesn't out number the available vehicles or drivers
+            checkRouteMax(routeRequest);
+            try
+            {
+                Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrders();
+
+                // Convert data input to type for Python input
+                CalculatingRoutesDTO calcRoute = frontDataToPythonData(routeRequest, orderDetailsDict);
+
+                // Make the request to the Python backend
+                RouteRequestListDTO routeRequestListDTO = await PythonRequest(calcRoute);
+
+                Console.WriteLine("Returned object from Python is " + routeRequestListDTO.ToString());
+
+                // Convert routeRequestListDTO to CalcRouteOutput
+                List<CalcRouteOutput> allRoutesCalced = pythonOutputToFront(routeRequestListDTO, orderDetailsDict);
+
+                Console.WriteLine("All routes calced object is " + allRoutesCalced.ToString());
+
+                AssignPosAndDelivery(allRoutesCalced, routeRequest);
+
+                return Ok(allRoutesCalced);
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle HTTP-specific exceptions and include detailed error from response
+                Console.WriteLine($"HTTP error while processing the route request: {ex.Message}");
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, ex.Message);
+            }
+            catch (JsonSerializationException ex)
+            {
+                // Handle JSON-specific exceptions
+                Console.WriteLine($"JSON processing error: {ex.Message}");
+                return BadRequest("Invalid data format received. Please check the request.");
+            }
+            catch (Exception ex)
+            {
+                // Handle any other exceptions
+                Console.WriteLine($"Unexpected error: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An unexpected error occurred: {ex.Message}");
+            }
+        }
+
     }
 }
