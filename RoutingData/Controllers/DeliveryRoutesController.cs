@@ -269,7 +269,7 @@ namespace RoutingData.Controllers
         // GET: api/DeliveryRoutes
         [HttpGet]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<DeliveryRoute>>> GetCourses()
+        public async Task<ActionResult<IEnumerable<DeliveryRoute>>> GetDeliveryRoutes()
         {
             if (_offlineDatabase.deliveryRoutes.Count == 0)
             {
@@ -424,24 +424,24 @@ namespace RoutingData.Controllers
 
         // GET: api/DeliveryRoutes
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<DeliveryRoute>>> GetCourses()
+        public async Task<ActionResult<IEnumerable<DeliveryRoute>>> GetDeliveryRoutes()
         {
-          if (_context.Courses == null)
+          if (_context.DeliveryRoutes == null)
           {
               return NotFound();
           }
-            return await _context.Courses.ToListAsync();
+            return await _context.DeliveryRoutes.ToListAsync();
         }
 
         // GET: api/DeliveryRoutes/5
         [HttpGet("{id}")]
         public async Task<ActionResult<DeliveryRoute>> GetDeliveryRoute(int id)
         {
-          if (_context.Courses == null)
+          if (_context.DeliveryRoutes == null)
           {
               return NotFound();
           }
-            var deliveryRoute = await _context.Courses.FindAsync(id);
+            var deliveryRoute = await _context.DeliveryRoutes.FindAsync(id);
 
             if (deliveryRoute == null)
             {
@@ -484,12 +484,12 @@ namespace RoutingData.Controllers
 
         // POST: api/DeliveryRoutes
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+     /*   [HttpPost]
         public async Task<ActionResult<DeliveryRoute>> PostDeliveryRoute(RouteRequest routeRequest )
         {
-          if (_context.Courses == null)
+          if (_context.DeliveryRoutes == null)
           {
-              return Problem("Entity set 'ApplicationDbContext.Courses'  is null.");
+              return Problem("Entity set 'ApplicationDbContext.DeliveryRoutes'  is null.");
           }
 
 
@@ -519,7 +519,6 @@ namespace RoutingData.Controllers
             }
 
             //Now built a list of OrderInROute, can make object to send to python
-
             CalculatingRoutesDTO routeToCalc = new CalculatingRoutesDTO();
             routeToCalc.orders = ordersInRoute;
             routeToCalc.num_vehicle = routeToCalc.num_vehicle;
@@ -541,16 +540,16 @@ namespace RoutingData.Controllers
                 return StatusCode(500, ex.Message);
             }
 
-        /*Add later to also save to database
-         * _context.Courses.Add(deliveryRoute);
+        *//*Add later to also save to database
+         * _context.DeliveryRoutes.Add(deliveryRoute);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetDeliveryRoute", new { id = deliveryRoute.Id }, deliveryRoute);*/
+            return CreatedAtAction("GetDeliveryRoute", new { id = deliveryRoute.Id }, deliveryRoute);*//*
 
            
         }
-
-        private List<CalcRouteOutput> convertToFrontEndOutput( List<Location> locations, List<Order> orders, 
+*/
+      /*  private List<CalcRouteOutput> convertToFrontEndOutput( List<RoutingData.Models.Location> locations, List<Order> orders, 
                                                                List<OrderProduct> orderProducts, List<Product> products,
                                                                RouteRequestListDTO routes )
         {
@@ -564,14 +563,14 @@ namespace RoutingData.Controllers
                     OrderDetail orderDetail = new OrderDetail();
                     Order matchOrder = orders.FirstOrDefault(o => o.Id == orderID);
                     int locationID = matchOrder.LocationId;
-                    Location orderLocation = locations.FirstOrDefault(o => o.Id == locationID);
+                    RoutingData.Models.Location orderLocation = locations.FirstOrDefault(o => o.Id == locationID);
 
                     orderDetail.OrderId = orderID;
 
                     //Details from location list
                     orderDetail.Addr = orderLocation.Address;
                     orderDetail.Lat = orderLocation.Latitude;
-                    orderDetail.Long = orderLocation.Longitude;
+                    orderDetail.Lon = orderLocation.Longitude;
                     orderDetail.Status = "Planned";
 
                     //Details from OrderProductList
@@ -605,68 +604,28 @@ namespace RoutingData.Controllers
             }
 
             return output;
-        }
+        }*/
 
 
 
 
-        //Method to request quantum routes
-        private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn)
-        {
-            string pythonBackendUrl = "https://quantumdeliverybackend.azurewebsites.net/generate-routes";
-
-            using (var httpClient = new HttpClient())
-            {
-                try
-                {
-                    // Serialize the object to JSON
-                    string jsonContent = JsonConvert.SerializeObject(routesIn);
-                    var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-
-                    // Send the POST request
-                    HttpResponseMessage response = await httpClient.PostAsync(pythonBackendUrl, content);
-
-                    // Check if the request was successful
-                    if (response.IsSuccessStatusCode)
-                    {
-                        // Read and deserialize the response content
-                        string responseContent = await response.Content.ReadAsStringAsync();
-                        RouteRequestListDTO routeResponse = JsonConvert.DeserializeObject<RouteRequestListDTO>(responseContent);
-
-                        // Return the deserialized response
-                        return routeResponse;
-                    }
-                    else
-                    {
-                        // Handle non-successful responses
-                        throw new Exception($"Error from Python backend: {response.ReasonPhrase}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Handle exceptions that occur during the HTTP call
-                    // Log the exception if needed
-                    throw new Exception($"Internal server error: {ex.Message}");
-                }
-            }
-        }
 
 
         // DELETE: api/DeliveryRoutes/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDeliveryRoute(int id)
         {
-            if (_context.Courses == null)
+            if (_context.DeliveryRoutes == null)
             {
                 return NotFound();
             }
-            var deliveryRoute = await _context.Courses.FindAsync(id);
+            var deliveryRoute = await _context.DeliveryRoutes.FindAsync(id);
             if (deliveryRoute == null)
             {
                 return NotFound();
             }
 
-            _context.Courses.Remove(deliveryRoute);
+            _context.DeliveryRoutes.Remove(deliveryRoute);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -674,7 +633,7 @@ namespace RoutingData.Controllers
 
         private bool DeliveryRouteExists(int id)
         {
-            return (_context.Courses?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.DeliveryRoutes?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 #endif
     }

@@ -105,7 +105,7 @@ namespace RoutingData.Controllers
 
         // GET: api/Orders
         [HttpGet]
-        public async Task<List<OrderDetailsDto>> GetOrderDetailsAsync()
+        public async Task<List<OrderDetailsDto>> GetOrders()
         {
             var orderDetails = await _context.Orders
                 .Join(_context.Locations,
@@ -146,10 +146,10 @@ namespace RoutingData.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Order>> GetOrder(int id)
         {
-          if (_context.Orders == null)
-          {
-              return NotFound();
-          }
+            if (_context.Orders == null)
+            {
+                return NotFound();
+            }
             var order = await _context.Orders.FindAsync(id);
 
             if (order == null)
@@ -241,5 +241,8 @@ namespace RoutingData.Controllers
         {
             return (_context.Orders?.Any(e => e.Id == id)).GetValueOrDefault();
         }
-#endif
     }
+
+#endif
+
+}
