@@ -11,9 +11,8 @@ namespace RoutingData.DTO
             BuildProducts();
             BuildOrders();
             BuildProductOrders();
-            BuildDrivers();
             BuildVehicles();
-            BuildAdminAccounts();
+            BuildAccounts();
             deliveryRoutes = new List<DeliveryRoute>();
         }
         public List<Customer> Customers { get; set; }
@@ -22,9 +21,8 @@ namespace RoutingData.DTO
         public List<Product> Products { get; set; }
         public List<OrderProduct> OrderProducts { get; set; }
         public List<DeliveryRoute> deliveryRoutes { get; set; }
-        public List<Driver> Drivers { get; set; }
         public List<Vehicle> Vehicles { get; set; }
-        public List<AdminAccount> AdminAccounts { get; set; }   
+        public List<Account> Accounts { get; set; }   
 
         private void BuildCustomers()
         {
@@ -40,17 +38,6 @@ namespace RoutingData.DTO
             }
         }
 
-        private void BuildAdminAccounts()
-        {
-            AdminAccounts = new List<AdminAccount>
-            {
-                new AdminAccount { Username = "admin1@email.com", Password = "password1" },
-                new AdminAccount { Username = "admin2@email.com", Password = "password2" },
-                new AdminAccount { Username = "admin3@email.com", Password = "password3" },
-                new AdminAccount { Username = "admin@example.com", Password = "admin123" },
-            };
-        }
-
         private void BuildVehicles()
         {
             Vehicles = new List<Vehicle>
@@ -64,16 +51,20 @@ namespace RoutingData.DTO
             };
         }
 
-        private void BuildDrivers()
+        private void BuildAccounts()
         {
-            Drivers = new List<Driver>
+            Accounts = new List<Account>
             {
-                new Driver { Username = "Bob1", Name = "Bob", Phone = "555 123 456", Password = "password123" },
-                new Driver { Username = "Alice1", Name = "Alice", Phone = "555 234 567", Password = "password456" },
-                new Driver { Username = "Charlie1", Name = "Charlie", Phone = "555 345 678", Password = "password789" },
-                new Driver { Username = "Diana1", Name = "Diana", Phone = "555 456 789", Password = "password101" },
-                new Driver { Username = "Eve1", Name = "Eve", Phone = "555 567 890", Password = "password102" },
-                new Driver { Username = "Frank1", Name = "Frank", Phone = "555 678 901", Password = "password103" },
+                new Account { Username = "admin1@email.com", Password = "password1", Role = "Admin" },
+                new Account { Username = "admin2@email.com", Password = "password2", Role = "Admin" },
+                new Account { Username = "admin3@email.com", Password = "password3", Role = "Admin" },
+                new Account { Username = "admin@example.com", Password = "admin123", Role = "Admin" },
+                new Account { Username = "Bob1", Name = "Bob", Phone = "555 123 456", Password = "password123", Role = "Driver" },
+                new Account { Username = "Alice1", Name = "Alice", Phone = "555 234 567", Password = "password456", Role = "Driver" },
+                new Account { Username = "Charlie1", Name = "Charlie", Phone = "555 345 678", Password = "password789", Role = "Driver" },
+                new Account { Username = "Diana1", Name = "Diana", Phone = "555 456 789", Password = "password101", Role = "Driver" },
+                new Account { Username = "Eve1", Name = "Eve", Phone = "555 567 890", Password = "password102", Role = "Driver" },
+                new Account { Username = "Frank1", Name = "Frank", Phone = "555 678 901", Password = "password103", Role = "Driver" },
             };
 
         }
@@ -122,7 +113,8 @@ namespace RoutingData.DTO
                     CustomerId = 1,
                     LocationId = 1,
                     DeliveryRouteId = 1,
-                    PositionNumber = 1
+                    PositionNumber = 1,
+                    Status = "planned"
                 },
                 new Order
                 {
@@ -132,7 +124,8 @@ namespace RoutingData.DTO
                     CustomerId = 2,
                     LocationId = 2,
                     DeliveryRouteId = 1,
-                    PositionNumber = 2
+                    PositionNumber = 2,
+                    Status = "planned"
                 },
                 new Order
                 {
@@ -142,7 +135,8 @@ namespace RoutingData.DTO
                     CustomerId = 3,
                     LocationId = 3,
                     DeliveryRouteId = 2,
-                    PositionNumber = 3
+                    PositionNumber = 3,
+                    Status = "planned"
                 }
             };
         }
@@ -160,29 +154,29 @@ namespace RoutingData.DTO
             };
         }
 
-        public Task<List<AdminAccount>> GetAdminAccountsAsync()
+        public Task<List<Account>> GetAccountsAsync()
         {
-            return Task.FromResult(AdminAccounts);
+            return Task.FromResult(Accounts);
         }
 
-        public Task<AdminAccount> FindAdminAccountAsync(string username)
+        public Task<Account> FindAccountAsync(string username)
         {
-            return Task.FromResult(AdminAccounts.FirstOrDefault(a => a.Username == username));
+            return Task.FromResult(Accounts.FirstOrDefault(a => a.Username == username));
         }
 
-        public Task AddAdminAccountAsync(AdminAccount adminAccount)
+        public Task AddAccountAsync(Account adminAccount)
         {
-            AdminAccounts.Add(adminAccount);
+            Accounts.Add(adminAccount);
             return Task.CompletedTask;
         }
 
-        public Task RemoveAdminAccountAsync(AdminAccount adminAccount)
+        public Task RemoveAccountAsync(Account adminAccount)
         {
-            AdminAccounts.Remove(adminAccount);
+            Accounts.Remove(adminAccount);
             return Task.CompletedTask;
         }
 
-        public void Entry(AdminAccount adminAccount)
+        public void Entry(Account adminAccount)
         {
             // a placeholder for Entity Framework's Entry method to change state
         }
@@ -227,7 +221,7 @@ namespace RoutingData.DTO
                     Addr = location.Address,
                     Lat = location.Latitude,
                     Lon = location.Longitude,
-                    Status = "Pending",
+                    Status = order.Status,
                     CustomerName = customer.Name,
                     Phone = customer.Phone,
                     ProdNames = productNames,
