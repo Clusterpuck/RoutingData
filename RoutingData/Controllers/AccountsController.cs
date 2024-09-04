@@ -101,7 +101,7 @@ namespace RoutingData.Controllers
 
         // POST: api/Accounts/authenticate
         [HttpPost("authenticate")]
-        public async Task<IActionResult> Authenticate([FromBody] Account adminAccount)
+        public async Task<IActionResult> Authenticate([FromBody] AuthenticateRequestDTO loginDetails)
         {
             if (loginDetails == null || string.IsNullOrEmpty(loginDetails.Username) || string.IsNullOrEmpty(loginDetails.Password))
             {
@@ -171,7 +171,7 @@ namespace RoutingData.Controllers
             }
 
             [HttpPost("login")]
-            public async Task<IActionResult> Login([FromBody] LoginRequest request)
+            public async Task<IActionResult> Login([FromBody] AuthenticateRequestDTO request)
             {
                 var admin = await _offlineDatabase.FindAccountAsync(request.Username);
                 if (admin != null && admin.Password == request.Password)
@@ -183,10 +183,5 @@ namespace RoutingData.Controllers
             }
         }
 
-        public class LoginRequest
-        {
-            public string Username { get; set; }
-            public string Password { get; set; }
-        }
     }
 }
