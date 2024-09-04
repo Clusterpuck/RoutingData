@@ -32,7 +32,7 @@ namespace RoutingData.Controllers
 
         // GET: api/Accounts
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AdminAccount>>> GetAdminAccounts()
+        public async Task<ActionResult<IEnumerable<Account>>> GetAccounts()
         {
             if (_offlineDatabase.Accounts == null)
             {
@@ -44,7 +44,7 @@ namespace RoutingData.Controllers
 
         // GET: api/Accounts/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<AdminAccount>> GetAdminAccount(string id)
+        public async Task<ActionResult<Account>> GetAccount(string id)
         {
             if (_offlineDatabase.Accounts == null)
             {
@@ -63,7 +63,7 @@ namespace RoutingData.Controllers
         // PUT: api/Accounts/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAdminAccount(string id, AdminAccount adminAccount)
+        public async Task<IActionResult> PutAccount(string id, Account adminAccount)
         {
             if (id != adminAccount.Username)
             {
@@ -86,7 +86,7 @@ namespace RoutingData.Controllers
         // POST: api/Accounts
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<AdminAccount>> PostAdminAccount(AdminAccount adminAccount)
+        public async Task<ActionResult<Account>> PostAccount(Account adminAccount)
         {
             if (_offlineDatabase.Accounts == null)
             {
@@ -101,7 +101,7 @@ namespace RoutingData.Controllers
 
         // POST: api/Accounts/authenticate
         [HttpPost("authenticate")]
-        public async Task<IActionResult> Authenticate([FromBody] AdminAccount adminAccount)
+        public async Task<IActionResult> Authenticate([FromBody] Account adminAccount)
         {
             if (loginDetails == null || string.IsNullOrEmpty(loginDetails.Username) || string.IsNullOrEmpty(loginDetails.Password))
             {
@@ -135,7 +135,7 @@ namespace RoutingData.Controllers
 
         // DELETE: api/Accounts/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAdminAccount(string id)
+        public async Task<IActionResult> DeleteAccount(string id)
         {
             if (_offlineDatabase.Accounts == null)
             {
