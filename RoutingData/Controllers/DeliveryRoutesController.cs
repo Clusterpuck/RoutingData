@@ -691,7 +691,59 @@ namespace RoutingData.Controllers
         {
             return (_context.DeliveryRoutes?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+
+
+        private CalcRouteOutput deliveryToCalcRouteOutput(DeliveryRoute deliveryRoute)
+        {
+            CalcRouteOutput calcRouteOutput = new CalcRouteOutput();
+            calcRouteOutput.VehicleId = deliveryRoute.VehicleId;
+            //TODO Add conversion
+
+            //dictionary to reference each order to get details
+            Dictionary<int, OrderDetailsDTO> orderDetailsDict = _offlineDatabase.MakeOrdersDictionary();
+            //This is a dictionary that gets order details from order IDs
+            //Now need match orderIDs to the deliveryRoute ID, building a list of order
+            //In that route, then converting those to OrderDetails. 
+
+            List<Order> orders = _offlineDatabase.Orders;
+            int routeID = deliveryRoute.Id;
+
+            foreach (Order order in orders)
+            {
+                if (order.DeliveryRouteId == routeID)
+                {//Finding the matching orderDetail that belongs to the route
+                    //Adding to the calcRouteOutput
+                    OrderDetailsDTO orderDetail = orderDetailsDict[order.Id];
+                    calcRouteOutput.Orders.Add(orderDetail);
+                }
+
+            }
+            return calcRouteOutput;
+
+        }
+
 #endif
+
+
+        // GET: api/DeliveryRoutes/driver/{driverUsername}
+        [HttpGet("driver/{driverUsername}")]
+        //[Authorize]
+        public async Task<ActionResult<CalcRouteOutput>> GetDeliveryRoutesByDriver(string driverUsername)
+        {
+            DeliveryRoute driverRoute = _context.DeliveryRoutes
+                                               .FirstOrDefault(r => r.DriverUsername == driverUsername);
+
+            if (driverRoute == null)
+            {
+                return NotFound($"No delivery routes found for driver with username {driverUsername}");
+            }
+
+            CalcRouteOutput calcOutput = deliveryToCalcRouteOutput(driverRoute);
+
+            //Now need to build the CalcRouteOutput and return that object 
+
+            return calcOutput;
+        }
 
 
         [HttpPost]
@@ -701,8 +753,12 @@ namespace RoutingData.Controllers
             CheckRouteMax(routeRequest);
             try
             {
+#if OFFLINE_DATA
+                Dictionary<int, OrderDetailsDTO> orderDetailsDict = _offlineDatabase.MakeOrdersDictionary();
+            
+#else
                 Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrders();
-
+#endif
                 // Convert data input to type for Python input
                 CalculatingRoutesDTO calcRoute = frontDataToPythonData(routeRequest, orderDetailsDict);
 

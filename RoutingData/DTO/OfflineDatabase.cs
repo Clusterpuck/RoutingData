@@ -182,7 +182,7 @@ namespace RoutingData.DTO
         }
 
         //this is the offline version, will also need an online version. 
-        public Dictionary<int, OrderDetail> MakeOrdersDictionary()
+        public Dictionary<int, OrderDetailsDTO> MakeOrdersDictionary()
         {
 
             Dictionary<int, RoutingData.Models.Location> locationDict =
@@ -192,8 +192,8 @@ namespace RoutingData.DTO
             Dictionary<int, Product> productDict =
                 Products.ToDictionary(p => p.Id);
 
-            Dictionary<int, OrderDetail> orderDetailsDict =
-                new Dictionary<int, OrderDetail>();
+            Dictionary<int, OrderDetailsDTO> orderDetailsDict =
+                new Dictionary<int, OrderDetailsDTO>();
 
             foreach (Order order in Orders)
             {
@@ -215,19 +215,19 @@ namespace RoutingData.DTO
                 }
 
                 // Create an OrderDetail object
-                OrderDetail orderDetail = new OrderDetail
+                OrderDetailsDTO orderDetail = new OrderDetailsDTO
                 {
-                    OrderId = order.Id,
-                    Addr = location.Address,
-                    Lat = location.Latitude,
-                    Lon = location.Longitude,
+                    OrderID = order.Id,
+                    Address = location.Address,
+                    Latitude = location.Latitude,
+                    Longitude = location.Longitude,
                     Status = order.Status,
                     CustomerName = customer.Name,
-                    Phone = customer.Phone,
-                    ProdNames = productNames,
+                    CustomerPhone = customer.Phone,
+                    ProductNames = productNames,
                     Position = order.PositionNumber,
                     DeliveryDate = order.DeliveryDate,
-                    Notes = order.OrderNotes,
+                    OrderNotes = order.OrderNotes,
                 };
 
                 // Add the orderDetail to the Hashtable using the OrderId as the key
