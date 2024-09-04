@@ -160,17 +160,6 @@ namespace RoutingData.Controllers
 
         }
 
-        private void checkRouteMax(RouteRequest routeRequest)
-        {
-            // Find the minimum of the driver count and vehicle count
-            int maxVehicles = Math.Min(_offlineDatabase.Drivers.Count, _offlineDatabase.Vehicles.Count);
-
-            // Only assign the minimum value if the current NumVehicle exceeds it
-            if (routeRequest.NumVehicle > maxVehicles)
-            {
-                routeRequest.NumVehicle = maxVehicles;
-            }
-        }
 
 #if OFFLINE_DATA
 
@@ -332,6 +321,19 @@ namespace RoutingData.Controllers
 
         }
 
+        
+        private void checkRouteMax(RouteRequest routeRequest)
+        {
+            // Find the minimum of the driver count and vehicle count
+            int maxVehicles = Math.Min(_offlineDatabase.Drivers.Count, _offlineDatabase.Vehicles.Count);
+
+            // Only assign the minimum value if the current NumVehicle exceeds it
+            if (routeRequest.NumVehicle > maxVehicles)
+            {
+                routeRequest.NumVehicle = maxVehicles;
+            }
+        }
+
 
         
 
@@ -420,7 +422,7 @@ namespace RoutingData.Controllers
             // list of orderIDs
             // Fetch all orders asynchronously
             List<Order> allOrders = await _context.Orders.ToListAsync();
-            List<Location> locations = await _context.Locations.ToListAsync();
+            List<RoutingData.Models.Location> locations = await _context.Locations.ToListAsync();
             List<OrderProduct> orderProducts = await _context.OrderProducts.ToListAsync();
             List<Product> products = await _context.Products.ToListAsync();
 
@@ -431,10 +433,10 @@ namespace RoutingData.Controllers
             foreach ( int orderID in routeRequest.Orders)
             {//create an from each order id for each order id sent
                 OrderInRouteDTO order = new OrderInRouteDTO();
-                order.order_ID = orderID;
+                order.order_id = orderID;
                 Order matchOrder = allOrders.FirstOrDefault(o => o.Id == orderID);
                 int locationID = matchOrder.LocationId;
-                Location orderLocation = locations.FirstOrDefault(o => o.Id == locationID);
+                RoutingData.Models.Location orderLocation = locations.FirstOrDefault(o => o.Id == locationID);
                 order.lat = orderLocation.Latitude;
                 order.lon = orderLocation.Longitude;
 

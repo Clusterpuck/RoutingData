@@ -86,7 +86,22 @@ namespace RoutingData.Controllers
 
         }
 
-/*        public async Task<List<OrderDetailsDto>> GetOrderDetailsAsync()
+
+     
+    }
+#else
+
+
+        private readonly ApplicationDbContext _context;
+
+        public OrdersController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/Orders
+        [HttpGet]
+        public async Task<List<OrderDetailsDto>> GetOrderDetailsAsync()
         {
             var orderDetails = await _context.Orders
                 .Join(_context.Locations,
@@ -121,27 +136,6 @@ namespace RoutingData.Controllers
                 .ToListAsync();
 
             return orderDetails;
-        }*/
-    }
-
-
-#else
-        private readonly ApplicationDbContext _context;
-
-        public OrdersController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
-        // GET: api/Orders
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
-        {
-          if (_context.Orders == null)
-          {
-              return NotFound();
-          }
-            return await _context.Orders.ToListAsync();
         }
 
         // GET: api/Orders/5
@@ -244,4 +238,4 @@ namespace RoutingData.Controllers
             return (_context.Orders?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 #endif
-}
+    }
