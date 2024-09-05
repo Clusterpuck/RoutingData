@@ -654,6 +654,8 @@ namespace RoutingData.Controllers
             return groupedOrderDetails.ToDictionary( order => order.OrderID);
         }
 
+
+
         private async Task CheckRouteMax(RouteRequest routeRequest)
         {
             // Get the count of drivers (Accounts with Role "Driver")
@@ -825,8 +827,12 @@ namespace RoutingData.Controllers
 
                 Console.WriteLine("All routes calced object is " + allRoutesCalced.ToString());
 
+#if OFFLINE_DATA
+                
+                AssignPosAndDelivery(allRoutesCalced, routeRequest );
+#else
                 await AssignPosAndDeliveryAsync(allRoutesCalced);
-
+#endif
                 return Ok(allRoutesCalced);
             }
             catch (HttpRequestException ex)
