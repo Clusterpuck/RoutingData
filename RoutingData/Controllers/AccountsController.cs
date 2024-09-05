@@ -189,9 +189,10 @@ namespace RoutingData.Controllers
 #else
         private readonly ApplicationDbContext _context;
 
-        public AccountsController(ApplicationDbContext context)
+        public AccountsController(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
 
@@ -209,6 +210,141 @@ namespace RoutingData.Controllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetAccount", new { id = account.Username }, account);
+        }
+
+        // GET: api/Accounts
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Account>>> GetAccounts()
+        {
+            // check if the accounts table exists and has data
+            if (_context.Accounts == null)
+            {
+                return NotFound("Accounts data is not available.");
+            }
+
+            // fetch the accounts from the database asynchronously
+            var accounts = await _context.Accounts.ToListAsync();
+
+            // check if the accounts list is empty
+            if (!accounts.Any())
+            {
+                return NotFound("No accounts found.");
+            }
+
+            return Ok(accounts);
+        }
+
+        // GET: api/Accounts/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Account>> GetAccount(string id)
+        {
+            // check if the Accounts table exists in the database context
+            if (_context.Accounts == null)
+            {
+                return NotFound("Accounts data is not available.");
+            }
+
+            // retrieve the account with the specified ID from the database
+            var account = await _context.Accounts.FindAsync(id);
+
+            // check if the account was found
+            if (account == null)
+            {
+                return NotFound($"Account with ID {id} not found.");
+            }
+
+            return Ok(account);
+        }
+
+        // PUT: api/Accounts/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutAccount(string id, Account adminAccount)
+        {
+            // check if the provided ID matches the account's username
+            if (id != adminAccount.Username)
+            {
+                return BadRequest("ID does not match the account username.");
+            }
+
+            // retrieve the existing account from the database
+            var existingAccount = await _context.Accounts.FindAsync(id);
+            if (existingAccount == null)
+            {
+                return NotFound($"Account with ID {id} not found.");
+            }
+
+            existingAccount.Password = adminAccount.Password;
+
+            // update the account in the context and save changes to the database
+            _context.Entry(existingAccount).State = EntityState.Modified;
+
+            try
+            {
+                // save changes asynchronously
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // check if the account still exists in the database
+                if (!DoesAccountExist(id))
+                {
+                    return NotFound($"Account with ID {id} no longer exists.");
+                }
+                else
+                {
+                    throw; // if it's a different concurrency issue
+                }
+            }
+
+            return NoContent(); // return 204 No Content on success
+        }
+
+        // POST: api/Accounts/authenticate
+        [HttpPost("authenticate")]
+        public async Task<IActionResult> Authenticate([FromBody] AuthenticateRequestDTO loginDetails)
+        {
+            // validate the login details (empty & null checks)
+            if (loginDetails == null || string.IsNullOrEmpty(loginDetails.Username) || string.IsNullOrEmpty(loginDetails.Password))
+            {
+                return BadRequest("Invalid client request");
+            }
+
+            // check if the user exists in the database with matching username and password
+            var user = await _context.Accounts
+                .FirstOrDefaultAsync(u => u.Username == loginDetails.Username && u.Password == loginDetails.Password);
+
+            if (user == null)
+            {
+                // return as unauthorized if the user does not exist or credentials are wrong
+                return Unauthorized();
+            }
+
+            // generate JWT Token
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]); // this key matches the configuration (the key in Program.cs) !! has to match !!
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+            new Claim(ClaimTypes.Name, user.Username)
+        }),
+                Expires = DateTime.UtcNow.AddHours(1),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var tokenString = tokenHandler.WriteToken(token);
+
+            // return the generated token
+            return Ok(new { Token = tokenString });
+        }
+
+
+        // check if an account exists in the database (online db version)
+        private bool DoesAccountExist(string id)
+        {
+            return _context.Accounts.Any(e => e.Username == id);
         }
 
 
