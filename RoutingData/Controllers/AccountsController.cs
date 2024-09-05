@@ -23,11 +23,9 @@ namespace RoutingData.Controllers
         private readonly IConfiguration _configuration;
         private readonly OfflineDatabase _offlineDatabase;
 
-        public AccountsController(OfflineDatabase offlineDatabase, IConfiguration configuration)
+        public AccountsController(IConfiguration configuration)
         {
-            _offlineDatabase = offlineDatabase;
             _configuration = configuration;
-
         }
 
         // GET: api/Accounts
@@ -94,7 +92,7 @@ namespace RoutingData.Controllers
             }
 
             await _offlineDatabase.AddAccountAsync(adminAccount);
-           //await _offlineDatabase.SaveChangesAsync();
+            //await _offlineDatabase.SaveChangesAsync();
 
             return CreatedAtAction("GetAccount", new { id = adminAccount.Username }, adminAccount);
         }
@@ -185,3 +183,20 @@ namespace RoutingData.Controllers
 
     }
 }
+    #if OFFLINE_DATA
+        private readonly OfflineDatabase _offlineDatabase;
+
+        public DeliveryRoutesController(OfflineDatabase offlineDatabase)
+        {
+            _offlineDatabase = offlineDatabase;
+        }
+
+    #else
+        private readonly ApplicationDbContext _context;
+
+        public LocationsController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+
