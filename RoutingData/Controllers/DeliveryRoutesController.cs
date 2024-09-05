@@ -93,6 +93,59 @@ namespace RoutingData.Controllers
         }
 
 
+        //converts front end data to the required input for python end point
+        private async Task<CalculatingRoutesDTO> FrontDataToPythonDataAsync(RouteRequest frontEndData)
+        {
+                // Fetch the order details directly from the database based on the provided order IDs
+                var orderDetails = await _context.Orders
+                 .Join(_context.Locations,
+                     order => order.LocationId,  
+                     location => location.Id,    
+                     (order, location) => new OrderDetailsDTO  
+                     {
+                         OrderID = order.Id,
+                         Latitude = location.Latitude,
+                         Longitude = location.Longitude
+                     })
+                 .Where(od => frontEndData.Orders.Contains(od.OrderID)) 
+                 .ToDictionaryAsync(od => od.OrderID); 
+
+            // Mapping order details to OrderInRouteDTO
+            List<OrderInRouteDTO> routesForPython = new List<OrderInRouteDTO>();
+
+            foreach (int orderID in frontEndData.Orders)
+            {
+                // Fetch the OrderDetail from the dictionary populated from the SQL query
+                OrderDetailsDTO orderDetail = orderDetails[orderID];
+                OrderInRouteDTO routeDTO = new OrderInRouteDTO
+                {
+                    lat = orderDetail.Latitude,
+                    lon = orderDetail.Longitude,
+                    order_id = orderID
+                };
+
+                routesForPython.Add(routeDTO);
+            }
+
+            CalculatingRoutesDTO calcRoute = new CalculatingRoutesDTO
+            {
+                orders = routesForPython,
+                vehicle_cluster_config = new SubCalcSetting
+                {
+                    type = "kmeans",
+                    k = frontEndData.NumVehicle
+                },
+                solver_config = new SolverCalcSetting
+                {
+                    type = frontEndData.calcType, // "brute";
+                    distance = "cartesian",
+                    max_solve_size = 5
+                }
+            };
+
+            return calcRoute;
+        }
+
 
         //converts front end data to the required input for python end point
         private CalculatingRoutesDTO frontDataToPythonData( RouteRequest frontEndData, Dictionary<int, OrderDetailsDTO> orderDetailsDict)
