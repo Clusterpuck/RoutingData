@@ -374,6 +374,58 @@ namespace RoutingData.Controllers
             _context = context;
         }
 
+        [HttpPost("update-status")]
+        public async Task<ActionResult<CalcRouteOutput>> UpdateOrderStatus(OrderStatusDTO orderStatusDTO)
+        {
+            // check if the delivery route exists for the driver
+            var driverRoute = await _context.DeliveryRoutes
+                                    .FirstOrDefaultAsync(r => r.DriverUsername == orderStatusDTO.Username);
+
+            if (driverRoute == null)
+            {
+                return NotFound("No route assigned to provided driver");
+            }
+
+            // check if the order exists and is part of the driver's delivery route
+            var order = await _context.Orders
+                              .FirstOrDefaultAsync(o => o.Id == orderStatusDTO.OrderId && o.DeliveryRouteId == driverRoute.Id);
+
+            if (order == null)
+            {
+                return NotFound("No matching order in that driver's route");
+            }
+
+            // update the order status
+            order.Status = orderStatusDTO.Status;
+            _context.Orders.Update(order);
+            await _context.SaveChangesAsync();
+
+            // retrieve all orders for the delivery route
+            var ordersInRoute = await _context.Orders
+                                        .Join(_context.Locations,
+                                                order => order.LocationId,
+                                                location => location.Id,
+                                                (order, location) => new { order, location })
+                                          .Where(joined => joined.order.DeliveryRouteId == driverRoute.Id)
+                                          .Select(joined => new OrderDetailsDTO
+                                          {
+                                              OrderID = joined.order.Id,
+                                              Latitude = joined.location.Latitude,
+                                              Longitude = joined.location.Longitude,
+                                              Status = joined.order.Status,
+                                          })
+                                          .ToListAsync();
+
+            // prepare the CalcRouteOutput to return
+            CalcRouteOutput routeForFrontend = new CalcRouteOutput
+            {
+                Orders = ordersInRoute,
+                VehicleId = driverRoute.VehicleId
+            };
+
+            return Ok(routeForFrontend);
+        }
+
         // ONLINE VERSION
         //converts front end data to the required input for python end point
         private async Task<CalculatingRoutesDTO> FrontDataToPythonDataAsync(RouteRequest frontEndData)
@@ -427,6 +479,7 @@ namespace RoutingData.Controllers
 
             return calcRoute;
         }
+
 
 
         // GET: api/DeliveryRoutes
