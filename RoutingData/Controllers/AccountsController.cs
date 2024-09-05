@@ -212,6 +212,32 @@ namespace RoutingData.Controllers
         }
 
 
+        // DELETE: api/Accounts/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAccount(string id)
+        {
+            if (_context.Accounts == null)
+            {
+                return NotFound();
+            }
+            var account = await _context.Accounts.FindAsync(id);
+            if (account == null)
+            {
+                return NotFound();
+            }
+
+            _context.Accounts.Remove(account);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool AccountExists(string id)
+        {
+            return (_context.Accounts?.Any(e => e.Username == id)).GetValueOrDefault();
+        }
+
+
 #endif
 
     }
