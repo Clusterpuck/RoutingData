@@ -19,11 +19,10 @@ namespace RoutingData.Controllers
     [ApiController]
     public class AccountsController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
 
 #if OFFLINE_DATA
 
-        // private readonly ApplicationDbContext _context;
-        private readonly IConfiguration _configuration;
         private readonly OfflineDatabase _offlineDatabase;
 
         public AccountsController(IConfiguration configuration, OfflineDatabase offlineDatabase)
