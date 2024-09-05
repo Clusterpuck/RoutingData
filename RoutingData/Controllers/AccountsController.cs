@@ -237,6 +237,31 @@ namespace RoutingData.Controllers
             return (_context.Accounts?.Any(e => e.Username == id)).GetValueOrDefault();
         }
 
+        [ApiController]
+        [Route("api/[controller]")]
+        [Authorize]
+        public class AuthController : ControllerBase
+        {
+            private readonly ApplicationDbContext _context;
+
+            public AuthController(ApplicationDbContext context)
+            {
+                _context = context;
+            }
+
+            [HttpPost("login")]
+            public async Task<IActionResult> Login([FromBody] AuthenticateRequestDTO request)
+            {
+                var admin = await _context.Accounts.FirstOrDefaultAsync(a => a.Username == request.Username);
+                if (admin != null && admin.Password == request.Password)
+                {
+                    // Generate and return a token
+                    return Ok(new { Token = "your-generated-token" });
+                }
+                return Unauthorized();
+            }
+        }
+
 
 #endif
 
