@@ -188,6 +188,12 @@ namespace RoutingData.Controllers
     }
 
 #else
+        private readonly ApplicationDbContext _context;
+
+        public AccountsController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
 
 #endif
