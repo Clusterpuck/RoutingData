@@ -182,7 +182,7 @@ namespace RoutingData.Controllers
         }
 
     }
-}
+
     #if OFFLINE_DATA
         private readonly OfflineDatabase _offlineDatabase;
 
@@ -192,11 +192,10 @@ namespace RoutingData.Controllers
         }
 
     #else
-        private readonly ApplicationDbContext _context;
+        
 
-        public LocationsController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+#endif
+    
+}
 
 
