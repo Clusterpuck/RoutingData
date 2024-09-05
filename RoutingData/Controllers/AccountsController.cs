@@ -195,6 +195,23 @@ namespace RoutingData.Controllers
         }
 
 
+        // POST: api/Accounts
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<Account>> PostAccount(Account account)
+        {
+            if (_context.Accounts == null)
+            {
+                return Problem("Entity set 'ApplicationDbContext.Accounts' is null.");
+            }
+
+            _context.Accounts.Add(account);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetAccount", new { id = account.Username }, account);
+        }
+
+
 #endif
 
     }
