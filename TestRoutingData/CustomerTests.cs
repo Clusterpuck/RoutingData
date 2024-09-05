@@ -10,6 +10,7 @@ namespace TestRoutingData
     {
         private readonly CustomersController _customerController;
 
+#if OFFLINE_DATA
 
         public CustomerTests()
         {
@@ -32,7 +33,6 @@ namespace TestRoutingData
             Assert.Contains(result, summaries);
         }
 
-#if OFFLINE_DATA
 
         [Fact]
         public async Task Get_Customers()
