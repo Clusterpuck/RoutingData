@@ -16,13 +16,13 @@ namespace TestRoutingData
         private readonly OrdersController _orderController;
         private readonly List<OrderProduct> _products;
 
+#if OFFLINE_DATA
         public OrderTests()
         {
             _orderController = new OrdersController(TestServiceProvider.OfflineDatabaseInstance);
             _products = TestServiceProvider.OfflineDatabaseInstance.OrderProducts.ToList();
         }
 
-#if OFFLINE_DATA
 
         [Fact]
         public async Task Get_Orders()
