@@ -19,13 +19,17 @@ namespace RoutingData.Controllers
     [ApiController]
     public class AccountsController : ControllerBase
     {
+
+#if OFFLINE_DATA
+
         // private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly OfflineDatabase _offlineDatabase;
 
-        public AccountsController(IConfiguration configuration)
+        public AccountsController(IConfiguration configuration, OfflineDatabase offlineDatabase)
         {
             _configuration = configuration;
+            _offlineDatabase = offlineDatabase;
         }
 
         // GET: api/Accounts
@@ -183,19 +187,12 @@ namespace RoutingData.Controllers
 
     }
 
-    #if OFFLINE_DATA
-        private readonly OfflineDatabase _offlineDatabase;
+#else
 
-        public DeliveryRoutesController(OfflineDatabase offlineDatabase)
-        {
-            _offlineDatabase = offlineDatabase;
-        }
-
-    #else
-        
 
 #endif
-    
+
+    }
 }
 
 
