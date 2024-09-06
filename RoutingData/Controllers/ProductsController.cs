@@ -106,7 +106,7 @@ namespace RoutingData.Controllers
                 }
             }
 
-            return NoContent();
+            return Created("", product);
         }
 
         // POST: api/Products

@@ -137,7 +137,7 @@ namespace RoutingData.Controllers
                 }
             }
 
-            return NoContent();
+            return Created("", vehicle);
         }
 
         // POST: api/Vehicles
