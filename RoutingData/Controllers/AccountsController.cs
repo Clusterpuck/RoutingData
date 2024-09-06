@@ -375,7 +375,7 @@ namespace RoutingData.Controllers
 
         [ApiController]
         [Route("api/[controller]")]
-        [Authorize]
+        //[Authorize]
         public class AuthController : ControllerBase
         {
             private readonly ApplicationDbContext _context;

@@ -13,7 +13,7 @@ namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class LocationsController : ControllerBase
     {
 #if OFFLINE_DATA
