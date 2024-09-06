@@ -109,7 +109,7 @@ namespace RoutingData.Controllers
                 }
             }
 
-            return NoContent();
+            return Created("", location);
         }
 
         // POST: api/Locations

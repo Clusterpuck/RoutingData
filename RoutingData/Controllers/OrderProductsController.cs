@@ -80,7 +80,7 @@ namespace RoutingData.Controllers
                 }
             }
 
-            return NoContent();
+            return Created("", orderProduct);
         }
 
         // POST: api/OrderProducts

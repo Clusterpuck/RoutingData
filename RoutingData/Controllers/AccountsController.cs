@@ -81,7 +81,7 @@ namespace RoutingData.Controllers
 
             //await _offlineDatabase.SaveChangesAsync();
 
-            return NoContent();
+            return Created("", adminAccount);
         }
 
         // POST: api/Accounts
@@ -297,7 +297,7 @@ namespace RoutingData.Controllers
                 }
             }
 
-            return NoContent(); // return 204 No Content on success
+            return Created("", adminAccount); 
         }
 
         // POST: api/Accounts/authenticate

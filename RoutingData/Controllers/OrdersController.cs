@@ -85,7 +85,7 @@ namespace RoutingData.Controllers
             else
             {
                 orderToUpdate.DeliveryDate = deliveryDate;
-                return NoContent();
+                return Created("", deliveryDate);
             }
 
         }
@@ -190,7 +190,7 @@ namespace RoutingData.Controllers
                 }
             }
 
-            return NoContent();
+            return Created("", order);
         }
 
         // POST: api/Orders

@@ -129,7 +129,7 @@ namespace RoutingData.Controllers
         public DeliveryRoutesController(OfflineDatabase offlineDatabase)
         {
             _offlineDatabase = offlineDatabase;
-        }
+        }return Created("", location);
 
 
         [HttpPost("update-status")]
@@ -508,7 +508,7 @@ namespace RoutingData.Controllers
             // Save changes to the database
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Created("", startRoute);
         }
 
 
@@ -569,7 +569,7 @@ namespace RoutingData.Controllers
                 }
             }
 
-            return NoContent();
+            return Created("", deliveryRoute);
         }
 
 
@@ -764,7 +764,7 @@ namespace RoutingData.Controllers
         public async Task<ActionResult<List<CalcRouteOutput>>> PostDeliveryRoute(RouteRequest routeRequest)
         {
             //ensures route doesn't out number the available vehicles or drivers
-            CheckRouteMax(routeRequest);
+            await CheckRouteMax(routeRequest);
             try
             {
 #if OFFLINE_DATA
