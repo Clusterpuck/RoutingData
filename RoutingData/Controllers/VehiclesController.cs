@@ -152,7 +152,7 @@ namespace RoutingData.Controllers
             _context.Vehicles.Add(vehicle);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetVehicle", new { id = vehicle.Id }, vehicle);
+            return CreatedAtAction("GetVehicle", new { id = vehicle.LicensePlate }, vehicle);
         }
 
         // DELETE: api/Vehicles/5
