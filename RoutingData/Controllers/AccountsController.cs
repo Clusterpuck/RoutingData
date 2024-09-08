@@ -196,6 +196,12 @@ namespace RoutingData.Controllers
         }
 
 
+        /// <summary>
+        /// Method <c>PostAccount</c> confirms the provided account has all valid details
+        /// Then adds the Active status and adds the product to the database
+        /// </summary>
+        /// <param name="inAccount"></param>
+        /// <returns></returns>
         // POST: api/Accounts
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
@@ -216,14 +222,20 @@ namespace RoutingData.Controllers
             return CreatedAtAction("GetAccount", new { id = account.Username }, account);
         }
 
-
+        /// <summary>
+        /// Method <c>ValidateAndMakeNewAccount</c> confirms the details of Username, Password
+        /// And Role are within the set requirements
+        /// Returns null if they are not.
+        /// </summary>
+        /// <param name="inAccount"></param>
+        /// <returns></returns>
         private Account ValidateAndMakeNewAccount( AccountInDTO inAccount )
         {
             Account newAccount = null; 
 
             if( IsValidEmail( inAccount.Username ) && 
                 inAccount.Password.Length >= Account.PASSWORD_LENGTH &&
-                ( inAccount.Role == "Driver" || inAccount.Role == "Admin" ) )
+                Account.ACCOUNT_ROLES.Contains( inAccount.Role) )
             {
                 newAccount = new Account()
                 {
@@ -232,6 +244,7 @@ namespace RoutingData.Controllers
                     Phone = inAccount.Phone,
                     Password = inAccount.Password,
                     Role = inAccount.Role,
+                    Address = inAccount.Address,
                     Status = Account.ACCOUNT_STATUSES[0]
                 };
 
@@ -240,6 +253,12 @@ namespace RoutingData.Controllers
 
         }
 
+
+        /// <summary>
+        /// Method <c>IsValidEmail</c> determines if a provided string is a valid email form
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns></returns>
         private bool IsValidEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
@@ -256,6 +275,12 @@ namespace RoutingData.Controllers
             }
         }
 
+
+        /// <summary>
+        /// Method <c>GetAccounts</c> Determines if accounts are active
+        /// Returns list of only active accounts
+        /// </summary>
+        /// <returns></returns>
         // GET: api/Accounts
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Account>>> GetAccounts()
@@ -267,7 +292,10 @@ namespace RoutingData.Controllers
             }
 
             // fetch the accounts from the database asynchronously
-            var accounts = await _context.Accounts.ToListAsync();
+            var accounts = await _context.Accounts
+                .Where(a => a.Status == "Active")
+                .ToListAsync();
+
 
             // check if the accounts list is empty
             if (!accounts.Any())
@@ -278,6 +306,13 @@ namespace RoutingData.Controllers
             return Ok(accounts);
         }
 
+
+        /// <summary>
+        /// Method <c>GetAccount</c> returns an account if found
+        /// Includes returning an Inactive account
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         // GET: api/Accounts/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Account>> GetAccount(string id)
@@ -300,28 +335,41 @@ namespace RoutingData.Controllers
             return Ok(account);
         }
 
+
+        /// <summary>
+        /// Method <c>PutAccount</c> Checks if the provided Username is in database
+        /// Confirms all details of the new Account object are valid
+        /// Then applies all fields except Status to the dbAccount record
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="inAccount"></param>
+        /// <returns></returns>
         // PUT: api/Accounts/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAccount(string id, Account adminAccount)
+        public async Task<IActionResult> PutAccount(string id, AccountInDTO inAccount)
         {
-            // check if the provided ID matches the account's username
-            if (id != adminAccount.Username)
+            //check if the account id exists in database
+            Account dbAccount = await _context.Accounts.FindAsync(id);
+            if (dbAccount == null )
             {
-                return BadRequest("ID does not match the account username.");
+                return NotFound($"No such account in database with id {id}.");
+            }
+            Account updatedAccount = ValidateAndMakeNewAccount(inAccount);
+            if( updatedAccount == null )
+            {
+                return BadRequest("Details not valid in provided account");
             }
 
-            // retrieve the existing account from the database
-            var existingAccount = await _context.Accounts.FindAsync(id);
-            if (existingAccount == null)
-            {
-                return NotFound($"Account with ID {id} not found.");
-            }
-
-            existingAccount.Password = adminAccount.Password;
+            dbAccount.Username = updatedAccount.Username;
+            dbAccount.Name = updatedAccount.Name;
+            dbAccount.Phone = updatedAccount.Phone;
+            dbAccount.Password = updatedAccount.Password;
+            dbAccount.Role = updatedAccount.Role;
+            dbAccount.Address = updatedAccount.Address;
 
             // update the account in the context and save changes to the database
-            _context.Entry(existingAccount).State = EntityState.Modified;
+            _context.Entry(dbAccount).State = EntityState.Modified;
 
             try
             {
@@ -341,9 +389,17 @@ namespace RoutingData.Controllers
                 }
             }
 
-            return Created("", adminAccount);
+            return Created("", dbAccount);
         }
 
+
+        /// <summary>
+        /// Method <c>Authenticate</c> determines if the Authentication values provided are valid
+        /// If so, creates and returns a JWT token
+        /// Otherwise returns the UnAuthorised State
+        /// </summary>
+        /// <param name="loginDetails"></param>
+        /// <returns></returns>
         // POST: api/Accounts/authenticate
         [HttpPost("authenticate")]
         public async Task<IActionResult> Authenticate([FromBody] AuthenticateRequestDTO loginDetails)
@@ -384,14 +440,22 @@ namespace RoutingData.Controllers
             return Ok(new { Token = tokenString });
         }
 
-
+        /// <summary>
+        /// Method <c>DoesAccountExist</c> helper method to determine existance of Account in database
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         // check if an account exists in the database (online db version)
         private bool DoesAccountExist(string id)
         {
             return _context.Accounts.Any(e => e.Username == id);
         }
 
-
+        /// <summary>
+        /// Method <c>DeleteAccount</c> If found, sets the Account status to inactive
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         // DELETE: api/Accounts/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAccount(string id)
@@ -406,17 +470,38 @@ namespace RoutingData.Controllers
                 return NotFound();
             }
 
-            _context.Accounts.Remove(account);
-            await _context.SaveChangesAsync();
+            //never actually deleting accounts, just sets status to InActive
+            account.Status = Account.ACCOUNT_STATUSES[1];
+            // update the account in the context and save changes to the database
+            _context.Entry(account).State = EntityState.Modified;
+
+            try
+            {
+                // save changes asynchronously
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // check if the account still exists in the database
+                if (!DoesAccountExist(id))
+                {
+                    return NotFound($"Account with ID {id} no longer exists.");
+                }
+                else
+                {
+                    throw; // if it's a different concurrency issue
+                }
+            }
 
             return NoContent();
         }
 
-        private bool AccountExists(string id)
-        {
-            return (_context.Accounts?.Any(e => e.Username == id)).GetValueOrDefault();
-        }
 
+
+        /// <summary>
+        /// <class>AuthController</class>
+        /// Used to authenticate users and generate the JWT tokens. 
+        /// </summary>
         [ApiController]
         [Route("api/[controller]")]
         //[Authorize]
