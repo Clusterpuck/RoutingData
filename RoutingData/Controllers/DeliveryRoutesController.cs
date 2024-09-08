@@ -129,7 +129,7 @@ namespace RoutingData.Controllers
         public DeliveryRoutesController(OfflineDatabase offlineDatabase)
         {
             _offlineDatabase = offlineDatabase;
-        }return Created("", location);
+        }
 
 
         [HttpPost("update-status")]
@@ -159,8 +159,8 @@ namespace RoutingData.Controllers
 
             //Perhaps better to do deliveryRoute dictionary, get all orders for a delivery route. 
             //But less work to simply do in N time, get all orders matching the delivery route
-            List<OrderDetail> ordersInRoute = new List<OrderDetail>();
-            Dictionary<int, OrderDetail> orderDetailsDict = _offlineDatabase.MakeOrdersDictionary();
+            List<OrderDetailsDTO> ordersInRoute = new List<OrderDetailsDTO>();
+            Dictionary<int, OrderDetailsDTO> orderDetailsDict = _offlineDatabase.MakeOrdersDictionary();
             foreach (Order orderDB in _offlineDatabase.Orders)
             {
                 if( orderDB.DeliveryRouteId == driverRoute.Id )
@@ -284,7 +284,7 @@ namespace RoutingData.Controllers
             //TODO Add conversion
 
             //dictionary to reference each order to get details
-            Dictionary<int, OrderDetail> orderDetailsDict = _offlineDatabase.MakeOrdersDictionary();
+            Dictionary<int, OrderDetailsDTO> orderDetailsDict = _offlineDatabase.MakeOrdersDictionary();
             //This is a dictionary that gets order details from order IDs
             //Now need match orderIDs to the deliveryRoute ID, building a list of order
             //In that route, then converting those to OrderDetails. 
@@ -297,7 +297,7 @@ namespace RoutingData.Controllers
                 if( order.DeliveryRouteId == routeID )
                 {//Finding the matching orderDetail that belongs to the route
                     //Adding to the calcRouteOutput
-                    OrderDetail orderDetail = orderDetailsDict[order.Id];
+                    OrderDetailsDTO orderDetail = orderDetailsDict[order.Id];
                     calcRouteOutput.Orders.Add(orderDetail);
                 }
 
@@ -335,9 +335,9 @@ namespace RoutingData.Controllers
                 //need to find the matching order object in offlinedatabase and assign the routeID
                 _offlineDatabase.deliveryRoutes.Add(newRoute);
                 int pos = 1;
-                foreach (OrderDetail order in allRoutesCalced[i].Orders)
+                foreach (OrderDetailsDTO order in allRoutesCalced[i].Orders)
                 {
-                    int orderID = order.OrderId;
+                    int orderID = order.OrderID;
                     Order dbOrder = ordersDict[orderID];
                     dbOrder.DeliveryRouteId = newRoute.Id;
                     dbOrder.PositionNumber = pos;
@@ -349,16 +349,20 @@ namespace RoutingData.Controllers
         }
 
         
-        private void checkRouteMax(RouteRequest routeRequest)
+        private Task CheckRouteMax(RouteRequest routeRequest)
         {
             // Find the minimum of the driver count and vehicle count
-            int maxVehicles = Math.Min(_offlineDatabase.Drivers.Count, _offlineDatabase.Vehicles.Count);
+            int maxVehicles = Math.Min(
+                        _offlineDatabase.Accounts.Where(acc => acc.Role == "Driver").Count(),
+                        _offlineDatabase.Vehicles.Count()
+);
 
             // Only assign the minimum value if the current NumVehicle exceeds it
             if (routeRequest.NumVehicle > maxVehicles)
             {
                 routeRequest.NumVehicle = maxVehicles;
             }
+            return Task.CompletedTask;
         }
 
 
@@ -740,9 +744,6 @@ namespace RoutingData.Controllers
 
         }
 
-#endif
-
-
         // GET: api/DeliveryRoutes/driver/{driverUsername}
         [HttpGet("driver/{driverUsername}")]
         //[Authorize]
@@ -762,6 +763,9 @@ namespace RoutingData.Controllers
 
             return calcOutput;
         }
+#endif
+
+
 
 
         [HttpPost]
@@ -775,13 +779,14 @@ namespace RoutingData.Controllers
                 Dictionary<int, OrderDetailsDTO> orderDetailsDict = _offlineDatabase.MakeOrdersDictionary();
                 // Convert data input to type for Python input
                 CalculatingRoutesDTO calcRoute = frontDataToPythonData(routeRequest, orderDetailsDict);
-                endif
-            
+                List<Vehicle> vehicles = _offlineDatabase.Vehicles;
+
 #else
                 Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrderDetails();
                 // Convert data input to type for Python input
                 CalculatingRoutesDTO calcRoute = await FrontDataToPythonDataAsync(routeRequest);
 
+                List<Vehicle> vehicles = await _context.Vehicles.ToListAsync();
 #endif
                 // Make the request to the Python backend
                 RouteRequestListDTO routeRequestListDTO = await PythonRequest(calcRoute);
@@ -789,7 +794,6 @@ namespace RoutingData.Controllers
                 Console.WriteLine("Returned object from Python is " + routeRequestListDTO.ToString());
 
                 //TODO Change to only get available vehicles once status set up
-                List<Vehicle> vehicles = await _context.Vehicles.ToListAsync();
 
                 // Convert routeRequestListDTO to CalcRouteOutput
                 List<CalcRouteOutput> allRoutesCalced = pythonOutputToFront(routeRequestListDTO, orderDetailsDict, vehicles);

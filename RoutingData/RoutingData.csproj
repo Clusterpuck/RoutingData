@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     
     <!-- Comment out to switch back to the online database-->
-     <!--<DefineConstants>OFFLINE_DATA</DefineConstants>-->
+  <!--<DefineConstants>OFFLINE_DATA</DefineConstants>-->
   </PropertyGroup>
 
   <ItemGroup>

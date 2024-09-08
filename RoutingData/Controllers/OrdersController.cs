@@ -29,11 +29,11 @@ namespace RoutingData.Controllers
         // GET: api/Orders
         [HttpGet]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<OrderDetail>>> GetOrders()
+        public async Task<ActionResult<IEnumerable<OrderDetailsDTO>>> GetOrders()
         {
-            Dictionary<int, OrderDetail> detailDict = _offlineDatabase.MakeOrdersDictionary();
+            Dictionary<int, OrderDetailsDTO> detailDict = _offlineDatabase.MakeOrdersDictionary();
             List<Order> orders = _offlineDatabase.Orders;
-            List<OrderDetail> orderDetails = new List<OrderDetail>();
+            List<OrderDetailsDTO> orderDetails = new List<OrderDetailsDTO>();
             foreach (var order in orders)
             {
                 orderDetails.Add(detailDict[order.Id]);
