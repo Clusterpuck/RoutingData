@@ -11,6 +11,10 @@ using RoutingData.Models;
 
 namespace RoutingData.Controllers
 {
+    /// <summary>
+    ///  Class <c>ProductsController</c> provides API interactions for Product model
+    /// </summary>
+
     [Route("api/[controller]")]
     [ApiController]
     //[Authorize]
@@ -44,11 +48,16 @@ namespace RoutingData.Controllers
 
         private readonly ApplicationDbContext _context;
 
+
         public ProductsController(ApplicationDbContext context)
         {
             _context = context;
         }
 
+        /// <summary>
+        /// Method <c>GetProducts</c> returns a list of all active products (products with active status)
+        /// </summary>
+        /// <returns></returns>
         // GET: api/Products
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
@@ -57,9 +66,18 @@ namespace RoutingData.Controllers
           {
               return NotFound();
           }
-            return await _context.Products.ToListAsync();
+            return await _context.Products
+                .Where( prod => prod.Status == Product.PRODUCT_STATUSES[0])
+                .ToListAsync();
         }
 
+
+        /// <summary>
+        /// Method <c>GetProduct</c> gets a product by it's specific ID. 
+        /// Will return an Inactive product for historical uses
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         // GET: api/Products/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetProduct(int id)
@@ -78,17 +96,26 @@ namespace RoutingData.Controllers
             return product;
         }
 
+
+        /// <summary>
+        /// Method <c>PutProduct</c> Edits an existing product if the provided id matches the id in the provided product object
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="product"></param>
+        /// <returns></returns>
         // PUT: api/Products/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(int id, Product product)
+        public async Task<IActionResult> PutProduct(int id, ProductInDTO inProduct)
         {
-            if (id != product.Id)
+            Product dbProduct = await _context.Products.FindAsync(id);
+            if (dbProduct == null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
-            _context.Entry(product).State = EntityState.Modified;
+            dbProduct.Name = inProduct.Name;
+            dbProduct.UnitOfMeasure = inProduct.UnitOfMeasure;
 
             try
             {
@@ -106,18 +133,33 @@ namespace RoutingData.Controllers
                 }
             }
 
-            return Created("", product);
+            return Created("", dbProduct);
         }
 
+
+        /// <summary>
+        /// Method <c>PostProduct</c> adds a product to the database
+        /// Sets status to starting default of "Active" 
+        /// Usis InProduct DTO to allow sent inobject o only need to send minimal fields
+        /// </summary>
+        /// <param name="product"></param>
+        /// <returns></returns>
         // POST: api/Products
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Product>> PostProduct(Product product)
+        public async Task<ActionResult<Product>> PostProduct(ProductInDTO inProduct)
         {
             if (_context.Products == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Products'  is null.");
             }
+
+            Product product = new Product()
+            {
+                Name = inProduct.Name,
+                UnitOfMeasure = inProduct.UnitOfMeasure,
+                Status = Product.PRODUCT_STATUSES[0]
+            };
 
             //All products start as active. 
             product.Status = Product.PRODUCT_STATUSES[0];
@@ -128,6 +170,12 @@ namespace RoutingData.Controllers
             return CreatedAtAction("GetProduct", new { id = product.Id }, product);
         }
 
+
+        /// <summary>
+        /// Method <c>DeleteProduct</c> assigns the product the inactive status in the database
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         // DELETE: api/Products/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
@@ -137,21 +185,28 @@ namespace RoutingData.Controllers
                 return NotFound();
             }
             var product = await _context.Products.FindAsync(id);
-            if (product == null || ( product.Status == Product.PRODUCT_STATUSES[2] ) )
+            if (product == null || ( product.Status == Product.PRODUCT_STATUSES[1] ) )
             {//Null product or a product already set to InActive is considered delted already
                 return NotFound();
             }
             //Instead of removing, simply set the product status to InActive
-            product.Status = Product.PRODUCT_STATUSES[2];
+            product.Status = Product.PRODUCT_STATUSES[1];
             await _context.SaveChangesAsync();
             
             //Also need to update any order that is "Planned" to remove this product.
-            await RemoveProductFromPlannedOrders(id);
+            await RemoveProductFromOrders(id);
 
             return NoContent();
         }
 
-        private async Task<IActionResult> RemoveProductFromPlannedOrders(int productId)
+
+        /// <summary>
+        /// Method <c>RemoveProductFromOrders</c> removes entries from OrderProduct table that match the product id
+        /// Only if the order isn't already loaded for deliver. i.e. planned
+        /// </summary>
+        /// <param name="productId"></param>
+        /// <returns></returns>
+        private async Task<IActionResult> RemoveProductFromOrders(int productId)
         {
             // Find all OrderProducts for the given product where the related order is in "Planned" status
             var orderProductsToRemove = await (
@@ -175,7 +230,11 @@ namespace RoutingData.Controllers
             return NoContent();
         }
 
-
+        /// <summary>
+        /// Method <c>ProductExists</c> confirms the product is in the database
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         private bool ProductExists(int id)
         {
             return (_context.Products?.Any(e => e.Id == id)).GetValueOrDefault();

@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 
 namespace RoutingData.Models
 {
