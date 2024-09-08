@@ -114,10 +114,14 @@ namespace RoutingData.Controllers
         [HttpPost]
         public async Task<ActionResult<Product>> PostProduct(Product product)
         {
-          if (_context.Products == null)
-          {
-              return Problem("Entity set 'ApplicationDbContext.Products'  is null.");
-          }
+            if (_context.Products == null)
+            {
+                return Problem("Entity set 'ApplicationDbContext.Products'  is null.");
+            }
+
+            //All products start as active. 
+            product.Status = Product.PRODUCT_STATUSES[0];
+        
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
@@ -133,16 +137,44 @@ namespace RoutingData.Controllers
                 return NotFound();
             }
             var product = await _context.Products.FindAsync(id);
-            if (product == null)
+            if (product == null || ( product.Status == Product.PRODUCT_STATUSES[2] ) )
+            {//Null product or a product already set to InActive is considered delted already
+                return NotFound();
+            }
+            //Instead of removing, simply set the product status to InActive
+            product.Status = Product.PRODUCT_STATUSES[2];
+            await _context.SaveChangesAsync();
+            
+            //Also need to update any order that is "Planned" to remove this product.
+            await RemoveProductFromPlannedOrders(id);
+
+            return NoContent();
+        }
+
+        private async Task<IActionResult> RemoveProductFromPlannedOrders(int productId)
+        {
+            // Find all OrderProducts for the given product where the related order is in "Planned" status
+            var orderProductsToRemove = await (
+                from op in _context.OrderProducts
+                join o in _context.Orders on op.OrderId equals o.Id
+                where o.Status == Order.ORDER_STATUSES[0] && op.ProductId == productId
+                select op
+            ).ToListAsync();
+
+            if (!orderProductsToRemove.Any())
             {
                 return NotFound();
             }
 
-            _context.Products.Remove(product);
+            // Remove the found OrderProducts
+            _context.OrderProducts.RemoveRange(orderProductsToRemove);
+
+            // Save changes to the database
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
+
 
         private bool ProductExists(int id)
         {
