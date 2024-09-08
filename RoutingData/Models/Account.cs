@@ -5,6 +5,7 @@ namespace RoutingData.Models
     public class Account
     {
         public static readonly String[] ACCOUNT_STATUSES = { "Active", "Inactive" };
+        public static readonly int PASSWORD_LENGTH = 6;
 
         [Key]
         public string Username { get; set; }

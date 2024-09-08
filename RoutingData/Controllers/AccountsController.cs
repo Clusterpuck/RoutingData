@@ -199,17 +199,61 @@ namespace RoutingData.Controllers
         // POST: api/Accounts
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Account>> PostAccount(Account account)
+        public async Task<ActionResult<Account>> PostAccount(AccountInDTO inAccount)
         {
             if (_context.Accounts == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Accounts' is null.");
             }
-
+            Account account = ValidateAndMakeNewAccount(inAccount);
+            if( account == null )
+            {
+                return Problem("Invalid details provided");
+            }
             _context.Accounts.Add(account);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetAccount", new { id = account.Username }, account);
+        }
+
+
+        private Account ValidateAndMakeNewAccount( AccountInDTO inAccount )
+        {
+            Account newAccount = null; 
+
+            if( IsValidEmail( inAccount.Username ) && 
+                inAccount.Password.Length >= Account.PASSWORD_LENGTH &&
+                ( inAccount.Role == "Driver" || inAccount.Role == "Admin" ) )
+            {
+                newAccount = new Account()
+                {
+                    Username = inAccount.Username,
+                    Name = inAccount.Name,
+                    Phone = inAccount.Phone,
+                    Password = inAccount.Password,
+                    Role = inAccount.Role,
+                    Status = Account.ACCOUNT_STATUSES[0]
+                };
+
+            }
+            return newAccount;
+
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return false;
+
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         // GET: api/Accounts
