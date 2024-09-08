@@ -4,6 +4,8 @@ namespace RoutingData.Models
 {
     public class Account
     {
+        public static readonly String[] ACCOUNT_STATUSES = { "Active", "Inactive" };
+
         [Key]
         public string Username { get; set; }
         public string Name { get; set; }

@@ -112,9 +112,9 @@ namespace RoutingData.Controllers
         // PUT: api/Vehicles/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutVehicle(int id, Vehicle vehicle)
+        public async Task<IActionResult> PutVehicle(String id, Vehicle vehicle)
         {
-            if (id != vehicle.Id)
+            if (id != vehicle.LicensePlate)
             {
                 return BadRequest();
             }
@@ -175,9 +175,9 @@ namespace RoutingData.Controllers
             return NoContent();
         }
 
-        private bool VehicleExists(int id)
+        private bool VehicleExists(String id)
         {
-            return (_context.Vehicles?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.Vehicles?.Any(e => e.LicensePlate == id)).GetValueOrDefault();
         }
 #endif
     }

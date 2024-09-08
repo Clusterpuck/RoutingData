@@ -4,6 +4,8 @@ namespace RoutingData.Models
 {
     public class Product
     {
+        public static readonly String[] PRODUCT_STATUSES = { "Active", "Inactive" };
+
         [Key]
         public int Id { get; set; }
         public string Name { get; set; }
