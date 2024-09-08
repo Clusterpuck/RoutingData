@@ -592,7 +592,8 @@ namespace RoutingData.Controllers
                 .Join(_context.Products,
                     combined => combined.orderProduct.ProductId,
                     product => product.Id,
-                    (combined, product) => new { combined.order, combined.location, combined.customer, product }).ToListAsync();
+                    (combined, product) => new { combined.order, combined.location, combined.customer, product })
+                .ToListAsync();
 
             var groupedOrderDetails = orderDetails
                 .GroupBy(g => new { g.order, g.location, g.customer })
@@ -601,6 +602,7 @@ namespace RoutingData.Controllers
                     OrderID = g.Key.order.Id,
                     OrderNotes = g.Key.order.OrderNotes,
                     DateOrdered = g.Key.order.DateOrdered,
+                    Status = g.Key.order.Status, 
                     Address = g.Key.location.Address,
                     Latitude = g.Key.location.Latitude,
                     Longitude = g.Key.location.Longitude,
@@ -610,8 +612,10 @@ namespace RoutingData.Controllers
                 })
                 .ToList();
 
-            return groupedOrderDetails.ToDictionary( order => order.OrderID);
+            // Returning the result as a dictionary where the key is OrderID and the value is OrderDetailsDTO
+            return groupedOrderDetails.ToDictionary(x => x.OrderID);
         }
+
 
 
 
