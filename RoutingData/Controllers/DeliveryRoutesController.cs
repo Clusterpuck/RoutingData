@@ -92,7 +92,7 @@ namespace RoutingData.Controllers
             }
         }
 
-        private List<CalcRouteOutput> pythonOutputToFront(RouteRequestListDTO routeList, Dictionary<int, OrderDetailsDTO> orderDetailsDict)
+        private List<CalcRouteOutput> pythonOutputToFront(RouteRequestListDTO routeList, Dictionary<int, OrderDetailsDTO> orderDetailsDict, List<Vehicle> vehicles)
         {
             //Has a list of list of orderIDs, representing one vehicles routes
 
@@ -104,7 +104,7 @@ namespace RoutingData.Controllers
                 List<int> route = routeList[i];
                 CalcRouteOutput routeForFrontend = new CalcRouteOutput();
                 List<OrderDetailsDTO> routeDetails = new List<OrderDetailsDTO>();
-                routeForFrontend.VehicleId = i+1;
+                routeForFrontend.VehicleId = vehicles[i].LicensePlate;
                 //For loops generates an ordered and detailed list of routes for each vehicle
                 foreach(int orderID in route )
                 {
@@ -420,7 +420,7 @@ namespace RoutingData.Controllers
             CalcRouteOutput routeForFrontend = new CalcRouteOutput
             {
                 Orders = ordersInRoute,
-                VehicleId = driverRoute.VehicleId
+                VehicleId = driverRoute.VehicleLicense
             };
 
             return Ok(routeForFrontend);
@@ -654,7 +654,7 @@ namespace RoutingData.Controllers
                 var newRoute = new DeliveryRoute
                 {
                     DeliveryDate = DateTime.Today,
-                    VehicleId = vehicles[i].Id,
+                    VehicleLicense = vehicles[i].LicensePlate,
                     DriverUsername = drivers[i].Username,
                     TimeCreated = DateTime.Now,
                     //CreatorAdminId = routeRequest.CreatorAdminId // Need to add this field in the RouteRequest
@@ -714,7 +714,7 @@ namespace RoutingData.Controllers
         private async Task<CalcRouteOutput> deliveryToCalcRouteOutput(DeliveryRoute deliveryRoute)
         {
             CalcRouteOutput calcRouteOutput = new CalcRouteOutput();
-            calcRouteOutput.VehicleId = deliveryRoute.VehicleId;
+            calcRouteOutput.VehicleId = deliveryRoute.VehicleLicense;
             //TODO Add conversion
 
             //dictionary to reference each order to get details
@@ -788,8 +788,11 @@ namespace RoutingData.Controllers
 
                 Console.WriteLine("Returned object from Python is " + routeRequestListDTO.ToString());
 
+                //TODO Change to only get available vehicles once status set up
+                List<Vehicle> vehicles = await _context.Vehicles.ToListAsync();
+
                 // Convert routeRequestListDTO to CalcRouteOutput
-                List<CalcRouteOutput> allRoutesCalced = pythonOutputToFront(routeRequestListDTO, orderDetailsDict);
+                List<CalcRouteOutput> allRoutesCalced = pythonOutputToFront(routeRequestListDTO, orderDetailsDict, vehicles);
 
                 Console.WriteLine("All routes calced object is " + allRoutesCalced.ToString());
 

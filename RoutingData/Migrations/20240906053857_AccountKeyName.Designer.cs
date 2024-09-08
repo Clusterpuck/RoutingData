@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RoutingData.Models;
 
@@ -11,9 +12,11 @@ using RoutingData.Models;
 namespace RoutingData.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240906053857_AccountKeyName")]
+    partial class AccountKeyName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -47,10 +50,6 @@ namespace RoutingData.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Username");
 
                     b.ToTable("Accounts");
@@ -69,10 +68,6 @@ namespace RoutingData.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -108,9 +103,8 @@ namespace RoutingData.Migrations
                     b.Property<DateTime>("TimeCreated")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("VehicleLicense")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("VehicleId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -147,10 +141,6 @@ namespace RoutingData.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("State")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -212,10 +202,6 @@ namespace RoutingData.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("OrderId", "ProductId");
 
                     b.ToTable("OrderProducts");
@@ -233,10 +219,6 @@ namespace RoutingData.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("UnitOfMeasure")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -248,14 +230,17 @@ namespace RoutingData.Migrations
 
             modelBuilder.Entity("RoutingData.Models.Vehicle", b =>
                 {
-                    b.Property<string>("LicensePlate")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
 
-                    b.Property<string>("Status")
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("LicensePlate")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("LicensePlate");
+                    b.HasKey("Id");
 
                     b.ToTable("Vehicles");
                 });

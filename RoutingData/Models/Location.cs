@@ -4,6 +4,8 @@ namespace RoutingData.Models
 {
     public class Location
     {
+        public static readonly String[] LOCATION_STATUSES = { "Active", "Inactive" };
+
         [Key]
         public int Id { get; set; }
         public double Longitude { get; set; }

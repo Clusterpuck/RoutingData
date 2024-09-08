@@ -18,7 +18,7 @@ namespace RoutingData.DTO
     public class CalcRouteOutput
     {
         // has vehicle id and list of OrderDetails
-        public int VehicleId { get; set; }
+        public String VehicleId { get; set; }
         public List<OrderDetailsDTO> Orders { get; set; }
 
         public CalcRouteOutput() {
