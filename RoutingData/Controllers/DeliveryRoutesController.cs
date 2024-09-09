@@ -825,7 +825,7 @@ namespace RoutingData.Controllers
                 valid = false;
                 sb.AppendLine($"Number of vehicles too low at {routeRequest.NumVehicle}");
             }
-            if (routeRequest.DeliveryDate < DateTime.Now)
+            if (routeRequest.DeliveryDate < DateTime.Today.AddDays(-1) )//Gives a small buffer to add last minute orders
             {
                 sb.AppendLine("Date set before current date");
                 valid = false;
