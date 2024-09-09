@@ -820,6 +820,11 @@ namespace RoutingData.Controllers
         private async Task<bool> ValidateRouteRequest( RouteRequest routeRequest, StringBuilder sb)
         {
             bool valid = true;
+            if( routeRequest.NumVehicle <= 0 )
+            {
+                valid = false;
+                sb.AppendLine($"Number of vehicles too low at {routeRequest.NumVehicle}");
+            }
             if (routeRequest.DeliveryDate < DateTime.Now)
             {
                 sb.AppendLine("Date set before current date");
@@ -968,13 +973,13 @@ namespace RoutingData.Controllers
         [HttpPost]
         public async Task<ActionResult<List<CalcRouteOutput>>> PostDeliveryRoute(RouteRequest routeRequest)
         {
+            await CheckRouteMax(routeRequest);
             StringBuilder sb = new StringBuilder();
             if (!await ValidateRouteRequest(routeRequest, sb))
             {//invalid routeRequest object
                 return BadRequest( sb.ToString() );
             }
             //ensures route doesn't out number the available vehicles or drivers
-            await CheckRouteMax(routeRequest);
             try
             {
 #if OFFLINE_DATA

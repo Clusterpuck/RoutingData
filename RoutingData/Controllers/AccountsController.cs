@@ -237,19 +237,19 @@ namespace RoutingData.Controllers
             if( !IsValidEmail( inAccount.Username ) )
             {
                 isValid = false;
-                sb.Append("Invalide Username/Email provided");
+                sb.Append("Invalid Username/Email provided, ");
 
             }
             if(inAccount.Password.Length < Account.PASSWORD_LENGTH)
             {
                 isValid = false;
-                sb.Append("Password is too short");
+                sb.Append("Password is too short, ");
 
             }
             if (!Account.ACCOUNT_ROLES.Contains(inAccount.Role))
             {
                 isValid = false;
-                sb.Append($"{inAccount.Role} is not a valid role");
+                sb.Append($"{inAccount.Role} is not a valid role ");
             }
             if( isValid)
             {
