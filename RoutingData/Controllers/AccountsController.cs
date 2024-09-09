@@ -211,10 +211,11 @@ namespace RoutingData.Controllers
             {
                 return Problem("Entity set 'ApplicationDbContext.Accounts' is null.");
             }
-            Account account = ValidateAndMakeNewAccount(inAccount);
+            StringBuilder sb  = new StringBuilder();
+            Account account = ValidateAndMakeNewAccount(inAccount, sb);
             if( account == null )
             {
-                return Problem("Invalid details provided");
+                return Problem($"Invalid details provided: {sb.ToString()}");
             }
             _context.Accounts.Add(account);
             await _context.SaveChangesAsync();
@@ -229,13 +230,28 @@ namespace RoutingData.Controllers
         /// </summary>
         /// <param name="inAccount"></param>
         /// <returns></returns>
-        private Account ValidateAndMakeNewAccount( AccountInDTO inAccount )
+        private Account ValidateAndMakeNewAccount( AccountInDTO inAccount, StringBuilder sb )
         {
-            Account newAccount = null; 
+            Account newAccount = null;
+            bool isValid = true;
+            if( !IsValidEmail( inAccount.Username ) )
+            {
+                isValid = false;
+                sb.Append("Invalide Username/Email provided");
 
-            if( IsValidEmail( inAccount.Username ) && 
-                inAccount.Password.Length >= Account.PASSWORD_LENGTH &&
-                Account.ACCOUNT_ROLES.Contains( inAccount.Role) )
+            }
+            if(inAccount.Password.Length < Account.PASSWORD_LENGTH)
+            {
+                isValid = false;
+                sb.Append("Password is too short");
+
+            }
+            if (!Account.ACCOUNT_ROLES.Contains(inAccount.Role))
+            {
+                isValid = false;
+                sb.Append($"{inAccount.Role} is not a valid role");
+            }
+            if( isValid)
             {
                 newAccount = new Account()
                 {
@@ -355,10 +371,11 @@ namespace RoutingData.Controllers
             {
                 return NotFound($"No such account in database with id {id}.");
             }
-            Account updatedAccount = ValidateAndMakeNewAccount(inAccount);
+            StringBuilder sb = new StringBuilder();
+            Account updatedAccount = ValidateAndMakeNewAccount(inAccount, sb);
             if( updatedAccount == null )
             {
-                return BadRequest("Details not valid in provided account");
+                return BadRequest($"Details not valid in provided account: {sb.ToString()}");
             }
 
             dbAccount.Username = updatedAccount.Username;
