@@ -2,8 +2,14 @@
 
 namespace RoutingData.DTO
 {
-
-    //Object structure that front end will send to C#
+    /// <summary>
+    ///Object structure that front end will send to C#
+    ///<para>int NumVehicle, 
+    ///string calcType, 
+    ///DateTime DeliveryDate
+    ///List int Orders
+    ///</para> 
+    /// </summary>
     public class RouteRequest
     {
         public int NumVehicle { get; set; }
@@ -13,8 +19,10 @@ namespace RoutingData.DTO
     }
 
 
-
-    //Object structure that frontend expects back from a route calc
+    /// <summary>
+    /// Object structure that frontend expects back from a route calc
+    /// 
+    /// </summary>
     public class CalcRouteOutput
     {
         // has vehicle id and list of OrderDetails

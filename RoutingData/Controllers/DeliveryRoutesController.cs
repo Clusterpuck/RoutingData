@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,8 +23,12 @@ namespace RoutingData.Controllers
     public class DeliveryRoutesController : ControllerBase
     {
 
-
-        //Method to request quantum routes
+        /// <summary>
+        /// Method <c>PythonRequest</c> Method to request quantum calculated routes
+        /// </summary>
+        /// <param name="routesIn"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn)
         {
             string pythonBackendUrl = "https://quantumdeliverybackend.azurewebsites.net/generate-routes";
@@ -92,7 +97,18 @@ namespace RoutingData.Controllers
             }
         }
 
-        private List<CalcRouteOutput> pythonOutputToFront(RouteRequestListDTO routeList, Dictionary<int, OrderDetailsDTO> orderDetailsDict, List<Vehicle> vehicles)
+
+        /// <summary>
+        /// Method <c>PythonOutputToFront</c>
+        /// Using Dictionary of OrderDetails and the RouteList object
+        /// a List of CalcRouteOutput object are generated. To return detailed
+        /// and ordered routes to the front end. 
+        /// </summary>
+        /// <param name="routeList"></param>
+        /// <param name="orderDetailsDict"></param>
+        /// <param name="vehicles"></param>
+        /// <returns></returns>
+        private List<CalcRouteOutput> PythonOutputToFront(RouteRequestListDTO routeList, Dictionary<int, OrderDetailsDTO> orderDetailsDict, List<Vehicle> vehicles)
         {
             //Has a list of list of orderIDs, representing one vehicles routes
 
@@ -373,14 +389,30 @@ namespace RoutingData.Controllers
 #else
         private readonly ApplicationDbContext _context;
 
+
+
         public DeliveryRoutesController(ApplicationDbContext context)
         {
             _context = context;
         }
 
+
+        /// <summary>
+        /// Method <c>UpdateOrderStatus</c> 
+        /// </summary>
+        /// <param name="orderStatusDTO"></param>
+        /// <returns></returns>
         [HttpPost("update-status")]
         public async Task<ActionResult<CalcRouteOutput>> UpdateOrderStatus(OrderStatusDTO orderStatusDTO)
         {
+            //Check if a valid status provided before using ay database requests
+            if( !Order.ORDER_STATUSES.Contains(orderStatusDTO.Status) )
+            {
+                string availableStatuses = string.Join(", ", Order.ORDER_STATUSES);
+                return BadRequest($"Invalid status sent of {orderStatusDTO.Status} +" +
+                    $" Must be either one of: {availableStatuses}");
+            }
+
             // check if the delivery route exists for the driver
             var driverRoute = await _context.DeliveryRoutes
                                     .FirstOrDefaultAsync(r => r.DriverUsername == orderStatusDTO.Username);
@@ -392,7 +424,8 @@ namespace RoutingData.Controllers
 
             // check if the order exists and is part of the driver's delivery route
             var order = await _context.Orders
-                              .FirstOrDefaultAsync(o => o.Id == orderStatusDTO.OrderId && o.DeliveryRouteId == driverRoute.Id);
+                              .FirstOrDefaultAsync(o => o.Id == orderStatusDTO.OrderId && 
+                              o.DeliveryRouteId == driverRoute.Id);
 
             if (order == null)
             {
@@ -404,8 +437,12 @@ namespace RoutingData.Controllers
             _context.Orders.Update(order);
             await _context.SaveChangesAsync();
 
+            //each status update request should return the relevent route it was updated for
             // retrieve all orders for the delivery route
-            var ordersInRoute = await _context.Orders
+            Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrderDetails();
+            CalcRouteOutput routeForFrontend = await DeliveryToCalcRouteOutput(driverRoute, orderDetailsDict);
+
+            /*var ordersInRoute = await _context.Orders
                                         .Join(_context.Locations,
                                                 order => order.LocationId,
                                                 location => location.Id,
@@ -425,18 +462,26 @@ namespace RoutingData.Controllers
             {
                 Orders = ordersInRoute,
                 VehicleId = driverRoute.VehicleLicense
-            };
+            };*/
 
             return Ok(routeForFrontend);
         }
 
+
+        /// <summary>
+        /// Method <c>FrontDataToPythonAsync</c> 
+        /// </summary>
+        /// <param name="frontEndData"></param>
+        /// <returns></returns>
         // ONLINE VERSION
         //converts front end data to the required input for python end point
         private async Task<CalculatingRoutesDTO> FrontDataToPythonDataAsync(RouteRequest frontEndData)
         {
             // Fetch the order details directly from the database based on the provided order IDs
-            var orderDetails = await _context.Orders
-             .Join(_context.Locations,
+            Dictionary<int, OrderDetailsDTO> orderDetails = await GetOrderDetails();
+            /*var orderDetails = await _context.Orders
+             .Join(_context.Locations.
+                Where( location => location.Status == RoutingData.Models.Location.LOCATION_STATUSES[0]), //Active locations only
                  order => order.LocationId,
                  location => location.Id,
                  (order, location) => new OrderDetailsDTO
@@ -446,7 +491,7 @@ namespace RoutingData.Controllers
                      Longitude = location.Longitude
                  })
              .Where(od => frontEndData.Orders.Contains(od.OrderID))
-             .ToDictionaryAsync(od => od.OrderID);
+             .ToDictionaryAsync(od => od.OrderID);*/
 
             // Mapping order details to OrderInRouteDTO
             List<OrderInRouteDTO> routesForPython = new List<OrderInRouteDTO>();
@@ -465,6 +510,22 @@ namespace RoutingData.Controllers
                 routesForPython.Add(routeDTO);
             }
 
+            CalculatingRoutesDTO calcRoute = BuildCalcRoute(frontEndData, routesForPython);
+
+            return calcRoute;
+        }
+
+
+        /// <summary>
+        /// Method <c>BuildCalcRoutes</c>
+        /// Helper method separated out to factor in changes between using literals and options
+        /// Creates an Object used to sent to the Python Quantum request
+        /// </summary>
+        /// <param name="frontEndData"></param>
+        /// <param name="routesForPython"></param>
+        /// <returns></returns>
+        private CalculatingRoutesDTO BuildCalcRoute(RouteRequest frontEndData, List<OrderInRouteDTO> routesForPython)
+        {
             CalculatingRoutesDTO calcRoute = new CalculatingRoutesDTO
             {
                 orders = routesForPython,
@@ -480,11 +541,15 @@ namespace RoutingData.Controllers
                     max_solve_size = 5
                 }
             };
-
             return calcRoute;
         }
 
-
+        /// <summary>
+        /// Method <c>PutDeliveryRoute</c>
+        /// Using endpoint /start/{id} sets all orders in the route to be On_Route
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         // PUT: api/DeliveryRoutes/Start/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("start/{id}")]
@@ -497,16 +562,18 @@ namespace RoutingData.Controllers
             {
                 return NotFound("Delivery route id not in database");
             }
-            //Get all the orders in the route, then set their status to on-route
+            //Get all the active/Planned, not already assigned or on route
+            //orders in the route, then set their status to on-route
             // Find all orders with the specified DeliveryRouteId
             var ordersToUpdate = await _context.Orders
-                .Where(order => order.DeliveryRouteId == id)
+                .Where(order => (order.Status == Order.ORDER_STATUSES[5]) && //All orders must be assigned
+                                (order.DeliveryRouteId == id) )
                 .ToListAsync();
 
             // Update the Status for all found orders
             foreach (var order in ordersToUpdate)
             {
-                order.Status = "on-route";
+                order.Status = Order.ORDER_STATUSES[1];//assigned On-Route
             }
 
             // Save changes to the database
@@ -515,21 +582,39 @@ namespace RoutingData.Controllers
             return Created("", startRoute);
         }
 
-
-            // GET: api/DeliveryRoutes
-            [HttpGet]
+        /// <summary>
+        /// Method <c>GetdeliveryRoutes</c>
+        /// returns a list of full detail routes of all routes in the system. 
+        /// </summary>
+        /// <returns></returns>
+        // GET: api/DeliveryRoutes
+        [HttpGet]
         public async Task<ActionResult<IEnumerable<DeliveryRoute>>> GetDeliveryRoutes()
         {
           if (_context.DeliveryRoutes == null)
           {
               return NotFound();
           }
+            Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrderDetails();
+            List<CalcRouteOutput> routesDetailed = new List<CalcRouteOutput>();
+            List<DeliveryRoute> deliveryRoutes = await _context.DeliveryRoutes.ToListAsync();
+            foreach (var route in deliveryRoutes)
+            {
+                routesDetailed.Add( await DeliveryToCalcRouteOutput(route, orderDetailsDict));
+            }
             return await _context.DeliveryRoutes.ToListAsync();
         }
 
+
+        /// <summary>
+        /// Method <c>CalcRouteOutput</c> 
+        /// Get the delivery and return as a CalcRouteOutput object which offers more detail
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         // GET: api/DeliveryRoutes/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<DeliveryRoute>> GetDeliveryRoute(int id)
+        public async Task<ActionResult<CalcRouteOutput>> GetDeliveryRoute(int id)
         {
           if (_context.DeliveryRoutes == null)
           {
@@ -542,9 +627,15 @@ namespace RoutingData.Controllers
                 return NotFound();
             }
 
-            return deliveryRoute;
+
+            Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrderDetails();
+            CalcRouteOutput routeOutput = await DeliveryToCalcRouteOutput(deliveryRoute, orderDetailsDict);
+
+            return routeOutput;
         }
 
+
+        //Most likely this will be changed in future. 
         // PUT: api/DeliveryRoutes/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
@@ -577,15 +668,22 @@ namespace RoutingData.Controllers
         }
 
 
-
+        /// <summary>
+        /// Method <c>GetOrderDetails</c>
+        /// Populates a Dictionary of OrderDetailDTOs, pulled only from items that have an active status
+        /// </summary>
+        /// <returns></returns>
         private async Task<Dictionary<int, OrderDetailsDTO>> GetOrderDetails()
         {
             var orderDetails = await _context.Orders
-                .Join(_context.Locations,
+                .Where(order => order.Status == Order.ORDER_STATUSES[0])
+                .Join(_context.Locations.
+                    Where(location => location.Status == RoutingData.Models.Location.LOCATION_STATUSES[0]),
                     order => order.LocationId,
                     location => location.Id,
                     (order, location) => new { order, location })
-                .Join(_context.Customers,
+                .Join(_context.Customers.
+                    Where(customer => customer.Status == Customer.CUSTOMER_STATUSES[0]),
                     combined => combined.order.CustomerId,
                     customer => customer.Id,
                     (combined, customer) => new { combined.order, combined.location, customer })
@@ -593,7 +691,8 @@ namespace RoutingData.Controllers
                     combined => combined.order.Id,
                     orderProduct => orderProduct.OrderId,
                     (combined, orderProduct) => new { combined.order, combined.location, combined.customer, orderProduct })
-                .Join(_context.Products,
+                .Join(_context.Products.
+                    Where(product => product.Status == Product.PRODUCT_STATUSES[0]),
                     combined => combined.orderProduct.ProductId,
                     product => product.Id,
                     (combined, product) => new { combined.order, combined.location, combined.customer, product })
@@ -622,7 +721,13 @@ namespace RoutingData.Controllers
 
 
 
-
+        /// <summary>
+        /// Method <CheckRouteMax</c> 
+        /// Confirms the maximum number of drivers hasn't been set
+        /// Otherwise changes value to the max
+        /// </summary>
+        /// <param name="routeRequest"></param>
+        /// <returns></returns>
         private async Task CheckRouteMax(RouteRequest routeRequest)
         {
             // Get the count of drivers (Accounts with Role "Driver")
@@ -644,17 +749,33 @@ namespace RoutingData.Controllers
         }
 
 
+        /// <summary>
+        /// Method <c>AssignPosAndDeliveryAsync</c> Assigns vehicle in order available
+        /// Need to consider vehicle availability in the future
+        /// Date as today and driver in order active
+        /// Then position and route id assigned to each order, in order in each list
+        /// </summary>
+        /// <param name="allRoutesCalced"></param>
+        /// <returns></returns>
         private async Task AssignPosAndDeliveryAsync(List<CalcRouteOutput> allRoutesCalced)
         {
             // Fetch all necessary data from the database
 
-            var ordersDict = await _context.Orders.ToDictionaryAsync(o => o.Id);
-            var drivers = await _context.Accounts.Where(account => account.Role == "Driver").ToListAsync();
-            var vehicles = await _context.Vehicles.ToListAsync();
+            var ordersDict = await _context.Orders.
+                Where(order => order.Status == Order.ORDER_STATUSES[0]).
+                ToDictionaryAsync(o => o.Id);
+            var drivers = await _context.Accounts.
+                Where(account => (account.Role == Account.ACCOUNT_ROLES[0] && //Driver roles only 
+                    account.Status == Account.ACCOUNT_STATUSES[0]) ). //Active Drivers only
+                ToListAsync();
+            var vehicles = await _context.Vehicles.
+                Where(vehicle => vehicle.Status == Vehicle.VEHICLE_STATUSES[0]).//Active vehicles only
+                ToListAsync();
+
 
             for (int i = 0; i < allRoutesCalced.Count; i++)
             {
-                // Create a new DeliveryRoute object
+                // Create and assing values to a new DeliveryRoute object
                 var newRoute = new DeliveryRoute
                 {
                     DeliveryDate = DateTime.Today,
@@ -669,6 +790,7 @@ namespace RoutingData.Controllers
                 await _context.SaveChangesAsync();
 
                 // Assign position number and DeliveryRouteId for each order
+                //assigned based on the returned order from python request
                 int pos = 1;
                 foreach (var orderDetail in allRoutesCalced[i].Orders)
                 {
@@ -676,6 +798,7 @@ namespace RoutingData.Controllers
                     {
                         dbOrder.DeliveryRouteId = newRoute.Id;  // Assign the newly generated DeliveryRouteId
                         dbOrder.PositionNumber = pos;           // Assign the position number
+                        dbOrder.Status = Order.ORDER_STATUSES[5];//Status of order set to assigned
                         pos++;
                     }
                 }
@@ -688,7 +811,12 @@ namespace RoutingData.Controllers
 
         }
 
-
+        /// <summary>
+        /// Method <c>DeleteDeliveryRoute</c> Turns all orders in route back to planned
+        /// And set their position and routeIds to -1 before removing the entity from database
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         // DELETE: api/DeliveryRoutes/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDeliveryRoute(int id)
@@ -702,6 +830,22 @@ namespace RoutingData.Controllers
             {
                 return NotFound();
             }
+            //Need to also set all orders in the route back to planned status, and their deliveryrouteID and position number
+            //to -1 to effectively delete
+           //First need the list of orders assigned to that route
+           List<Order> ordersInRoute = await _context.Orders.
+                Where(order => order.DeliveryRouteId == deliveryRoute.Id). //all orders in route
+                ToListAsync();
+            foreach (var order in ordersInRoute)
+            {
+                order.Status = Order.ORDER_STATUSES[0]; //changes back to planned
+                order.DeliveryRouteId = -1;
+                order.PositionNumber = -1;
+
+                //Marking order as modified
+                _context.Orders.Update(order);
+            }
+
 
             _context.DeliveryRoutes.Remove(deliveryRoute);
             await _context.SaveChangesAsync();
@@ -709,20 +853,31 @@ namespace RoutingData.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Method <c>DeliveryRouteExists</c> helper method to confirm route in database by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         private bool DeliveryRouteExists(int id)
         {
             return (_context.DeliveryRoutes?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 
 
-        private async Task<CalcRouteOutput> deliveryToCalcRouteOutput(DeliveryRoute deliveryRoute)
+        /// <summary>
+        /// Method <c>DeliveryToCalcRouteOutput</c>
+        /// Using the OrderDetails dictionary, populates a CalcRouteOutput object
+        /// For the front end to have the required details
+        /// </summary>
+        /// <param name="deliveryRoute"></param>
+        /// <returns></returns>
+        private async Task<CalcRouteOutput> DeliveryToCalcRouteOutput(DeliveryRoute deliveryRoute, Dictionary<int, OrderDetailsDTO> orderDetailsDict)
         {
             CalcRouteOutput calcRouteOutput = new CalcRouteOutput();
             calcRouteOutput.VehicleId = deliveryRoute.VehicleLicense;
             //TODO Add conversion
 
             //dictionary to reference each order to get details
-            Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrderDetails();
             //This is a dictionary that gets order details from order IDs
             //Now need match orderIDs to the deliveryRoute ID, building a list of order
             //In that route, then converting those to OrderDetails. 
@@ -756,21 +911,64 @@ namespace RoutingData.Controllers
             {
                 return NotFound($"No delivery routes found for driver with username {driverUsername}");
             }
-
-            CalcRouteOutput calcOutput = await deliveryToCalcRouteOutput(driverRoute);
+            Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrderDetails();
+            CalcRouteOutput calcOutput = await DeliveryToCalcRouteOutput(driverRoute, orderDetailsDict);
 
             //Now need to build the CalcRouteOutput and return that object 
 
             return calcOutput;
         }
+        
+        
+        /// <summary>
+        /// Method <c>ValidateRouteRequest</c>
+        /// Confirms is date is future date and all orders exist and are in planned state
+        /// </summary>
+        /// <param name="routeRequest"></param>
+        /// <param name="sb"></param>
+        /// <returns></returns>
+        private async Task<bool> ValidateRouteRequest( RouteRequest routeRequest, StringBuilder sb)
+        {
+            bool valid = true;
+            if (routeRequest.DeliveryDate < DateTime.Now)
+            {
+                sb.AppendLine("Date set before current date");
+                valid = false;
+            }
+            var plannedOrders = await _context.Orders
+                .Where(order => routeRequest.Orders.Contains(order.Id) && 
+                                order.Status == Order.ORDER_STATUSES[0]) //Has "Planned" status, meaning order is not yet assigned a route
+                .ToListAsync();
+
+            if ( routeRequest.Orders.Count != plannedOrders.Count)
+            {
+                sb.AppendLine("One or more orders do not have a 'Planned' status.");
+                valid = false;
+            }
+
+            return valid;
+        }
 #endif
 
 
 
-
+        /// <summary>
+        /// Method <c>PostDeliveryRoute</c>
+        /// Uses the DTO or a list of orders and number of vehicles
+        /// Collects the location of each order and assigns to send to python
+        /// Then convert python output to details needed to front end
+        /// Saves the new route in the database then returns
+        /// </summary>
+        /// <param name="routeRequest"></param>
+        /// <returns></returns>
         [HttpPost]
         public async Task<ActionResult<List<CalcRouteOutput>>> PostDeliveryRoute(RouteRequest routeRequest)
         {
+            StringBuilder sb = new StringBuilder();
+            if (!await ValidateRouteRequest(routeRequest, sb))
+            {//invalid routeRequest object
+                return BadRequest( sb.ToString() );
+            }
             //ensures route doesn't out number the available vehicles or drivers
             await CheckRouteMax(routeRequest);
             try
@@ -782,21 +980,23 @@ namespace RoutingData.Controllers
                 List<Vehicle> vehicles = _offlineDatabase.Vehicles;
 
 #else
+                //Creates a dictionary from the datbase of order details required
                 Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrderDetails();
+
                 // Convert data input to type for Python input
                 CalculatingRoutesDTO calcRoute = await FrontDataToPythonDataAsync(routeRequest);
 
-                List<Vehicle> vehicles = await _context.Vehicles.ToListAsync();
+                List<Vehicle> vehicles = await _context.Vehicles
+                    .Where(vehicle => vehicle.Status == Vehicle.VEHICLE_STATUSES[0])//all active vehicles
+                    .ToListAsync();
 #endif
                 // Make the request to the Python backend
                 RouteRequestListDTO routeRequestListDTO = await PythonRequest(calcRoute);
 
                 Console.WriteLine("Returned object from Python is " + routeRequestListDTO.ToString());
 
-                //TODO Change to only get available vehicles once status set up
-
                 // Convert routeRequestListDTO to CalcRouteOutput
-                List<CalcRouteOutput> allRoutesCalced = pythonOutputToFront(routeRequestListDTO, orderDetailsDict, vehicles);
+                List<CalcRouteOutput> allRoutesCalced = PythonOutputToFront(routeRequestListDTO, orderDetailsDict, vehicles);
 
                 Console.WriteLine("All routes calced object is " + allRoutesCalced.ToString());
 
