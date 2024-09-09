@@ -23,120 +23,6 @@ namespace RoutingData.Controllers
     public class DeliveryRoutesController : ControllerBase
     {
 
-        /// <summary>
-        /// Method <c>PythonRequest</c> Method to request quantum calculated routes
-        /// </summary>
-        /// <param name="routesIn"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn)
-        {
-            string pythonBackendUrl = "https://quantumdeliverybackend.azurewebsites.net/generate-routes";
-            //string pythonBackendUrl = "http://127.0.0.1:8000/generate-routes";
-            using (var httpClient = new HttpClient())
-            {
-                try
-                {
-                    // Serialize the object to JSON
-                    string jsonContent = JsonConvert.SerializeObject(routesIn);
-
-                    // Log the JSON payload
-                    Console.WriteLine("JSON Payload Sent to Python:");
-                    Console.WriteLine(jsonContent);
-
-                    var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-
-                    var request = new HttpRequestMessage(HttpMethod.Post, pythonBackendUrl)
-                    {
-                        Content = content
-                    };
-
-                    // Add a custom header
-                    string backend_token = Environment.GetEnvironmentVariable("BACKEND_TOKEN");
-                    request.Headers.Add("authorisation", "Bearer " + backend_token);
-
-                    // Send the POST request
-                    Console.WriteLine(request.Headers);
-                    HttpResponseMessage response = await httpClient.SendAsync(request);
-
-                    // Check if the request was successful
-                    if (response.IsSuccessStatusCode)
-                    {
-                        // Read and deserialize the response content
-                        string responseContent = await response.Content.ReadAsStringAsync();
-                        RouteRequestListDTO routeResponse = JsonConvert.DeserializeObject<RouteRequestListDTO>(responseContent);
-
-                        // Return the deserialized response
-                        return routeResponse;
-                    }
-                    else
-                    {
-                        // Handle non-successful responses by extracting the error details
-                        string errorContent = await response.Content.ReadAsStringAsync();
-                        throw new HttpRequestException($"Error from Python backend: {response.ReasonPhrase}. Details: {errorContent}");
-                    }
-                }
-                catch (HttpRequestException httpEx)
-                {
-                    // Log the exception and throw a custom error
-                    Console.WriteLine($"HTTP error: {httpEx.Message}");
-                    throw new Exception($"Failed to communicate with the Python backend. {httpEx.Message}.");
-                }
-                catch (JsonSerializationException jsonEx)
-                {
-                    // Log JSON serialization/deserialization errors
-                    Console.WriteLine($"JSON error: {jsonEx.Message}");
-                    throw new Exception("Failed to process the data for the Python backend. Please ensure the data format is correct.");
-                }
-                catch (Exception ex)
-                {
-                    // Log any other exceptions
-                    Console.WriteLine($"General error: {ex.Message}");
-                    throw new Exception($"An unexpected error occurred: {ex.Message}");
-                }
-            }
-        }
-
-
-        /// <summary>
-        /// Method <c>PythonOutputToFront</c>
-        /// Using Dictionary of OrderDetails and the RouteList object
-        /// a List of CalcRouteOutput object are generated. To return detailed
-        /// and ordered routes to the front end. 
-        /// </summary>
-        /// <param name="routeList"></param>
-        /// <param name="orderDetailsDict"></param>
-        /// <param name="vehicles"></param>
-        /// <returns></returns>
-        private List<CalcRouteOutput> PythonOutputToFront(RouteRequestListDTO routeList, Dictionary<int, OrderDetailsDTO> orderDetailsDict, List<Vehicle> vehicles)
-        {
-            //Has a list of list of orderIDs, representing one vehicles routes
-
-            //Full list object to send to frontend, giving all vehicles routes. 
-            List<CalcRouteOutput> allRoutesCalced = new List<CalcRouteOutput>();
-
-            for( int i = 0; i < routeList.Count; i++ )
-            {
-                List<int> route = routeList[i];
-                CalcRouteOutput routeForFrontend = new CalcRouteOutput();
-                List<OrderDetailsDTO> routeDetails = new List<OrderDetailsDTO>();
-                routeForFrontend.VehicleId = vehicles[i].LicensePlate;
-                //For loops generates an ordered and detailed list of routes for each vehicle
-                foreach(int orderID in route )
-                {
-                    OrderDetailsDTO referenceDetails = orderDetailsDict[orderID];
-                    routeDetails.Add(referenceDetails);
-                    Console.WriteLine("Added order detail of " + referenceDetails.Address);
-                }
-                //Vehicle ID assigned by front end after recieving route. 
-                routeForFrontend.Orders = routeDetails;
-                allRoutesCalced.Add(routeForFrontend);
-                Console.WriteLine("Added a route to front end output " + routeForFrontend.ToString());
-            }
-            return allRoutesCalced;
-
-        }
-
 
 #if OFFLINE_DATA
 
@@ -676,7 +562,7 @@ namespace RoutingData.Controllers
         private async Task<Dictionary<int, OrderDetailsDTO>> GetOrderDetails()
         {
             var orderDetails = await _context.Orders
-                .Where(order => order.Status == Order.ORDER_STATUSES[0])
+                // .Where(order => order.Status == Order.ORDER_STATUSES[0])
                 .Join(_context.Locations.
                     Where(location => location.Status == RoutingData.Models.Location.LOCATION_STATUSES[0]),
                     order => order.LocationId,
@@ -732,11 +618,14 @@ namespace RoutingData.Controllers
         {
             // Get the count of drivers (Accounts with Role "Driver")
             var driverCount = await _context.Accounts
-                .Where(account => account.Role == "Driver")
+                .Where(account => ( account.Role == Account.ACCOUNT_ROLES[0] ) && //Only selecting driver role
+                    (account.Status == Account.ACCOUNT_STATUSES[0])) //That is active
                 .CountAsync();
 
             // Get the count of vehicles
-            var vehicleCount = await _context.Vehicles.CountAsync();
+            var vehicleCount = await _context.Vehicles
+                .Where(vehicle => vehicle.Status == Vehicle.VEHICLE_STATUSES[0]) //Only selecting active vehicle
+                .CountAsync();
 
             // Find the minimum of the driver count and vehicle count
             int maxVehicles = Math.Min(driverCount, vehicleCount);
@@ -759,6 +648,7 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         private async Task AssignPosAndDeliveryAsync(List<CalcRouteOutput> allRoutesCalced)
         {
+            Console.WriteLine("Entering Assign Position and Delivery");
             // Fetch all necessary data from the database
 
             var ordersDict = await _context.Orders.
@@ -949,7 +839,121 @@ namespace RoutingData.Controllers
             return valid;
         }
 #endif
+//**Generic helper method for either offline or Online Database
 
+        /// <summary>
+        /// Method <c>PythonRequest</c> Method to request quantum calculated routes
+        /// </summary>
+        /// <param name="routesIn"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn)
+        {
+            string pythonBackendUrl = "https://quantumdeliverybackend.azurewebsites.net/generate-routes";
+            //string pythonBackendUrl = "http://127.0.0.1:8000/generate-routes";
+            using (var httpClient = new HttpClient())
+            {
+                try
+                {
+                    // Serialize the object to JSON
+                    string jsonContent = JsonConvert.SerializeObject(routesIn);
+
+                    // Log the JSON payload
+                    Console.WriteLine("JSON Payload Sent to Python:");
+                    Console.WriteLine(jsonContent);
+
+                    var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                    var request = new HttpRequestMessage(HttpMethod.Post, pythonBackendUrl)
+                    {
+                        Content = content
+                    };
+
+                    // Add a custom header
+                    string backend_token = Environment.GetEnvironmentVariable("BACKEND_TOKEN");
+                    request.Headers.Add("authorisation", "Bearer " + backend_token);
+
+                    // Send the POST request
+                    Console.WriteLine(request.Headers);
+                    HttpResponseMessage response = await httpClient.SendAsync(request);
+
+                    // Check if the request was successful
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Read and deserialize the response content
+                        string responseContent = await response.Content.ReadAsStringAsync();
+                        RouteRequestListDTO routeResponse = JsonConvert.DeserializeObject<RouteRequestListDTO>(responseContent);
+
+                        // Return the deserialized response
+                        return routeResponse;
+                    }
+                    else
+                    {
+                        // Handle non-successful responses by extracting the error details
+                        string errorContent = await response.Content.ReadAsStringAsync();
+                        throw new HttpRequestException($"Error from Python backend: {response.ReasonPhrase}. Details: {errorContent}");
+                    }
+                }
+                catch (HttpRequestException httpEx)
+                {
+                    // Log the exception and throw a custom error
+                    Console.WriteLine($"HTTP error: {httpEx.Message}");
+                    throw new Exception($"Failed to communicate with the Python backend. {httpEx.Message}.");
+                }
+                catch (JsonSerializationException jsonEx)
+                {
+                    // Log JSON serialization/deserialization errors
+                    Console.WriteLine($"JSON error: {jsonEx.Message}");
+                    throw new Exception("Failed to process the data for the Python backend. Please ensure the data format is correct.");
+                }
+                catch (Exception ex)
+                {
+                    // Log any other exceptions
+                    Console.WriteLine($"General error: {ex.Message}");
+                    throw new Exception($"An unexpected error occurred: {ex.Message}");
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Method <c>PythonOutputToFront</c>
+        /// Using Dictionary of OrderDetails and the RouteList object
+        /// a List of CalcRouteOutput object are generated. To return detailed
+        /// and ordered routes to the front end. 
+        /// </summary>
+        /// <param name="routeList"></param>
+        /// <param name="orderDetailsDict"></param>
+        /// <param name="vehicles"></param>
+        /// <returns></returns>
+        private List<CalcRouteOutput> PythonOutputToFront(RouteRequestListDTO routeList, Dictionary<int, OrderDetailsDTO> orderDetailsDict, List<Vehicle> vehicles)
+        {
+            //Has a list of list of orderIDs, representing one vehicles routes
+
+            //Full list object to send to frontend, giving all vehicles routes. 
+            List<CalcRouteOutput> allRoutesCalced = new List<CalcRouteOutput>();
+
+            for (int i = 0; i < routeList.Count; i++)
+            {
+                List<int> route = routeList[i];
+                CalcRouteOutput routeForFrontend = new CalcRouteOutput();
+                List<OrderDetailsDTO> routeDetails = new List<OrderDetailsDTO>();
+                routeForFrontend.VehicleId = vehicles[i].LicensePlate;
+                //For loops generates an ordered and detailed list of routes for each vehicle
+                foreach (int orderID in route)
+                {
+                    OrderDetailsDTO referenceDetails = orderDetailsDict[orderID];
+                    routeDetails.Add(referenceDetails);
+                    Console.WriteLine("Added order detail of " + referenceDetails.Address);
+                }
+                //Vehicle ID assigned by front end after recieving route. 
+                routeForFrontend.Orders = routeDetails;
+                allRoutesCalced.Add(routeForFrontend);
+                Console.WriteLine("Added a route to front end output " + routeForFrontend.ToString());
+            }
+            return allRoutesCalced;
+
+        }
 
 
         /// <summary>
