@@ -230,6 +230,7 @@ namespace RoutingData.Controllers
         /// </summary>
         /// <param name="inAccount"></param>
         /// <returns></returns>
+        /// TODO Update to change to throw exception when invalid and not to assign null object
         private Account ValidateAndMakeNewAccount( AccountInDTO inAccount, StringBuilder sb )
         {
             Account newAccount = null;

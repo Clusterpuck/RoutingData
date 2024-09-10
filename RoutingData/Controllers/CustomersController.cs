@@ -187,6 +187,7 @@ namespace RoutingData.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         // DELETE: api/Customers/5
+        //Should not be able to delete customers that are assigned any active orders at all
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCustomer(int id)
         {
@@ -200,27 +201,22 @@ namespace RoutingData.Controllers
             {
                 return NotFound();
             }
+            //Check for any orders associated that aren't cancelled
             //Sets customer to Inactive instead of deleting
-            customer.Status = Customer.CUSTOMER_STATUSES[1];
-            List<Order> customerOrders = await _context.Orders.
+            List<Order> activeOrders = await _context.Orders.
                 Where(order => order.CustomerId == customer.Id && 
-                    order.Status != Order.ORDER_STATUSES[3] && //not delievered
-                    order.Status != Order.ORDER_STATUSES[4]). //not cancelled
-                ToListAsync();
-            
-            // Remove each order that was found
-            foreach (var order in customerOrders)
+                    order.Status != Order.ORDER_STATUSES[4] && //not cancelled
+                    order.Status != Order.ORDER_STATUSES[5]).//not delivered
+                    ToListAsync(); 
+            //any associated orders that aren't cancelled or delviered should not allow customer to delete
+            if( activeOrders.Any() )
             {
-                var orderProducts = await _context.OrderProducts
-                    .Where(op => op.OrderId == order.Id)
-                    .ToListAsync();
-
-                // Remove all associated OrderProducts
-                _context.OrderProducts.RemoveRange(orderProducts);
-
-                _context.Orders.Remove(order);
+                return BadRequest("Customer has aassociated active orders");
             }
-
+            
+            //set status to inactive
+            customer.Status = Customer.CUSTOMER_STATUSES[1];
+            
             await _context.SaveChangesAsync();
 
             return NoContent();
