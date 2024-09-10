@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Linq;
 using System.Text;
@@ -679,6 +680,9 @@ namespace RoutingData.Controllers
                 // Add the new route to the database and save it to generate the ID
                 _context.DeliveryRoutes.Add(newRoute);
                 await _context.SaveChangesAsync();
+                //save route id to return object
+                allRoutesCalced[i].DeliveryRouteID = newRoute.Id;
+
 
                 // Assign position number and DeliveryRouteId for each order
                 //assigned based on the returned order from python request
@@ -790,11 +794,35 @@ namespace RoutingData.Controllers
 
         }
 
+        bool IsValidEmail(string email)
+        {
+            var trimmedEmail = email.Trim();
+
+            if (trimmedEmail.EndsWith("."))
+            {
+                return false;
+            }
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == trimmedEmail;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         // GET: api/DeliveryRoutes/driver/{driverUsername}
         [HttpGet("driver/{driverUsername}")]
         //[Authorize]
         public async Task<ActionResult<CalcRouteOutput>> GetDeliveryRoutesByDriver(string driverUsername)
         {
+            if (!IsValidEmail(driverUsername) 
+            {
+                return BadRequest("Email is not a valid format");
+            }
+
             DeliveryRoute driverRoute = _context.DeliveryRoutes
                                                .FirstOrDefault(r => r.DriverUsername == driverUsername);
 

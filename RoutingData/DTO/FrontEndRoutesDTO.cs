@@ -31,6 +31,7 @@ namespace RoutingData.DTO
 #else
         public String VehicleId { get; set; }
 #endif
+        public int DeliveryRouteID { get; set; }
         public List<OrderDetailsDTO> Orders { get; set; }
 
         public CalcRouteOutput() {
