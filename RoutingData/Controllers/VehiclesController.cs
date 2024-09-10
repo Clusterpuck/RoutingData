@@ -169,7 +169,15 @@ namespace RoutingData.Controllers
                 return NotFound();
             }
 
-            //_context.Vehicles.Remove(vehicle);
+            //Find any routes that are associated with this vehicle
+            List<DeliveryRoute> routes = await _context.DeliveryRoutes.
+                Where(route => route.VehicleLicense == vehicle.LicensePlate).
+                ToListAsync();
+            if (routes.Any())
+            {
+                return BadRequest("Vehicle is associated with active route");
+            }
+
             vehicle.Status = Vehicle.VEHICLE_STATUSES[2];
             await _context.SaveChangesAsync();
 
