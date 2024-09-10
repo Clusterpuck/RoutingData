@@ -145,7 +145,7 @@ namespace RoutingData.Controllers
 
             // before deleteing, make sure location isnt apart of any active delivery
             bool hasOngoingOrders = await _context.Orders
-                .AnyAsync(order => order.LocationId == id && order.Status != Order.ORDER_STATUSES[4]); 
+                .AnyAsync(order => order.LocationId == id && order.Status != Order.ORDER_STATUSES[1]); 
 
             if (hasOngoingOrders)
             {
@@ -153,7 +153,7 @@ namespace RoutingData.Controllers
             }
 
             // finally, remove location (set to inactive)
-            location.Status = Location.LOCATION_STATUSES[2]; 
+            location.Status = Location.LOCATION_STATUSES[1]; 
             _context.Entry(location).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
