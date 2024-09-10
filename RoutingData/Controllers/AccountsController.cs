@@ -217,8 +217,22 @@ namespace RoutingData.Controllers
             {
                 return Problem($"Invalid details provided: {sb.ToString()}");
             }
-            _context.Accounts.Add(account);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Accounts.Add(account);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                // Check for specific error related to unique constraint violation
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("PRIMARY KEY constraint"))
+                {
+                    return Conflict($"Account with username '{account.Username}' already exists.");
+                }
+
+                // Log and return a general error message
+                return Problem($"An error occurred while trying to add the account. {ex.InnerException}" );
+            }
 
             return CreatedAtAction("GetAccount", new { id = account.Username }, account);
         }

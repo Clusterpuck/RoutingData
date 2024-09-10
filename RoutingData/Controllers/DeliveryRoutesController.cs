@@ -818,7 +818,7 @@ namespace RoutingData.Controllers
         //[Authorize]
         public async Task<ActionResult<CalcRouteOutput>> GetDeliveryRoutesByDriver(string driverUsername)
         {
-            if (!IsValidEmail(driverUsername) 
+            if (!IsValidEmail(driverUsername) )
             {
                 return BadRequest("Email is not a valid format");
             }
