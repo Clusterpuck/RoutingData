@@ -112,14 +112,19 @@ namespace RoutingData.Controllers
         // PUT: api/Vehicles/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutVehicle(String id, Vehicle vehicle)
+        public async Task<IActionResult> PutVehicle(String id, VehicleInDTO vehicle)
         {
             if (id != vehicle.LicensePlate)
             {
                 return BadRequest();
             }
+            Vehicle newVehicle = new Vehicle()
+            {
+                LicensePlate = vehicle.LicensePlate,
+                Status = Vehicle.VEHICLE_STATUSES[0]
+            };
 
-            _context.Entry(vehicle).State = EntityState.Modified;
+            _context.Entry(newVehicle).State = EntityState.Modified;
 
             try
             {
@@ -143,14 +148,36 @@ namespace RoutingData.Controllers
         // POST: api/Vehicles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Vehicle>> PostVehicle(Vehicle vehicle)
+        public async Task<ActionResult<Vehicle>> PostVehicle(VehicleInDTO vehicle)
         {
           if (_context.Vehicles == null)
           {
               return Problem("Entity set 'ApplicationDbContext.Vehicles'  is null.");
           }
-            _context.Vehicles.Add(vehicle);
-            await _context.SaveChangesAsync();
+            Vehicle newVehicle = new Vehicle()
+            {
+                LicensePlate = vehicle.LicensePlate,
+                Status = Vehicle.VEHICLE_STATUSES[0]
+            };
+
+            _context.Vehicles.Add(newVehicle);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+
+            }
+            catch (DbUpdateException ex)
+            {
+                // Check for specific error related to unique constraint violation
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("PRIMARY KEY constraint"))
+                {
+                    return Conflict($"Vehicle with plate '{vehicle.LicensePlate}' already exists.");
+                }
+
+                // Log and return a general error message
+                return Problem($"An error occurred while trying to add the vehicle. {ex.InnerException}");
+            }
 
             return CreatedAtAction("GetVehicle", new { id = vehicle.LicensePlate }, vehicle);
         }
