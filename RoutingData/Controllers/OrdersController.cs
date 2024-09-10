@@ -233,7 +233,7 @@ namespace RoutingData.Controllers
             // check if any product is discontinued
             var productIds = orderDTO.Products.Select(p => p.ProductId).ToList();
             var discontinuedProducts = await _context.Products
-                .Where(p => productIds.Contains(p.Id) && p.Status == "Discontinued")
+                .Where(p => productIds.Contains(p.Id) && p.Status == Product.PRODUCT_STATUSES[2])
                 .ToListAsync();
 
             if (discontinuedProducts.Any())
@@ -243,14 +243,14 @@ namespace RoutingData.Controllers
 
             // check if the customer is inactive
             var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == orderDTO.Order.CustomerId);
-            if (customer == null || customer.Status == "Inactive")
+            if (customer == null || customer.Status == Customer.CUSTOMER_STATUSES[2])
             {
                 return BadRequest("The customer is inactive and cannot place orders.");
             }
 
             // check if the location is inactive
             var location = await _context.Locations.FirstOrDefaultAsync(l => l.Id == orderDTO.Order.LocationId);
-            if (location == null || location.Status == "Inactive")
+            if (location == null || location.Status == Location.LOCATION_STATUSES[2])
             {
                 return BadRequest("The location is inactive and cannot be used for deliveries.");
             }
@@ -284,16 +284,26 @@ namespace RoutingData.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteOrder(int id)
         {
+            // first check if rhere are any orders
             if (_context.Orders == null)
             {
                 return NotFound();
             }
+
+            // then try and find the order by the given ID
             var order = await _context.Orders.FindAsync(id);
             if (order == null)
             {
-                return NotFound();
+                return NotFound("Order not found.");
             }
 
+            // check order status before deleting, make sure it is not delivered
+            if (order.Status == Order.ORDER_STATUSES[4])
+            {
+                return BadRequest("Cannot delete a delivered order.");
+            }
+
+            // remove the order if it hasn't been delivered
             _context.Orders.Remove(order);
             await _context.SaveChangesAsync();
 
