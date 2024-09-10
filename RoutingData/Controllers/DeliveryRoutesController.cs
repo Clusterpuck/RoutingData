@@ -922,31 +922,6 @@ namespace RoutingData.Controllers
         }
 
         /// <summary>
-        /// Recalculates the delivery route for the specified vehicle (limited to 1 vehicle).
-        /// </summary>
-        /// <param name="route">The delivery route to recalculate.</param>
-        /// <param name="orders">The orders that are currently "on-route."</param>
-        /// 
-        //This method doesn't work, uses wrong attribute of the product and is also not in use. 
-        //Will leave commented out for now unti can confirm whether needed or not. 
-       /* private void RecalculateDeliveryRoute(DeliveryRoute route, List<Order> orders)
-        {
-            // Placeholder logic for recalculating the route
-            // This could involve sorting orders based on proximity, delivery windows, etc.
-
-            // Example logic: Sort orders by delivery position or some other criteria.
-            orders = orders.OrderBy(o => o.PositionNumber).ToList();
-
-            // Adjust the route based on the recalculated order
-            route.Orders = orders;
-
-            // Save recalculated route back to the context
-            _context.Update(route);
-            _context.SaveChanges();
-        }*/
-
-
-        /// <summary>
         /// Method <c>PythonOutputToFront</c>
         /// Using Dictionary of OrderDetails and the RouteList object
         /// a List of CalcRouteOutput object are generated. To return detailed
