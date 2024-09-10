@@ -351,6 +351,10 @@ namespace RoutingData.Controllers
         public async Task<ActionResult<Account>> GetAccount(string id)
         {
             // check if the Accounts table exists in the database context
+            if( !IsValidEmail(id))
+            {
+                return BadRequest("Not a valid email");
+            }
             if (_context.Accounts == null)
             {
                 return NotFound("Accounts data is not available.");
