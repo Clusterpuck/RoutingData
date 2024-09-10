@@ -140,9 +140,9 @@ namespace RoutingData.Controllers
                     ProductNames = g.Select(x => x.product.Name).ToList()
                 })
                 .ToList();
-
             return groupedOrderDetails;
         }
+        
 
         // GET: api/Orders/5
         [HttpGet("{id}")]
