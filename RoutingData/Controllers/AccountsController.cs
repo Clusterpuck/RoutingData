@@ -246,6 +246,8 @@ namespace RoutingData.Controllers
                 sb.Append("Password is too short, ");
 
             }
+            //Convert to all upper case to overcome case issues. 
+            inAccount.Role = inAccount.Role.ToUpper();
             if (!Account.ACCOUNT_ROLES.Contains(inAccount.Role))
             {
                 isValid = false;

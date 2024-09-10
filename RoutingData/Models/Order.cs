@@ -5,7 +5,7 @@ namespace RoutingData.Models
     //comment for change
     public class Order
     {
-        public static readonly String[] ORDER_STATUSES = { "Planned", "On-Route", "Delayed", "Delivered", "Cancelled", "Assigned" };
+        public static readonly String[] ORDER_STATUSES = { "PLANNED", "ON-ROUTE", "DELAYED", "DELIVERED", "CANCELLED", "ASSIGNED" };
 
         [Key]
         public int Id { get; set; }
