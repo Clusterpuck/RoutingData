@@ -111,7 +111,7 @@ namespace RoutingData.DTO
                     DateOrdered = DateTime.Now,
                     OrderNotes = "Order 1 Notes",
                     CustomerId = 1,
-                    LocationId = 1,
+                    LocationId = 13,
                     DeliveryRouteId = 1,
                     PositionNumber = 1,
                     Status = "planned"
@@ -137,7 +137,84 @@ namespace RoutingData.DTO
                     DeliveryRouteId = 2,
                     PositionNumber = 3,
                     Status = "planned"
-                }
+                },
+                new Order
+                {
+                    Id = 4,
+                    DateOrdered = DateTime.Now.AddDays(-3),
+                    OrderNotes = "Order 4 Notes",
+                    CustomerId = 4,
+                    LocationId = 4,
+                    DeliveryRouteId = -1,
+                    PositionNumber = -1,
+                    Status = "planned"
+                },
+                new Order
+                {
+                    Id = 5,
+                    DateOrdered = DateTime.Now.AddDays(-3),
+                    OrderNotes = "Order 5 Notes",
+                    CustomerId = 5,
+                    LocationId = 5,
+                    DeliveryRouteId = -1,
+                    PositionNumber = -1,
+                    Status = "planned"
+                },
+                new Order
+                {
+                    Id = 6,
+                    DateOrdered = DateTime.Now.AddDays(-3),
+                    OrderNotes = "Order 6 Notes",
+                    CustomerId = 6,
+                    LocationId = 6,
+                    DeliveryRouteId = -1,
+                    PositionNumber = -1,
+                    Status = "planned"
+                },
+                new Order
+                {
+                    Id = 7,
+                    DateOrdered = DateTime.Now.AddDays(-3),
+                    OrderNotes = "Order 7 Notes",
+                    CustomerId = 7,
+                    LocationId = 12,
+                    DeliveryRouteId = -1,
+                    PositionNumber = -1,
+                    Status = "planned"
+                },
+                new Order
+                {
+                    Id = 8,
+                    DateOrdered = DateTime.Now.AddDays(-2),
+                    OrderNotes = "Order 8 Notes",
+                    CustomerId = 8,
+                    LocationId = 8,
+                    DeliveryRouteId = -1,
+                    PositionNumber = -1,
+                    Status = "planned"
+                },
+                new Order
+                {
+                    Id = 9,
+                    DateOrdered = DateTime.Now.AddDays(-1),
+                    OrderNotes = "Order 9 Notes",
+                    CustomerId = 9,
+                    LocationId = 9,
+                    DeliveryRouteId = -1,
+                    PositionNumber = -1,
+                    Status = "planned"
+                },
+                new Order
+                {
+                    Id = 10,
+                    DateOrdered = DateTime.Now.AddDays(-4),
+                    OrderNotes = "Order 10 Notes",
+                    CustomerId = 5,
+                    LocationId = 11,
+                    DeliveryRouteId = -1,
+                    PositionNumber = -1,
+                    Status = "planned"
+                },
             };
         }
 
