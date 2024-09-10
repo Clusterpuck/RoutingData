@@ -137,13 +137,14 @@ namespace RoutingData.Controllers
                     Longitude = g.Key.location.Longitude,
                     CustomerName = g.Key.customer.Name,
                     CustomerPhone = g.Key.customer.Phone,
+                    Status = g.Key.order.Status,//NickW Added
                     ProductNames = g.Select(x => x.product.Name).ToList()
                 })
                 .ToList();
             return groupedOrderDetails;
         }
         
-
+        //TODO Can add get order by status
         // GET: api/Orders/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Order>> GetOrder(int id)
@@ -162,6 +163,7 @@ namespace RoutingData.Controllers
             return order;
         }
 
+        //TODO Edit to use OrderWithProductsDTO
         // PUT: api/Orders/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
@@ -302,7 +304,7 @@ namespace RoutingData.Controllers
             {
                 return BadRequest("Cannot delete a delivered order.");
             }
-
+            //NICKW should jut change to 
             // remove the order if it hasn't been delivered
             _context.Orders.Remove(order);
             await _context.SaveChangesAsync();
