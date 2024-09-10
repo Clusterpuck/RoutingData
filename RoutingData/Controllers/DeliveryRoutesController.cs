@@ -926,7 +926,10 @@ namespace RoutingData.Controllers
         /// </summary>
         /// <param name="route">The delivery route to recalculate.</param>
         /// <param name="orders">The orders that are currently "on-route."</param>
-        private void RecalculateDeliveryRoute(DeliveryRoute route, List<Order> orders)
+        /// 
+        //This method doesn't work, uses wrong attribute of the product and is also not in use. 
+        //Will leave commented out for now unti can confirm whether needed or not. 
+       /* private void RecalculateDeliveryRoute(DeliveryRoute route, List<Order> orders)
         {
             // Placeholder logic for recalculating the route
             // This could involve sorting orders based on proximity, delivery windows, etc.
@@ -940,7 +943,7 @@ namespace RoutingData.Controllers
             // Save recalculated route back to the context
             _context.Update(route);
             _context.SaveChanges();
-        }
+        }*/
 
 
         /// <summary>
