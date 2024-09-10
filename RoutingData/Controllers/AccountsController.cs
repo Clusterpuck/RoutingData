@@ -386,17 +386,21 @@ namespace RoutingData.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAccount(string id, AccountInDTO inAccount)
         {
-            //check if the account id exists in database
-            Account dbAccount = await _context.Accounts.FindAsync(id);
-            if (dbAccount == null )
+            if( !IsValidEmail(id) || !IsValidEmail(inAccount.Username) )
             {
-                return NotFound($"No such account in database with id {id}.");
+                return BadRequest("Not a valid email");
             }
+            //check if the account id exists in database
             StringBuilder sb = new StringBuilder();
             Account updatedAccount = ValidateAndMakeNewAccount(inAccount, sb);
             if( updatedAccount == null )
             {
                 return BadRequest($"Details not valid in provided account: {sb.ToString()}");
+            }
+            Account dbAccount = await _context.Accounts.FindAsync(id);
+            if (dbAccount == null )
+            {
+                return NotFound($"No such account in database with id {id}.");
             }
 
             dbAccount.Username = updatedAccount.Username;
