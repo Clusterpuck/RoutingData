@@ -193,9 +193,28 @@ namespace RoutingData.Controllers
             return Created("", order);
         }
 
-        // POST: api/Orders
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        /// <summary>
+        /// Adds a new order to the system.
+        /// </summary>
+        /// <param name="orderDTO">The data transfer object containing the order and its associated products.</param>
+        /// <returns>
+        /// Returns the created order along with the route to retrieve the order if successful. 
+        /// Returns a <see cref="BadRequestResult"/> if:
+        /// <list type="bullet">
+        /// <item><description>Any product in the order is discontinued.</description></item>
+        /// <item><description>The customer is inactive.</description></item>
+        /// <item><description>The location is inactive.</description></item>
+        /// <item><description>The delivery date is not in the future.</description></item>
+        /// </list>
+        /// Returns a <see cref="UnauthorizedResult"/> if the user token is invalid.
+        /// </returns>
+        /// <remarks>
+        /// This method also sets the customer ID from the user's authentication token.
+        /// </remarks>
+
+
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Order>> PostOrder(OrderWithProductsDTO orderDTO)
         {
             if (_context.Orders == null || _context.OrderProducts == null)
@@ -203,11 +222,52 @@ namespace RoutingData.Controllers
                 return Problem("Entity sets 'ApplicationDbContext.Orders' or 'ApplicationDbContext.OrderProducts' are null.");
             }
 
-            // Add the Order
+            // retrieve user information from token
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserID");
+            if (userIdClaim == null)
+            {
+                return Unauthorized("Invalid token or user not found.");
+            }
+            var userId = int.Parse(userIdClaim.Value);
+
+            // check if any product is discontinued
+            var productIds = orderDTO.Products.Select(p => p.ProductId).ToList();
+            var discontinuedProducts = await _context.Products
+                .Where(p => productIds.Contains(p.Id) && p.Status == "Discontinued")
+                .ToListAsync();
+
+            if (discontinuedProducts.Any())
+            {
+                return BadRequest("Some products are discontinued and cannot be ordered.");
+            }
+
+            // check if the customer is inactive
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == orderDTO.Order.CustomerId);
+            if (customer == null || customer.Status == "Inactive")
+            {
+                return BadRequest("The customer is inactive and cannot place orders.");
+            }
+
+            // check if the location is inactive
+            var location = await _context.Locations.FirstOrDefaultAsync(l => l.Id == orderDTO.Order.LocationId);
+            if (location == null || location.Status == "Inactive")
+            {
+                return BadRequest("The location is inactive and cannot be used for deliveries.");
+            }
+
+            // check if the delivery date is greater than today
+            if (orderDTO.Order.DeliveryDate <= DateTime.Today)
+            {
+                return BadRequest("Delivery date must be greater than today.");
+            }
+
+            // add the Order
             var order = orderDTO.Order;
+            order.CustomerId = userId;  // set account by token
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
+            // add the products
             foreach (var product in orderDTO.Products)
             {
                 product.OrderId = order.Id;
@@ -218,6 +278,7 @@ namespace RoutingData.Controllers
 
             return CreatedAtAction("GetOrder", new { id = order.Id }, order);
         }
+
 
         // DELETE: api/Orders/5
         [HttpDelete("{id}")]

@@ -448,6 +448,7 @@ namespace RoutingData.Controllers
             {
                 return NotFound("Delivery route id not in database");
             }
+
             //Get all the active/Planned, not already assigned or on route
             //orders in the route, then set their status to on-route
             // Find all orders with the specified DeliveryRouteId
@@ -918,6 +919,27 @@ namespace RoutingData.Controllers
                     throw new Exception($"An unexpected error occurred: {ex.Message}");
                 }
             }
+        }
+
+        /// <summary>
+        /// Recalculates the delivery route for the specified vehicle (limited to 1 vehicle).
+        /// </summary>
+        /// <param name="route">The delivery route to recalculate.</param>
+        /// <param name="orders">The orders that are currently "on-route."</param>
+        private void RecalculateDeliveryRoute(DeliveryRoute route, List<Order> orders)
+        {
+            // Placeholder logic for recalculating the route
+            // This could involve sorting orders based on proximity, delivery windows, etc.
+
+            // Example logic: Sort orders by delivery position or some other criteria.
+            orders = orders.OrderBy(o => o.PositionNumber).ToList();
+
+            // Adjust the route based on the recalculated order
+            route.Orders = orders;
+
+            // Save recalculated route back to the context
+            _context.Update(route);
+            _context.SaveChanges();
         }
 
 
