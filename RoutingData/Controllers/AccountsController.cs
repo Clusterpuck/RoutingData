@@ -451,6 +451,10 @@ namespace RoutingData.Controllers
             {
                 return BadRequest("Invalid client request");
             }
+            if( !IsValidEmail(loginDetails.Username) || loginDetails.Password.Length < Account.PASSWORD_LENGTH )
+            {
+                return BadRequest("Invalid request data");
+            }
 
             // check if the user exists in the database with matching username and password
             var user = await _context.Accounts
