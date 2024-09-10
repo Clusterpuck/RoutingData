@@ -126,22 +126,35 @@ namespace RoutingData.Controllers
 
             return CreatedAtAction("GetLocation", new { id = location.Id }, location);
         }
-
         // DELETE: api/Locations/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLocation(int id)
         {
+            // first check location table isnt empty
             if (_context.Locations == null)
             {
-                return NotFound();
+                return NotFound("Location data not available.");
             }
+
+            // then find the location by the given ID
             var location = await _context.Locations.FindAsync(id);
             if (location == null)
             {
-                return NotFound();
+                return NotFound("Location not found.");
             }
 
-            _context.Locations.Remove(location);
+            // before deleteing, make sure location isnt apart of any active delivery
+            bool hasOngoingOrders = await _context.Orders
+                .AnyAsync(order => order.LocationId == id && order.Status != Order.ORDER_STATUSES[1]); 
+
+            if (hasOngoingOrders)
+            {
+                return BadRequest("Cannot delete location as it is associated with ongoing orders, please wait for orders to be completed and then try again.");
+            }
+
+            // finally, remove location (set to inactive)
+            location.Status = Location.LOCATION_STATUSES[1]; 
+            _context.Entry(location).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
             return NoContent();

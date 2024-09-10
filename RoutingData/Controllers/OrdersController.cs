@@ -235,7 +235,7 @@ namespace RoutingData.Controllers
             // check if any product is discontinued
             var productIds = orderDTO.Products.Select(p => p.ProductId).ToList();
             var discontinuedProducts = await _context.Products
-                .Where(p => productIds.Contains(p.Id) && p.Status == Product.PRODUCT_STATUSES[2])
+                .Where(p => productIds.Contains(p.Id) && p.Status == Product.PRODUCT_STATUSES[1])
                 .ToListAsync();
 
             if (discontinuedProducts.Any())
@@ -245,14 +245,14 @@ namespace RoutingData.Controllers
 
             // check if the customer is inactive
             var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == orderDTO.Order.CustomerId);
-            if (customer == null || customer.Status == Customer.CUSTOMER_STATUSES[2])
+            if (customer == null || customer.Status == Customer.CUSTOMER_STATUSES[1])
             {
                 return BadRequest("The customer is inactive and cannot place orders.");
             }
 
             // check if the location is inactive
             var location = await _context.Locations.FirstOrDefaultAsync(l => l.Id == orderDTO.Order.LocationId);
-            if (location == null || location.Status == Location.LOCATION_STATUSES[2])
+            if (location == null || location.Status == Location.LOCATION_STATUSES[1])
             {
                 return BadRequest("The location is inactive and cannot be used for deliveries.");
             }
@@ -300,13 +300,13 @@ namespace RoutingData.Controllers
             }
 
             // check order status before deleting, make sure it is not delivered
-            if (order.Status == Order.ORDER_STATUSES[4])
+            if (order.Status == Order.ORDER_STATUSES[3])
             {
                 return BadRequest("Cannot delete a delivered order.");
             }
             //NICKW should jut change to 
             // remove the order if it hasn't been delivered
-            _context.Orders.Remove(order);
+            order.Status = Order.ORDER_STATUSES[4];
             await _context.SaveChangesAsync();
 
             return NoContent();
