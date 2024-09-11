@@ -114,7 +114,7 @@ namespace RoutingData.DTO
                     DateOrdered = DateTime.Now,
                     OrderNotes = "Order 1 Notes",
                     CustomerId = 1,
-                    LocationId = 1,
+                    LocationId = 13,
                     DeliveryRouteId = 1,
                     PositionNumber = 1,
                     Status = Order.ORDER_STATUSES[0]
@@ -139,6 +139,7 @@ namespace RoutingData.DTO
                     LocationId = 3,
                     DeliveryRouteId = 2,
                     PositionNumber = 3,
+
                     Status = Order.ORDER_STATUSES[0]
                 }
             };
