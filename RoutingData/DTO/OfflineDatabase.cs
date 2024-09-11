@@ -11,7 +11,7 @@ namespace RoutingData.DTO
             BuildProducts();
             BuildOrders();
             BuildProductOrders();
-            BuildVehicles();
+            //BuildVehicles();
             BuildAccounts();
             deliveryRoutes = new List<DeliveryRoute>();
         }
@@ -38,33 +38,35 @@ namespace RoutingData.DTO
             }
         }
 
-        private void BuildVehicles()
+        /*private void BuildVehicles()
         {
             Vehicles = new List<Vehicle>
             {
-                new Vehicle { Id = 1, LicensePlate = "Terminator" },
-                new Vehicle { Id = 2, LicensePlate = "RoadRunner" },
-                new Vehicle { Id = 3, LicensePlate = "Thunderbolt" },
-                new Vehicle { Id = 4, LicensePlate = "SilverBullet" },
-                new Vehicle { Id = 5, LicensePlate = "Falcon" },
-                new Vehicle { Id = 6, LicensePlate = "Lightning" },
+                new Vehicle { Id = 1, LicensePlate = "Terminator", Status = Vehicle.VEHICLE_STATUSES[0] },
+                new Vehicle { Id = 2, LicensePlate = "RoadRunner", Status = Vehicle.VEHICLE_STATUSES[0] },
+                new Vehicle { Id = 3, LicensePlate = "Thunderbolt", Status = Vehicle.VEHICLE_STATUSES[0] },
+                new Vehicle { Id = 4, LicensePlate = "SilverBullet", Status = Vehicle.VEHICLE_STATUSES[0] },
+                new Vehicle { Id = 5, LicensePlate = "Falcon", Status = Vehicle.VEHICLE_STATUSES[0] },
+                new Vehicle { Id = 6, LicensePlate = "Lightning", Status = Vehicle.VEHICLE_STATUSES[0] },
+
             };
-        }
+        }*/
 
         private void BuildAccounts()
         {
             Accounts = new List<Account>
             {
-                new Account { Username = "admin1@email.com", Password = "password1", Role = "Admin" },
-                new Account { Username = "admin2@email.com", Password = "password2", Role = "Admin" },
-                new Account { Username = "admin3@email.com", Password = "password3", Role = "Admin" },
-                new Account { Username = "admin@example.com", Password = "admin123", Role = "Admin" },
-                new Account { Username = "Bob1", Name = "Bob", Phone = "555 123 456", Password = "password123", Role = "Driver" },
-                new Account { Username = "Alice1", Name = "Alice", Phone = "555 234 567", Password = "password456", Role = "Driver" },
-                new Account { Username = "Charlie1", Name = "Charlie", Phone = "555 345 678", Password = "password789", Role = "Driver" },
-                new Account { Username = "Diana1", Name = "Diana", Phone = "555 456 789", Password = "password101", Role = "Driver" },
-                new Account { Username = "Eve1", Name = "Eve", Phone = "555 567 890", Password = "password102", Role = "Driver" },
-                new Account { Username = "Frank1", Name = "Frank", Phone = "555 678 901", Password = "password103", Role = "Driver" },
+                new Account { Username = "admin1@email.com", Password = "password1", Role = "Admin", Status = Account.ACCOUNT_STATUSES[0] },
+                new Account { Username = "admin2@email.com", Password = "password2", Role = "Admin", Status = Account.ACCOUNT_STATUSES[0] },
+                new Account { Username = "admin3@email.com", Password = "password3", Role = "Admin", Status = Account.ACCOUNT_STATUSES[0] },
+                new Account { Username = "admin@example.com", Password = "admin123", Role = "Admin", Status = Account.ACCOUNT_STATUSES[0] },
+                new Account { Username = "Bob1", Name = "Bob", Phone = "555 123 456", Password = "password123", Role = "Driver", Status = Account.ACCOUNT_STATUSES[0] },
+                new Account { Username = "Alice1", Name = "Alice", Phone = "555 234 567", Password = "password456", Role = "Driver", Status = Account.ACCOUNT_STATUSES[0] },
+                new Account { Username = "Charlie1", Name = "Charlie", Phone = "555 345 678", Password = "password789", Role = "Driver", Status = Account.ACCOUNT_STATUSES[0] },
+                new Account { Username = "Diana1", Name = "Diana", Phone = "555 456 789", Password = "password101", Role = "Driver", Status = Account.ACCOUNT_STATUSES[0] },
+                new Account { Username = "Eve1", Name = "Eve", Phone = "555 567 890", Password = "password102", Role = "Driver", Status = Account.ACCOUNT_STATUSES[0] },
+                new Account { Username = "Frank1", Name = "Frank", Phone = "555 678 901", Password = "password103", Role = "Driver", Status = Account.ACCOUNT_STATUSES[0] },
+
             };
 
         }
@@ -73,19 +75,20 @@ namespace RoutingData.DTO
         {
             Locations = new List<Location>
             {
-                new Location { Id = 1, Longitude = 115.8146751, Latitude = -32.1375223, Address = "42 Wallaby Way", Suburb = "Bertram", State = "WA", Country = "Australia", PostCode = 6167, Description = "Fake Address" },
-                new Location { Id = 2, Longitude = 115.8146732, Latitude = -32.1375187, Address = "21 Peregrine Circle", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description" },
-                new Location { Id = 3, Longitude = 115.8130603, Latitude = -32.1404435, Address = "66 Mannikin Heights", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description" },
-                new Location { Id = 4, Longitude = 115.79835, Latitude = -32.13816, Address = "128 Fanstone Avenue", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description" },
-                new Location { Id = 5, Longitude = 115.79112, Latitude = -32.13816, Address = "54 Fanstone Avenue", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description" },
-                new Location { Id = 6, Longitude = 115.80386, Latitude = -32.15274, Address = "32 Holmes Road", Suburb = "Munster", State = "Western Australia", Country = "Australia", PostCode = 6166, Description = "No Description" },
-                new Location { Id = 7, Longitude = 115.8130603, Latitude = -32.1404435, Address = "66 Mannikin Heights", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description" },
-                new Location { Id = 8, Longitude = 115.799275, Latitude = -32.133987, Address = "143 East Churchill Avenue", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description" },
-                new Location { Id = 9, Longitude = 115.8084911, Latitude = -32.135661, Address = "143 Tindal Avenue", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description" },
-                new Location { Id = 10, Longitude = 115.8130603, Latitude = -32.1404435, Address = "66 Mannikin Heights", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description" },
-                new Location { Id = 11, Longitude = 115.8145594, Latitude = -32.1386723, Address = "43 Peregrine Circle", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description" },
-                new Location { Id = 12, Longitude = 115.810722, Latitude = -32.136686, Address = "8 Retusa Street", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description" },
-                new Location { Id = 13, Longitude = 115.897796, Latitude = -31.984252, Address = "243b Gloucester Street", Suburb = "East Victoria Park", State = "Western Australia", Country = "Australia", PostCode = 6101, Description = "No Description" }
+                new Location { Id = 1, Longitude = 115.8146751, Latitude = -32.1375223, Address = "42 Wallaby Way", Suburb = "Bertram", State = "WA", Country = "Australia", PostCode = 6167, Description = "Fake Address", Status = Location.LOCATION_STATUSES[0] },
+                new Location { Id = 2, Longitude = 115.8146732, Latitude = -32.1375187, Address = "21 Peregrine Circle", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description", Status = Location.LOCATION_STATUSES[0] },
+                new Location { Id = 3, Longitude = 115.8130603, Latitude = -32.1404435, Address = "66 Mannikin Heights", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description", Status = Location.LOCATION_STATUSES[0] },
+                new Location { Id = 4, Longitude = 115.79835, Latitude = -32.13816, Address = "128 Fanstone Avenue", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description", Status = Location.LOCATION_STATUSES[0] },
+                new Location { Id = 5, Longitude = 115.79112, Latitude = -32.13816, Address = "54 Fanstone Avenue", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description", Status = Location.LOCATION_STATUSES[0] },
+                new Location { Id = 6, Longitude = 115.80386, Latitude = -32.15274, Address = "32 Holmes Road", Suburb = "Munster", State = "Western Australia", Country = "Australia", PostCode = 6166, Description = "No Description", Status = Location.LOCATION_STATUSES[0] },
+                new Location { Id = 7, Longitude = 115.8130603, Latitude = -32.1404435, Address = "66 Mannikin Heights", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description", Status = Location.LOCATION_STATUSES[0] },
+                new Location { Id = 8, Longitude = 115.799275, Latitude = -32.133987, Address = "143 East Churchill Avenue", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description", Status = Location.LOCATION_STATUSES[0] },
+                new Location { Id = 9, Longitude = 115.8084911, Latitude = -32.135661, Address = "143 Tindal Avenue", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description", Status = Location.LOCATION_STATUSES[0] },
+                new Location { Id = 10, Longitude = 115.8130603, Latitude = -32.1404435, Address = "66 Mannikin Heights", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description", Status = Location.LOCATION_STATUSES[0] },
+                new Location { Id = 11, Longitude = 115.8145594, Latitude = -32.1386723, Address = "43 Peregrine Circle", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description", Status = Location.LOCATION_STATUSES[0] },
+                new Location { Id = 12, Longitude = 115.810722, Latitude = -32.136686, Address = "8 Retusa Street", Suburb = "Beeliar", State = "Western Australia", Country = "Australia", PostCode = 6164, Description = "No Description", Status = Location.LOCATION_STATUSES[0] },
+                new Location { Id = 13, Longitude = 115.897796, Latitude = -31.984252, Address = "243b Gloucester Street", Suburb = "East Victoria Park", State = "Western Australia", Country = "Australia", PostCode = 6101, Description = "No Description", Status = Location.LOCATION_STATUSES[0] },
+
             };
 
         }
@@ -94,11 +97,11 @@ namespace RoutingData.DTO
         {
             Products = new List<Product>
             {
-                new Product { Id = 1, Name = "Apples", UnitOfMeasure = "Kilograms" },
-                new Product { Id = 2, Name = "Milk", UnitOfMeasure = "Liters" },
-                new Product { Id = 3, Name = "Steel Beams", UnitOfMeasure = "Meters" },
-                new Product { Id = 4, Name = "Nails", UnitOfMeasure = "Kilograms" },
-                new Product { Id = 5, Name = "Pallets", UnitOfMeasure = "Pallets" }
+                new Product { Id = 1, Name = "Apples", UnitOfMeasure = "Kilograms", Status = Product.PRODUCT_STATUSES[0] },
+                new Product { Id = 2, Name = "Milk", UnitOfMeasure = "Liters", Status = Product.PRODUCT_STATUSES[0] },
+                new Product { Id = 3, Name = "Steel Beams", UnitOfMeasure = "Meters", Status = Product.PRODUCT_STATUSES[0] },
+                new Product { Id = 4, Name = "Nails", UnitOfMeasure = "Kilograms", Status = Product.PRODUCT_STATUSES[0] },
+                new Product { Id = 5, Name = "Pallets", UnitOfMeasure = "Pallets", Status = Product.PRODUCT_STATUSES[0] }
             };
         }
 
@@ -114,7 +117,7 @@ namespace RoutingData.DTO
                     LocationId = 13,
                     DeliveryRouteId = 1,
                     PositionNumber = 1,
-                    Status = "planned"
+                    Status = Order.ORDER_STATUSES[0]
                 },
                 new Order
                 {
@@ -125,7 +128,7 @@ namespace RoutingData.DTO
                     LocationId = 2,
                     DeliveryRouteId = 1,
                     PositionNumber = 2,
-                    Status = "planned"
+                    Status = Order.ORDER_STATUSES[0]
                 },
                 new Order
                 {
@@ -136,85 +139,9 @@ namespace RoutingData.DTO
                     LocationId = 3,
                     DeliveryRouteId = 2,
                     PositionNumber = 3,
-                    Status = "planned"
-                },
-                new Order
-                {
-                    Id = 4,
-                    DateOrdered = DateTime.Now.AddDays(-3),
-                    OrderNotes = "Order 4 Notes",
-                    CustomerId = 4,
-                    LocationId = 4,
-                    DeliveryRouteId = -1,
-                    PositionNumber = -1,
-                    Status = "planned"
-                },
-                new Order
-                {
-                    Id = 5,
-                    DateOrdered = DateTime.Now.AddDays(-3),
-                    OrderNotes = "Order 5 Notes",
-                    CustomerId = 5,
-                    LocationId = 5,
-                    DeliveryRouteId = -1,
-                    PositionNumber = -1,
-                    Status = "planned"
-                },
-                new Order
-                {
-                    Id = 6,
-                    DateOrdered = DateTime.Now.AddDays(-3),
-                    OrderNotes = "Order 6 Notes",
-                    CustomerId = 6,
-                    LocationId = 6,
-                    DeliveryRouteId = -1,
-                    PositionNumber = -1,
-                    Status = "planned"
-                },
-                new Order
-                {
-                    Id = 7,
-                    DateOrdered = DateTime.Now.AddDays(-3),
-                    OrderNotes = "Order 7 Notes",
-                    CustomerId = 7,
-                    LocationId = 12,
-                    DeliveryRouteId = -1,
-                    PositionNumber = -1,
-                    Status = "planned"
-                },
-                new Order
-                {
-                    Id = 8,
-                    DateOrdered = DateTime.Now.AddDays(-2),
-                    OrderNotes = "Order 8 Notes",
-                    CustomerId = 8,
-                    LocationId = 8,
-                    DeliveryRouteId = -1,
-                    PositionNumber = -1,
-                    Status = "planned"
-                },
-                new Order
-                {
-                    Id = 9,
-                    DateOrdered = DateTime.Now.AddDays(-1),
-                    OrderNotes = "Order 9 Notes",
-                    CustomerId = 9,
-                    LocationId = 9,
-                    DeliveryRouteId = -1,
-                    PositionNumber = -1,
-                    Status = "planned"
-                },
-                new Order
-                {
-                    Id = 10,
-                    DateOrdered = DateTime.Now.AddDays(-4),
-                    OrderNotes = "Order 10 Notes",
-                    CustomerId = 5,
-                    LocationId = 11,
-                    DeliveryRouteId = -1,
-                    PositionNumber = -1,
-                    Status = "planned"
-                },
+
+                    Status = Order.ORDER_STATUSES[0]
+                }
             };
         }
 
@@ -259,7 +186,7 @@ namespace RoutingData.DTO
         }
 
         //this is the offline version, will also need an online version. 
-        public Dictionary<int, OrderDetail> MakeOrdersDictionary()
+        public Dictionary<int, OrderDetailsDTO> MakeOrdersDictionary()
         {
 
             Dictionary<int, RoutingData.Models.Location> locationDict =
@@ -269,8 +196,8 @@ namespace RoutingData.DTO
             Dictionary<int, Product> productDict =
                 Products.ToDictionary(p => p.Id);
 
-            Dictionary<int, OrderDetail> orderDetailsDict =
-                new Dictionary<int, OrderDetail>();
+            Dictionary<int, OrderDetailsDTO> orderDetailsDict =
+                new Dictionary<int, OrderDetailsDTO>();
 
             foreach (Order order in Orders)
             {
@@ -292,19 +219,19 @@ namespace RoutingData.DTO
                 }
 
                 // Create an OrderDetail object
-                OrderDetail orderDetail = new OrderDetail
+                OrderDetailsDTO orderDetail = new OrderDetailsDTO
                 {
-                    OrderId = order.Id,
-                    Addr = location.Address,
-                    Lat = location.Latitude,
-                    Lon = location.Longitude,
+                    OrderID = order.Id,
+                    Address = location.Address,
+                    Latitude = location.Latitude,
+                    Longitude = location.Longitude,
                     Status = order.Status,
                     CustomerName = customer.Name,
-                    Phone = customer.Phone,
-                    ProdNames = productNames,
+                    CustomerPhone = customer.Phone,
+                    ProductNames = productNames,
                     Position = order.PositionNumber,
                     DeliveryDate = order.DeliveryDate,
-                    Notes = order.OrderNotes,
+                    OrderNotes = order.OrderNotes,
                 };
 
                 // Add the orderDetail to the Hashtable using the OrderId as the key

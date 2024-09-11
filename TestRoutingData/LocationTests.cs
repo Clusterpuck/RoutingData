@@ -13,12 +13,12 @@ namespace TestRoutingData
     {
         private readonly LocationsController _locationController;
 
+#if OFFLINE_DATA
         public LocationTests()
         {
             _locationController = new LocationsController(TestServiceProvider.OfflineDatabaseInstance);
         }
 
-#if OFFLINE_DATA
 
         [Fact]
         public async Task Get_Locations()

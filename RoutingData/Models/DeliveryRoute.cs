@@ -11,7 +11,11 @@ namespace RoutingData.Models
         public int CreatorAdminId { get; set; }
         public DateTime TimeCreated { get; set; }
         public DateTime DeliveryDate {  get; set; }
+#if OFFLINE_DATA
         public int VehicleId { get; set; }
+#else
+        public String VehicleLicense { get; set; }
+#endif
         public String DriverUsername { get; set; }
     }
 }

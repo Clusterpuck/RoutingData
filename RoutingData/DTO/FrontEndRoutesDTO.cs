@@ -2,8 +2,14 @@
 
 namespace RoutingData.DTO
 {
-
-    //Object structure that front end will send to C#
+    /// <summary>
+    ///Object structure that front end will send to C#
+    ///<para>int NumVehicle, 
+    ///string calcType, 
+    ///DateTime DeliveryDate
+    ///List int Orders
+    ///</para> 
+    /// </summary>
     public class RouteRequest
     {
         public int NumVehicle { get; set; }
@@ -13,16 +19,23 @@ namespace RoutingData.DTO
     }
 
 
-
-    //Object structure that frontend expects back from a route calc
+    /// <summary>
+    /// Object structure that frontend expects back from a route calc
+    /// 
+    /// </summary>
     public class CalcRouteOutput
     {
         // has vehicle id and list of OrderDetails
+#if OFFLINE_DATA
         public int VehicleId { get; set; }
-        public List<OrderDetail> Orders { get; set; }
+#else
+        public String VehicleId { get; set; }
+#endif
+        public int DeliveryRouteID { get; set; }
+        public List<OrderDetailsDTO> Orders { get; set; }
 
         public CalcRouteOutput() {
-            Orders = new List<OrderDetail>();
+            Orders = new List<OrderDetailsDTO>();
         }
 
         public override string ToString()
@@ -35,38 +48,6 @@ namespace RoutingData.DTO
                 sb.AppendLine(order.ToString());
                 sb.AppendLine(new string('-', 20)); // Separator between orders
             }
-            return sb.ToString();
-        }
-    }
-
-    public class OrderDetail
-    {
-        public int OrderId { get; set; }
-        public string Addr { get; set; }
-        public double Lat { get; set; }
-        public double Lon { get; set; }
-        public string Status { get; set; }
-        public string CustomerName { get; set; }
-        public string Phone { get; set; }
-        public int Position { get; set; }
-        public List<string> ProdNames { get; set; }
-        public string Notes { get; set; }
-        public DateTime DeliveryDate { get; set; }
-        
-
-
-        public override string ToString()
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"OrderId: {OrderId}");
-            sb.AppendLine($"Addr: {Addr}");
-            sb.AppendLine($"Lat: {Lat}");
-            sb.AppendLine($"Lon: {Lon}");
-            sb.AppendLine($"Status: {Status}");
-            sb.AppendLine($"CustomerName: {CustomerName}");
-            sb.AppendLine($"Phone: {Phone}");
-            sb.Append("ProdNames: ");
-            sb.AppendLine(ProdNames != null ? string.Join(", ", ProdNames) : "None");
             return sb.ToString();
         }
     }

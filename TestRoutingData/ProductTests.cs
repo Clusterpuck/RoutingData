@@ -14,12 +14,12 @@ namespace TestRoutingData
     {
         private readonly ProductsController _productController;
 
+#if OFFLINE_DATA
         public ProductTests()
         {
             _productController = new ProductsController(TestServiceProvider.OfflineDatabaseInstance);
         }
 
-#if OFFLINE_DATA
 
         [Fact]
         public async Task Get_Products()

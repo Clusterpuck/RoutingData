@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    //[Authorize]
     public class LocationsController : ControllerBase
     {
 #if OFFLINE_DATA
@@ -22,6 +24,7 @@ namespace RoutingData.Controllers
             _offlineDatabase = offlineDatabase;
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Location>>> GetLocations()
         {
@@ -29,6 +32,7 @@ namespace RoutingData.Controllers
             return _offlineDatabase.Locations;
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<Location>> PostLocation(Location location)
         {
@@ -80,12 +84,22 @@ namespace RoutingData.Controllers
         // PUT: api/Locations/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLocation(int id, Location location)
+        public async Task<IActionResult> PutLocation(int id, LocationInDTO location)
         {
-            if (id != location.Id)
+            Location dbLocation = await _context.Locations.FindAsync(id);
+            if (dbLocation == null)
             {
-                return BadRequest();
+                return BadRequest("Location ID does not exist");
             }
+            //Update database object with new details
+            dbLocation.Longitude = location.Longitude;
+            dbLocation.Latitude = location.Latitude;
+            dbLocation.Address = location.Address;
+            dbLocation.Suburb = location.Suburb;
+            dbLocation.State = location.State;
+            dbLocation.PostCode = location.PostCode;
+            dbLocation.Country = location.Country;
+            dbLocation.Description = location.Description;
 
             _context.Entry(location).State = EntityState.Modified;
 
@@ -105,39 +119,63 @@ namespace RoutingData.Controllers
                 }
             }
 
-            return NoContent();
+            return Created("", location);
         }
 
         // POST: api/Locations
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Location>> PostLocation(Location location)
+        public async Task<ActionResult<Location>> PostLocation(LocationInDTO location)
         {
-          if (_context.Locations == null)
-          {
-              return Problem("Entity set 'ApplicationDbContext.Locations'  is null.");
-          }
-            _context.Locations.Add(location);
+            if (_context.Locations == null)
+            {
+                return Problem("Entity set 'ApplicationDbContext.Locations'  is null.");
+            }
+            Location dbLocation = new Location();
+                dbLocation.Longitude = location.Longitude;
+                dbLocation.Latitude = location.Latitude;
+                dbLocation.Address = location.Address;
+                dbLocation.Suburb = location.Suburb;
+                dbLocation.State = location.State;
+                dbLocation.PostCode = location.PostCode;
+                dbLocation.Country = location.Country;
+                dbLocation.Description = location.Description;
+            _context.Locations.Add(dbLocation);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetLocation", new { id = location.Id }, location);
+            return CreatedAtAction("GetLocation", new { id = dbLocation.Id }, dbLocation);
         }
-
         // DELETE: api/Locations/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLocation(int id)
         {
+            // first check location table isnt empty
             if (_context.Locations == null)
             {
-                return NotFound();
+                return NotFound("Location data not available.");
             }
+
+            // then find the location by the given ID
             var location = await _context.Locations.FindAsync(id);
             if (location == null)
             {
-                return NotFound();
+                return NotFound("Location not found.");
             }
 
-            _context.Locations.Remove(location);
+            // before deleteing, make sure location isnt apart of any active delivery
+            bool hasOngoingOrders = await _context.Orders
+                .AnyAsync(order => order.LocationId == id && 
+                    ( order.Status != Order.ORDER_STATUSES[3] || order.Status != Order.ORDER_STATUSES[4]  ) ); //Any that are not Delivered or cancelled
+            //Unless cancelled or delivered, should not be able to set location to inactive
+
+            if (hasOngoingOrders)
+            {
+                return BadRequest("Cannot delete location as it is associated with ongoing orders, please wait for orders to be completed and then try again.");
+            }
+
+            // finally, remove location (set to inactive)
+            location.Status = Location.LOCATION_STATUSES[1]; 
+            _context.Entry(location).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
             return NoContent();

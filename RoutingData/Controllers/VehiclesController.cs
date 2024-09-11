@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    //[Authorize]
     public class VehiclesController : ControllerBase
     {
 #if OFFLINE_DATA
@@ -110,14 +112,19 @@ namespace RoutingData.Controllers
         // PUT: api/Vehicles/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutVehicle(int id, Vehicle vehicle)
+        public async Task<IActionResult> PutVehicle(String id, VehicleInDTO vehicle)
         {
-            if (id != vehicle.Id)
+            if (id != vehicle.LicensePlate)
             {
                 return BadRequest();
             }
+            Vehicle newVehicle = new Vehicle()
+            {
+                LicensePlate = vehicle.LicensePlate,
+                Status = Vehicle.VEHICLE_STATUSES[0]
+            };
 
-            _context.Entry(vehicle).State = EntityState.Modified;
+            _context.Entry(newVehicle).State = EntityState.Modified;
 
             try
             {
@@ -135,22 +142,44 @@ namespace RoutingData.Controllers
                 }
             }
 
-            return NoContent();
+            return Created("", vehicle);
         }
 
         // POST: api/Vehicles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Vehicle>> PostVehicle(Vehicle vehicle)
+        public async Task<ActionResult<Vehicle>> PostVehicle(VehicleInDTO vehicle)
         {
           if (_context.Vehicles == null)
           {
               return Problem("Entity set 'ApplicationDbContext.Vehicles'  is null.");
           }
-            _context.Vehicles.Add(vehicle);
-            await _context.SaveChangesAsync();
+            Vehicle newVehicle = new Vehicle()
+            {
+                LicensePlate = vehicle.LicensePlate,
+                Status = Vehicle.VEHICLE_STATUSES[0]
+            };
 
-            return CreatedAtAction("GetVehicle", new { id = vehicle.Id }, vehicle);
+            _context.Vehicles.Add(newVehicle);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+
+            }
+            catch (DbUpdateException ex)
+            {
+                // Check for specific error related to unique constraint violation
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("PRIMARY KEY constraint"))
+                {
+                    return Conflict($"Vehicle with plate '{vehicle.LicensePlate}' already exists.");
+                }
+
+                // Log and return a general error message
+                return Problem($"An error occurred while trying to add the vehicle. {ex.InnerException}");
+            }
+
+            return CreatedAtAction("GetVehicle", new { id = vehicle.LicensePlate }, vehicle);
         }
 
         // DELETE: api/Vehicles/5
@@ -167,15 +196,24 @@ namespace RoutingData.Controllers
                 return NotFound();
             }
 
-            _context.Vehicles.Remove(vehicle);
+            //Find any routes that are associated with this vehicle
+            List<DeliveryRoute> routes = await _context.DeliveryRoutes.
+                Where(route => route.VehicleLicense == vehicle.LicensePlate).
+                ToListAsync();
+            if (routes.Any())
+            {
+                return BadRequest("Vehicle is associated with active route");
+            }
+
+            vehicle.Status = Vehicle.VEHICLE_STATUSES[2];
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool VehicleExists(int id)
+        private bool VehicleExists(String id)
         {
-            return (_context.Vehicles?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.Vehicles?.Any(e => e.LicensePlate == id)).GetValueOrDefault();
         }
 #endif
     }
