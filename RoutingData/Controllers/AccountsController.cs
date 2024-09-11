@@ -217,8 +217,22 @@ namespace RoutingData.Controllers
             {
                 return Problem($"Invalid details provided: {sb.ToString()}");
             }
-            _context.Accounts.Add(account);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Accounts.Add(account);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                // Check for specific error related to unique constraint violation
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("PRIMARY KEY constraint"))
+                {
+                    return Conflict($"Account with username '{account.Username}' already exists.");
+                }
+
+                // Log and return a general error message
+                return Problem($"An error occurred while trying to add the account. {ex.InnerException}" );
+            }
 
             return CreatedAtAction("GetAccount", new { id = account.Username }, account);
         }
@@ -230,6 +244,7 @@ namespace RoutingData.Controllers
         /// </summary>
         /// <param name="inAccount"></param>
         /// <returns></returns>
+        /// TODO Update to change to throw exception when invalid and not to assign null object
         private Account ValidateAndMakeNewAccount( AccountInDTO inAccount, StringBuilder sb )
         {
             Account newAccount = null;
@@ -336,6 +351,10 @@ namespace RoutingData.Controllers
         public async Task<ActionResult<Account>> GetAccount(string id)
         {
             // check if the Accounts table exists in the database context
+            if( !IsValidEmail(id))
+            {
+                return BadRequest("Not a valid email");
+            }
             if (_context.Accounts == null)
             {
                 return NotFound("Accounts data is not available.");
@@ -367,18 +386,22 @@ namespace RoutingData.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAccount(string id, AccountInDTO inAccount)
         {
-            //check if the account id exists in database
-            Account dbAccount = await _context.Accounts.FindAsync(id);
-            if (dbAccount == null )
+            if( !IsValidEmail(id) || !IsValidEmail(inAccount.Username) )
             {
-                return NotFound($"No such account in database with id {id}.");
+                return BadRequest("Not a valid email");
             }
+            //check if the account id exists in database
             StringBuilder sb = new StringBuilder();
             Account updatedAccount = ValidateAndMakeNewAccount(inAccount, sb);
             
             if( updatedAccount == null )
             {
                 return BadRequest($"Details not valid in provided account: {sb.ToString()}");
+            }
+            Account dbAccount = await _context.Accounts.FindAsync(id);
+            if (dbAccount == null )
+            {
+                return NotFound($"No such account in database with id {id}.");
             }
 
             dbAccount.Username = updatedAccount.Username;
@@ -428,6 +451,10 @@ namespace RoutingData.Controllers
             if (loginDetails == null || string.IsNullOrEmpty(loginDetails.Username) || string.IsNullOrEmpty(loginDetails.Password))
             {
                 return BadRequest("Invalid client request");
+            }
+            if( !IsValidEmail(loginDetails.Username) || loginDetails.Password.Length < Account.PASSWORD_LENGTH )
+            {
+                return BadRequest("Invalid request data");
             }
 
             // check if the user exists in the database with matching username and password

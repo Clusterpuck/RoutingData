@@ -103,6 +103,7 @@ namespace RoutingData.Controllers
             _context = context;
         }
 
+        //TODO Get Orders can potentially just return Not cancelled orders review options
         // GET: api/Orders
         [HttpGet]
         public async Task<List<OrderDetailsDTO>> GetOrders()
@@ -137,13 +138,14 @@ namespace RoutingData.Controllers
                     Longitude = g.Key.location.Longitude,
                     CustomerName = g.Key.customer.Name,
                     CustomerPhone = g.Key.customer.Phone,
+                    Status = g.Key.order.Status,//NickW Added
                     ProductNames = g.Select(x => x.product.Name).ToList()
                 })
                 .ToList();
             return groupedOrderDetails;
         }
         
-
+        //TODO Can add get order by status
         // GET: api/Orders/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Order>> GetOrder(int id)
@@ -162,6 +164,7 @@ namespace RoutingData.Controllers
             return order;
         }
 
+        //TODO Edit to use OrderWithProductsDTO
         // PUT: api/Orders/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
@@ -214,7 +217,7 @@ namespace RoutingData.Controllers
 
 
         [HttpPost]
-        [Authorize]
+        //[Authorize]
         public async Task<ActionResult<Order>> PostOrder(OrderWithProductsDTO orderDTO)
         {
             if (_context.Orders == null || _context.OrderProducts == null)
@@ -223,12 +226,12 @@ namespace RoutingData.Controllers
             }
 
             // retrieve user information from token
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserID");
+           /* var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserID");
             if (userIdClaim == null)
             {
                 return Unauthorized("Invalid token or user not found.");
             }
-            var userId = int.Parse(userIdClaim.Value);
+            var userId = int.Parse(userIdClaim.Value);*/
 
             // check if any product is discontinued
             var productIds = orderDTO.Products.Select(p => p.ProductId).ToList();
@@ -256,27 +259,79 @@ namespace RoutingData.Controllers
             }
 
             // check if the delivery date is greater than today
-            if (orderDTO.Order.DeliveryDate <= DateTime.Today)
+            if (orderDTO.Order.DeliveryDate <= DateTime.Today.AddDays(-1))
             {
                 return BadRequest("Delivery date must be greater than today.");
             }
 
             // add the Order
             var order = orderDTO.Order;
-            order.CustomerId = userId;  // set account by token
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
+            Order dbOrder = orderDtoToOrder(order);
+            //order.CustomerId = userId;  // set account by token
+            _context.Orders.Add(dbOrder);
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                // Check for specific error related to unique constraint violation
+                if (ex.InnerException != null )
+                {
+                    return Conflict($"Error adding order '{order.OrderNotes}'. {ex.InnerException}");
+                }
+
+                // Log and return a general error message
+                return Problem($"An error occurred while trying to add the order.");
+            }
 
             // add the products
             foreach (var product in orderDTO.Products)
             {
-                product.OrderId = order.Id;
-                _context.OrderProducts.Add(product);
+                OrderProduct dbOrderProd = new OrderProduct()
+                {
+                    OrderId = dbOrder.Id,
+                    Status = OrderProduct.ORDERPRODUCTS_STATUSES[0],
+                    Quantity = product.Quantity,
+                    ProductId = product.ProductId,
+
+                };
+                _context.OrderProducts.Add(dbOrderProd);
+            }
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                if (ex.InnerException != null)
+                {
+                    return Conflict($"Error adding products: {ex.InnerException}"); 
+                }
+                return Problem("Unknown error adding products");
+
             }
 
-            await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetOrder", new { id = order.Id }, order);
+            return CreatedAtAction("GetOrder", new { id = dbOrder.Id }, dbOrder);
+        }
+
+        private Order orderDtoToOrder(OrderInDTO orderInDTO)
+        {
+            Order order = new Order()
+            {
+                Status = Order.ORDER_STATUSES[0],
+                DateOrdered = orderInDTO.DateOrdered,
+                OrderNotes = orderInDTO.OrderNotes,
+                CustomerId = orderInDTO.CustomerId,
+                LocationId = orderInDTO.LocationId,
+                DeliveryRouteId = -1,
+                PositionNumber = -1,
+                DeliveryDate = orderInDTO.DeliveryDate,
+
+            };
+            return order;
+            
         }
 
 
@@ -298,13 +353,25 @@ namespace RoutingData.Controllers
             }
 
             // check order status before deleting, make sure it is not delivered
-            if (order.Status == Order.ORDER_STATUSES[3])
+            if (order.Status == Order.ORDER_STATUSES[3])//check if delivered
             {
                 return BadRequest("Cannot delete a delivered order.");
             }
+            //if is anything other than planned then should not delete
+            else if( order.Status != Order.ORDER_STATUSES[0])
+            {
+                return BadRequest("Cannot delete on on route order. Cancel route first");
+            }
 
-            // remove the order if it hasn't been delivered
+            // remove the order if it hasn't been delivered on on delivery
             order.Status = Order.ORDER_STATUSES[4];
+            List<OrderProduct> orderProducts = await _context.OrderProducts.
+                Where(orderProd => orderProd.OrderId == order.Id).
+                ToListAsync();
+            foreach (var product in orderProducts)
+            {//set each to inactive
+                product.Status = OrderProduct.ORDERPRODUCTS_STATUSES[1];
+            }
             await _context.SaveChangesAsync();
 
             return NoContent();

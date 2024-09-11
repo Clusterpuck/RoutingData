@@ -84,12 +84,22 @@ namespace RoutingData.Controllers
         // PUT: api/Locations/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLocation(int id, Location location)
+        public async Task<IActionResult> PutLocation(int id, LocationInDTO location)
         {
-            if (id != location.Id)
+            Location dbLocation = await _context.Locations.FindAsync(id);
+            if (dbLocation == null)
             {
-                return BadRequest();
+                return BadRequest("Location ID does not exist");
             }
+            //Update database object with new details
+            dbLocation.Longitude = location.Longitude;
+            dbLocation.Latitude = location.Latitude;
+            dbLocation.Address = location.Address;
+            dbLocation.Suburb = location.Suburb;
+            dbLocation.State = location.State;
+            dbLocation.PostCode = location.PostCode;
+            dbLocation.Country = location.Country;
+            dbLocation.Description = location.Description;
 
             _context.Entry(location).State = EntityState.Modified;
 
@@ -115,16 +125,25 @@ namespace RoutingData.Controllers
         // POST: api/Locations
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Location>> PostLocation(Location location)
+        public async Task<ActionResult<Location>> PostLocation(LocationInDTO location)
         {
-          if (_context.Locations == null)
-          {
-              return Problem("Entity set 'ApplicationDbContext.Locations'  is null.");
-          }
-            _context.Locations.Add(location);
+            if (_context.Locations == null)
+            {
+                return Problem("Entity set 'ApplicationDbContext.Locations'  is null.");
+            }
+            Location dbLocation = new Location();
+                dbLocation.Longitude = location.Longitude;
+                dbLocation.Latitude = location.Latitude;
+                dbLocation.Address = location.Address;
+                dbLocation.Suburb = location.Suburb;
+                dbLocation.State = location.State;
+                dbLocation.PostCode = location.PostCode;
+                dbLocation.Country = location.Country;
+                dbLocation.Description = location.Description;
+            _context.Locations.Add(dbLocation);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetLocation", new { id = location.Id }, location);
+            return CreatedAtAction("GetLocation", new { id = dbLocation.Id }, dbLocation);
         }
         // DELETE: api/Locations/5
         [HttpDelete("{id}")]
@@ -145,7 +164,9 @@ namespace RoutingData.Controllers
 
             // before deleteing, make sure location isnt apart of any active delivery
             bool hasOngoingOrders = await _context.Orders
-                .AnyAsync(order => order.LocationId == id && order.Status != Order.ORDER_STATUSES[1]); 
+                .AnyAsync(order => order.LocationId == id && 
+                    ( order.Status != Order.ORDER_STATUSES[3] || order.Status != Order.ORDER_STATUSES[4]  ) ); //Any that are not Delivered or cancelled
+            //Unless cancelled or delivered, should not be able to set location to inactive
 
             if (hasOngoingOrders)
             {
