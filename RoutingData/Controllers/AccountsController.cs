@@ -375,6 +375,7 @@ namespace RoutingData.Controllers
             }
             StringBuilder sb = new StringBuilder();
             Account updatedAccount = ValidateAndMakeNewAccount(inAccount, sb);
+            
             if( updatedAccount == null )
             {
                 return BadRequest($"Details not valid in provided account: {sb.ToString()}");
