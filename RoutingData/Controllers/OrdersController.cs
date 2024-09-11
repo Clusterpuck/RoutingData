@@ -259,7 +259,7 @@ namespace RoutingData.Controllers
             }
 
             // check if the delivery date is greater than today
-            if (orderDTO.Order.DeliveryDate <= DateTime.Today)
+            if (orderDTO.Order.DeliveryDate <= DateTime.Today.AddDays(-1))
             {
                 return BadRequest("Delivery date must be greater than today.");
             }

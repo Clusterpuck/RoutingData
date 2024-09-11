@@ -477,7 +477,7 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         // GET: api/DeliveryRoutes
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<DeliveryRoute>>> GetDeliveryRoutes()
+        public async Task<ActionResult<IEnumerable<CalcRouteOutput>>> GetDeliveryRoutes()
         {
           if (_context.DeliveryRoutes == null)
           {
@@ -490,7 +490,7 @@ namespace RoutingData.Controllers
             {
                 routesDetailed.Add( await DeliveryToCalcRouteOutput(route, orderDetailsDict));
             }
-            return await _context.DeliveryRoutes.ToListAsync();
+            return routesDetailed;//await _context.DeliveryRoutes.ToListAsync();
         }
 
 
