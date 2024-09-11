@@ -288,8 +288,15 @@ namespace RoutingData.Controllers
             // add the products
             foreach (var product in orderDTO.Products)
             {
-                product.OrderId = dbOrder.Id;
-                _context.OrderProducts.Add(product);
+                OrderProduct dbOrderProd = new OrderProduct()
+                {
+                    OrderId = dbOrder.Id,
+                    Status = OrderProduct.ORDERPRODUCTS_STATUSES[0],
+                    Quantity = product.Quantity,
+                    ProductId = product.ProductId,
+
+                };
+                _context.OrderProducts.Add(dbOrderProd);
             }
             try
             {
