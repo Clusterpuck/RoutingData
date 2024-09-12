@@ -140,6 +140,7 @@ namespace RoutingData.Controllers
                 dbLocation.PostCode = location.PostCode;
                 dbLocation.Country = location.Country;
                 dbLocation.Description = location.Description;
+                dbLocation.Status = Location.LOCATION_STATUSES[0];
             _context.Locations.Add(dbLocation);
             await _context.SaveChangesAsync();
 

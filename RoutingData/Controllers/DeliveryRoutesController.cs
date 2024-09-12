@@ -326,8 +326,9 @@ namespace RoutingData.Controllers
 
             //each status update request should return the relevent route it was updated for
             // retrieve all orders for the delivery route
-            Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrderDetails();
-            CalcRouteOutput routeForFrontend = await DeliveryToCalcRouteOutput(driverRoute, orderDetailsDict);
+            DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
+            await dictionaryOrderDetails.GetOrderDetails(_context);
+            CalcRouteOutput routeForFrontend = await DeliveryToCalcRouteOutput(driverRoute, dictionaryOrderDetails.OrderDetailsDict);
 
             /*var ordersInRoute = await _context.Orders
                                         .Join(_context.Locations,
@@ -365,20 +366,9 @@ namespace RoutingData.Controllers
         private async Task<CalculatingRoutesDTO> FrontDataToPythonDataAsync(RouteRequest frontEndData)
         {
             // Fetch the order details directly from the database based on the provided order IDs
-            Dictionary<int, OrderDetailsDTO> orderDetails = await GetOrderDetails();
-            /*var orderDetails = await _context.Orders
-             .Join(_context.Locations.
-                Where( location => location.Status == RoutingData.Models.Location.LOCATION_STATUSES[0]), //Active locations only
-                 order => order.LocationId,
-                 location => location.Id,
-                 (order, location) => new OrderDetailsDTO
-                 {
-                     OrderID = order.Id,
-                     Latitude = location.Latitude,
-                     Longitude = location.Longitude
-                 })
-             .Where(od => frontEndData.Orders.Contains(od.OrderID))
-             .ToDictionaryAsync(od => od.OrderID);*/
+            DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
+            await dictionaryOrderDetails.GetOrderDetails( _context );
+           
 
             // Mapping order details to OrderInRouteDTO
             List<OrderInRouteDTO> routesForPython = new List<OrderInRouteDTO>();
@@ -386,7 +376,7 @@ namespace RoutingData.Controllers
             foreach (int orderID in frontEndData.Orders)
             {
                 // Fetch the OrderDetail from the dictionary populated from the SQL query
-                OrderDetailsDTO orderDetail = orderDetails[orderID];
+                OrderDetailsDTO orderDetail = dictionaryOrderDetails.OrderDetailsDict[orderID];
                 OrderInRouteDTO routeDTO = new OrderInRouteDTO
                 {
                     lat = orderDetail.Latitude,
@@ -483,12 +473,13 @@ namespace RoutingData.Controllers
           {
               return NotFound();
           }
-            Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrderDetails();
+            DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
+            await dictionaryOrderDetails.GetOrderDetails(_context);
             List<CalcRouteOutput> routesDetailed = new List<CalcRouteOutput>();
             List<DeliveryRoute> deliveryRoutes = await _context.DeliveryRoutes.ToListAsync();
             foreach (var route in deliveryRoutes)
             {
-                routesDetailed.Add( await DeliveryToCalcRouteOutput(route, orderDetailsDict));
+                routesDetailed.Add( await DeliveryToCalcRouteOutput(route, dictionaryOrderDetails.OrderDetailsDict));
             }
             return routesDetailed;//await _context.DeliveryRoutes.ToListAsync();
         }
@@ -515,9 +506,9 @@ namespace RoutingData.Controllers
                 return NotFound();
             }
 
-
-            Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrderDetails();
-            CalcRouteOutput routeOutput = await DeliveryToCalcRouteOutput(deliveryRoute, orderDetailsDict);
+            DictionaryOrderDetails dictOrderDetails = new DictionaryOrderDetails();
+            await dictOrderDetails.GetOrderDetails(_context);
+            CalcRouteOutput routeOutput = await DeliveryToCalcRouteOutput(deliveryRoute, dictOrderDetails.OrderDetailsDict);
 
             return routeOutput;
         }
@@ -554,59 +545,6 @@ namespace RoutingData.Controllers
 
             return Created("", deliveryRoute);
         }
-
-
-        /// <summary>
-        /// Method <c>GetOrderDetails</c>
-        /// Populates a Dictionary of OrderDetailDTOs, pulled only from items that have an active status
-        /// </summary>
-        /// <returns></returns>
-        private async Task<Dictionary<int, OrderDetailsDTO>> GetOrderDetails()
-        {
-            var orderDetails = await _context.Orders
-                // .Where(order => order.Status == Order.ORDER_STATUSES[0])
-                .Join(_context.Locations.
-                    Where(location => location.Status == RoutingData.Models.Location.LOCATION_STATUSES[0]),
-                    order => order.LocationId,
-                    location => location.Id,
-                    (order, location) => new { order, location })
-                .Join(_context.Customers.
-                    Where(customer => customer.Status == Customer.CUSTOMER_STATUSES[0]),
-                    combined => combined.order.CustomerId,
-                    customer => customer.Id,
-                    (combined, customer) => new { combined.order, combined.location, customer })
-                .Join(_context.OrderProducts,
-                    combined => combined.order.Id,
-                    orderProduct => orderProduct.OrderId,
-                    (combined, orderProduct) => new { combined.order, combined.location, combined.customer, orderProduct })
-                .Join(_context.Products.
-                    Where(product => product.Status == Product.PRODUCT_STATUSES[0]),
-                    combined => combined.orderProduct.ProductId,
-                    product => product.Id,
-                    (combined, product) => new { combined.order, combined.location, combined.customer, product })
-                .ToListAsync();
-
-            var groupedOrderDetails = orderDetails
-                .GroupBy(g => new { g.order, g.location, g.customer })
-                .Select(g => new OrderDetailsDTO
-                {
-                    OrderID = g.Key.order.Id,
-                    OrderNotes = g.Key.order.OrderNotes,
-                    DateOrdered = g.Key.order.DateOrdered,
-                    Status = g.Key.order.Status, 
-                    Address = g.Key.location.Address,
-                    Latitude = g.Key.location.Latitude,
-                    Longitude = g.Key.location.Longitude,
-                    CustomerName = g.Key.customer.Name,
-                    CustomerPhone = g.Key.customer.Phone,
-                    ProductNames = g.Select(x => x.product.Name).ToList()
-                })
-                .ToList();
-
-            // Returning the result as a dictionary where the key is OrderID and the value is OrderDetailsDTO
-            return groupedOrderDetails.ToDictionary(x => x.OrderID);
-        }
-
 
 
         /// <summary>
@@ -830,8 +768,9 @@ namespace RoutingData.Controllers
             {
                 return NotFound($"No delivery routes found for driver with username {driverUsername}");
             }
-            Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrderDetails();
-            CalcRouteOutput calcOutput = await DeliveryToCalcRouteOutput(driverRoute, orderDetailsDict);
+            DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
+            await dictionaryOrderDetails.GetOrderDetails( _context );
+            CalcRouteOutput calcOutput = await DeliveryToCalcRouteOutput(driverRoute, dictionaryOrderDetails.OrderDetailsDict);
 
             //Now need to build the CalcRouteOutput and return that object 
 
@@ -1018,7 +957,8 @@ namespace RoutingData.Controllers
 
 #else
                 //Creates a dictionary from the datbase of order details required
-                Dictionary<int, OrderDetailsDTO> orderDetailsDict = await GetOrderDetails();
+                DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
+                await dictionaryOrderDetails.GetOrderDetails( _context );
 
                 // Convert data input to type for Python input
                 CalculatingRoutesDTO calcRoute = await FrontDataToPythonDataAsync(routeRequest);
@@ -1033,7 +973,7 @@ namespace RoutingData.Controllers
                 Console.WriteLine("Returned object from Python is " + routeRequestListDTO.ToString());
 
                 // Convert routeRequestListDTO to CalcRouteOutput
-                List<CalcRouteOutput> allRoutesCalced = PythonOutputToFront(routeRequestListDTO, orderDetailsDict, vehicles);
+                List<CalcRouteOutput> allRoutesCalced = PythonOutputToFront(routeRequestListDTO, dictionaryOrderDetails.OrderDetailsDict, vehicles);
 
                 Console.WriteLine("All routes calced object is " + allRoutesCalced.ToString());
 
