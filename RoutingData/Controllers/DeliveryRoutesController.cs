@@ -770,6 +770,7 @@ namespace RoutingData.Controllers
         {
             CalcRouteOutput calcRouteOutput = new CalcRouteOutput();
             calcRouteOutput.VehicleId = deliveryRoute.VehicleLicense;
+            calcRouteOutput.DriverUsername = deliveryRoute.DriverUsername;
             //TODO Add conversion
 
             //dictionary to reference each order to get details
