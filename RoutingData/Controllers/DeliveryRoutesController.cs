@@ -779,6 +779,7 @@ namespace RoutingData.Controllers
 
             List<Order> orders = await _context.Orders.ToListAsync();
             int routeID = deliveryRoute.Id;
+            calcRouteOutput.DeliveryRouteID = routeID;
 
             foreach (Order order in orders)
             {
@@ -787,6 +788,7 @@ namespace RoutingData.Controllers
                     //Adding to the calcRouteOutput
                     OrderDetailsDTO orderDetail = orderDetailsDict[order.Id];
                     calcRouteOutput.Orders.Add(orderDetail);
+
                 }
 
             }
