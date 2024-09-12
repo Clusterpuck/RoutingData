@@ -29,6 +29,7 @@ namespace RoutingData.DTO
             sb.AppendLine($"Status: {Status}");
             sb.AppendLine($"CustomerName: {CustomerName}");
             sb.AppendLine($"Phone: {CustomerPhone}");
+            sb.AppendLine($"Delivery Date : {DeliveryDate}");
             sb.Append("ProdNames: ");
             sb.AppendLine(ProductNames != null ? string.Join(", ", ProductNames) : "None");
             return sb.ToString();

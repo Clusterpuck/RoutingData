@@ -139,11 +139,14 @@ namespace RoutingData.Controllers
                     CustomerName = g.Key.customer.Name,
                     CustomerPhone = g.Key.customer.Phone,
                     Status = g.Key.order.Status,//NickW Added
-                    ProductNames = g.Select(x => x.product.Name).ToList()
+                    ProductNames = g.Select(x => x.product.Name).ToList(),
+                    DeliveryDate = g.Key.order.DeliveryDate,
                 })
                 .ToList();
             return groupedOrderDetails;
         }
+
+
         
         //TODO Can add get order by status
         // GET: api/Orders/5
