@@ -55,6 +55,7 @@ namespace RoutingData.DTO
                     Longitude = g.Key.location.Longitude,
                     CustomerName = g.Key.customer.Name,
                     CustomerPhone = g.Key.customer.Phone,
+                    Position = g.Key.order.PositionNumber,
                     ProductNames = g.Select(x => x.product.Name)
                     .ToList(),
                 })
