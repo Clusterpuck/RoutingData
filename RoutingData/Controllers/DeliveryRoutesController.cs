@@ -499,7 +499,7 @@ namespace RoutingData.Controllers
             //orders in the route, then set their status to on-route
             // Find all orders with the specified DeliveryRouteId
             var ordersToUpdate = await _context.Orders
-                .Where(order => (order.Status == Order.ORDER_STATUSES[5]) && //All orders must be assigned
+                .Where(order => (order.Status == Order.ORDER_STATUSES[4]) && //All orders must be assigned
                                 (order.DeliveryRouteId == id) )
                 .ToListAsync();
 
@@ -686,7 +686,7 @@ namespace RoutingData.Controllers
                     {
                         dbOrder.DeliveryRouteId = newRoute.Id;  // Assign the newly generated DeliveryRouteId
                         dbOrder.PositionNumber = pos;           // Assign the position number
-                        dbOrder.Status = Order.ORDER_STATUSES[5];//Status of order set to assigned
+                        dbOrder.Status = Order.ORDER_STATUSES[4];//Status of order set to assigned
                         pos++;
                     }
                 }
