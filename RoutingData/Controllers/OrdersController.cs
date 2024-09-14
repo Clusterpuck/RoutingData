@@ -139,6 +139,7 @@ namespace RoutingData.Controllers
                     CustomerName = g.Key.customer.Name,
                     CustomerPhone = g.Key.customer.Phone,
                     Status = g.Key.order.Status,//NickW Added
+                    Delayed = g.Key.order.Delayed, // amira added
                     ProductNames = g.Select(x => x.product.Name).ToList(),
                     DeliveryDate = g.Key.order.DeliveryDate,
                 })
@@ -331,6 +332,7 @@ namespace RoutingData.Controllers
                 DeliveryRouteId = -1,
                 PositionNumber = -1,
                 DeliveryDate = orderInDTO.DeliveryDate,
+                Delayed = false //amira added
 
             };
             return order;
