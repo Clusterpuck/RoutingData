@@ -139,6 +139,7 @@ namespace RoutingData.Controllers
                     CustomerName = g.Key.customer.Name,
                     CustomerPhone = g.Key.customer.Phone,
                     Status = g.Key.order.Status,//NickW Added
+                    Delayed = g.Key.order.Delayed, // amira added
                     ProductNames = g.Select(x => x.product.Name).ToList(),
                     DeliveryDate = g.Key.order.DeliveryDate,
                 })
@@ -331,6 +332,7 @@ namespace RoutingData.Controllers
                 DeliveryRouteId = -1,
                 PositionNumber = -1,
                 DeliveryDate = orderInDTO.DeliveryDate,
+                Delayed = false //amira added
 
             };
             return order;
@@ -356,7 +358,7 @@ namespace RoutingData.Controllers
             }
 
             // check order status before deleting, make sure it is not delivered
-            if (order.Status == Order.ORDER_STATUSES[3])//check if delivered
+            if (order.Status == Order.ORDER_STATUSES[2])//check if delivered
             {
                 return BadRequest("Cannot delete a delivered order.");
             }
@@ -367,7 +369,7 @@ namespace RoutingData.Controllers
             }
 
             // remove the order if it hasn't been delivered on on delivery
-            order.Status = Order.ORDER_STATUSES[4];
+            order.Status = Order.ORDER_STATUSES[3];
             List<OrderProduct> orderProducts = await _context.OrderProducts.
                 Where(orderProd => orderProd.OrderId == order.Id).
                 ToListAsync();

@@ -166,7 +166,7 @@ namespace RoutingData.Controllers
             // before deleteing, make sure location isnt apart of any active delivery
             bool hasOngoingOrders = await _context.Orders
                 .AnyAsync(order => order.LocationId == id && 
-                    ( order.Status != Order.ORDER_STATUSES[3] || order.Status != Order.ORDER_STATUSES[4]  ) ); //Any that are not Delivered or cancelled
+                    ( order.Status != Order.ORDER_STATUSES[2] || order.Status != Order.ORDER_STATUSES[3]  ) ); //Any that are not Delivered or cancelled
             //Unless cancelled or delivered, should not be able to set location to inactive
 
             if (hasOngoingOrders)

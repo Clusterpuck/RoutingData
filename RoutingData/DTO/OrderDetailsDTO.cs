@@ -18,6 +18,7 @@ namespace RoutingData.DTO
         public string OrderNotes { get; set; }
         public DateTime DateOrdered { get; set; }
         public DateTime DeliveryDate {  get; set; }
+        public Boolean Delayed { get; set; }
 
         public override string ToString()
         {
@@ -32,6 +33,7 @@ namespace RoutingData.DTO
             sb.AppendLine($"Delivery Date : {DeliveryDate}");
             sb.Append("ProdNames: ");
             sb.AppendLine(ProductNames != null ? string.Join(", ", ProductNames) : "None");
+            sb.AppendLine($"Delayed: {Delayed}"); //amira added
             return sb.ToString();
         }
 

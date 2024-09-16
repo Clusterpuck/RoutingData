@@ -59,4 +59,12 @@ namespace RoutingData.DTO
         public int OrderId { get; set; }
         public string Status { get; set; }
     }
+
+    // amira added
+    public class OrderDelayedDTO
+    {
+        public string Username { get; set; }
+        public int OrderId { get; set; }
+        public string Delayed { get; set; }
+    }
 }

@@ -205,8 +205,8 @@ namespace RoutingData.Controllers
             //Sets customer to Inactive instead of deleting
             List<Order> activeOrders = await _context.Orders.
                 Where(order => order.CustomerId == customer.Id && 
-                    order.Status != Order.ORDER_STATUSES[4] && //not cancelled
-                    order.Status != Order.ORDER_STATUSES[5]).//not delivered
+                    order.Status != Order.ORDER_STATUSES[3] && //not cancelled
+                    order.Status != Order.ORDER_STATUSES[2]).//not delivered
                     ToListAsync(); 
             //any associated orders that aren't cancelled or delviered should not allow customer to delete
             if( activeOrders.Any() )

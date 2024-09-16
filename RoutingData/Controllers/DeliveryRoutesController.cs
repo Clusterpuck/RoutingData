@@ -355,6 +355,61 @@ namespace RoutingData.Controllers
             return Ok(routeForFrontend);
         }
 
+        // amira added
+        /// <summary>
+        /// Method <c>UpdateOrderDelayed</c> 
+        /// </summary>
+        /// <param name="orderDelayedDTO"></param>
+        /// <returns></returns>
+        [HttpPost("update-delayed")]
+        public async Task<ActionResult<CalcRouteOutput>> UpdateOrderDelayed(OrderDelayedDTO orderDelayedDTO)
+        {
+            //Check if a valid boolean provided before using ay database requests
+            if ( !( orderDelayedDTO.Delayed.Equals("true") || orderDelayedDTO.Delayed.Equals("false") ) )
+            {
+                return BadRequest($"Invalid Delayed value sent of {orderDelayedDTO.Delayed} +" +
+                    " Must be either: true or false.");
+            }
+
+            // check if the delivery route exists for the driver
+            var driverRoute = await _context.DeliveryRoutes
+                                    .FirstOrDefaultAsync(r => r.DriverUsername == orderDelayedDTO.Username);
+
+            if (driverRoute == null)
+            {
+                return NotFound("No route assigned to provided driver");
+            }
+
+            // check if the order exists and is part of the driver's delivery route
+            var order = await _context.Orders
+                              .FirstOrDefaultAsync(o => o.Id == orderDelayedDTO.OrderId &&
+                              o.DeliveryRouteId == driverRoute.Id);
+
+            if (order == null)
+            {
+                return NotFound("No matching order in that driver's route");
+            }
+
+            // order must be on route to set the delayed status to true
+            if (!(order.Status.Equals(Order.ORDER_STATUSES[1])))
+            {
+                return BadRequest("Order must be on-route to be set as delayed.");
+            }
+
+            // update the orders delayed attribute
+            order.Delayed = bool.Parse(orderDelayedDTO.Delayed);
+            _context.Orders.Update(order);
+            await _context.SaveChangesAsync();
+
+            //each status update request should return the relevent route it was updated for
+            // retrieve all orders for the delivery route
+            DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
+            await dictionaryOrderDetails.GetOrderDetails(_context);
+            CalcRouteOutput routeForFrontend = await DeliveryToCalcRouteOutput(driverRoute, dictionaryOrderDetails.OrderDetailsDict);
+
+            return Ok(routeForFrontend);
+        }
+
 
         /// <summary>
         /// Method <c>FrontDataToPythonAsync</c> 
@@ -444,7 +499,7 @@ namespace RoutingData.Controllers
             //orders in the route, then set their status to on-route
             // Find all orders with the specified DeliveryRouteId
             var ordersToUpdate = await _context.Orders
-                .Where(order => (order.Status == Order.ORDER_STATUSES[5]) && //All orders must be assigned
+                .Where(order => (order.Status == Order.ORDER_STATUSES[4]) && //All orders must be assigned
                                 (order.DeliveryRouteId == id) )
                 .ToListAsync();
 
@@ -631,7 +686,7 @@ namespace RoutingData.Controllers
                     {
                         dbOrder.DeliveryRouteId = newRoute.Id;  // Assign the newly generated DeliveryRouteId
                         dbOrder.PositionNumber = pos;           // Assign the position number
-                        dbOrder.Status = Order.ORDER_STATUSES[5];//Status of order set to assigned
+                        dbOrder.Status = Order.ORDER_STATUSES[4];//Status of order set to assigned
                         pos++;
                     }
                 }
@@ -674,6 +729,7 @@ namespace RoutingData.Controllers
                 order.Status = Order.ORDER_STATUSES[0]; //changes back to planned
                 order.DeliveryRouteId = -1;
                 order.PositionNumber = -1;
+                order.Delayed = bool.Parse("false"); // change delayed status back to false
 
                 //Marking order as modified
                 _context.Orders.Update(order);

@@ -56,6 +56,7 @@ namespace RoutingData.DTO
                     CustomerName = g.Key.customer.Name,
                     CustomerPhone = g.Key.customer.Phone,
                     Position = g.Key.order.PositionNumber,
+                    Delayed = g.Key.order.Delayed, //amira added
                     ProductNames = g.Select(x => x.product.Name)
                     .ToList(),
                 })
