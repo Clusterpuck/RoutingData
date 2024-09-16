@@ -739,7 +739,7 @@ namespace RoutingData.Controllers
             _context.DeliveryRoutes.Remove(deliveryRoute);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = "Route deleted successfully" }); // Return a success message
         }
 
         /// <summary>

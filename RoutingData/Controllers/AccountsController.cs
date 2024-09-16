@@ -540,7 +540,7 @@ namespace RoutingData.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(new { message = "Account deleted successfully" }); // Return a success message
         }
 
 

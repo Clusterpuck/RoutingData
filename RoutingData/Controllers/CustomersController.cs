@@ -219,7 +219,7 @@ namespace RoutingData.Controllers
             
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = "Customer deleted successfully" }); // Return a success message
         }
 
         private bool CustomerExists(int id)

@@ -196,7 +196,7 @@ namespace RoutingData.Controllers
             //Also need to update any order that is "Planned" to remove this product.
             await RemoveProductFromOrders(id);
 
-            return NoContent();
+            return Ok(new { message = "Product deleted successfully" }); // Return a success message
         }
 
 
