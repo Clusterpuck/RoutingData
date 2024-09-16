@@ -379,7 +379,7 @@ namespace RoutingData.Controllers
             }
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = "Order deleted successfully" }); // Return a success message
         }
 
         private bool OrderExists(int id)

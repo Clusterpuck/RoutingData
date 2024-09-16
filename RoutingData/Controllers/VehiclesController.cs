@@ -208,7 +208,7 @@ namespace RoutingData.Controllers
             vehicle.Status = Vehicle.VEHICLE_STATUSES[2];
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = "Vehicle deleted successfully" }); // Return a success message
         }
 
         private bool VehicleExists(String id)

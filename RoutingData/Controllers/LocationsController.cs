@@ -179,7 +179,7 @@ namespace RoutingData.Controllers
             _context.Entry(location).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = "Location deleted successfully" }); // Return a success message
         }
 
         private bool LocationExists(int id)
