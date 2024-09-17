@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using RoutingData.DTO;
 using RoutingData.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 using static NuGet.Packaging.PackagingConstants;
 
 namespace RoutingData.Controllers
@@ -364,7 +365,7 @@ namespace RoutingData.Controllers
         [HttpPost("update-delayed")]
         public async Task<ActionResult<CalcRouteOutput>> UpdateOrderDelayed(OrderDelayedDTO orderDelayedDTO)
         {
-            //Check if a valid boolean provided before using ay database requests
+            //Check if a valid boolean provided before using any database requests
             if ( !( orderDelayedDTO.Delayed.Equals("true") || orderDelayedDTO.Delayed.Equals("false") ) )
             {
                 return BadRequest($"Invalid Delayed value sent of {orderDelayedDTO.Delayed} +" +
@@ -402,6 +403,62 @@ namespace RoutingData.Controllers
             await _context.SaveChangesAsync();
 
             //each status update request should return the relevent route it was updated for
+            // retrieve all orders for the delivery route
+            DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
+            await dictionaryOrderDetails.GetOrderDetails(_context);
+            CalcRouteOutput routeForFrontend = await DeliveryToCalcRouteOutput(driverRoute, dictionaryOrderDetails.OrderDetailsDict);
+
+            return Ok(routeForFrontend);
+        }
+
+        // amira added
+        /// <summary>
+        /// Method <c>UpdateOrderIssue</c> 
+        /// </summary>
+        /// <param name="orderIssueDTO"></param>
+        /// <returns></returns>
+        [HttpPost("update-issue")]
+        public async Task<ActionResult<CalcRouteOutput>> UpdateOrderIssue(OrderIssueDTO orderIssueDTO)
+        {
+            //Check if a valid message is provided before using any database requests
+            if (string.IsNullOrEmpty(orderIssueDTO.DriverNote))
+            {
+                return BadRequest($"DriverNote field is empty. Must provide a note on the issue.");
+            }
+
+            // check if the delivery route exists for the driver
+            var driverRoute = await _context.DeliveryRoutes
+                                    .FirstOrDefaultAsync(r => r.DriverUsername == orderIssueDTO.Username);
+
+            if (driverRoute == null)
+            {
+                return NotFound("No route assigned to provided driver");
+            }
+
+            // check if the order exists and is part of the driver's delivery route
+            var order = await _context.Orders
+                              .FirstOrDefaultAsync(o => o.Id == orderIssueDTO.OrderId &&
+                              o.DeliveryRouteId == driverRoute.Id);
+
+            if (order == null)
+            {
+                return NotFound("No matching order in that driver's route");
+            }
+
+            // order must be on route to set the status to 'issue'
+            if (!(order.Status.Equals(Order.ORDER_STATUSES[1])))
+            {
+                return BadRequest("Order must be on-route to change the status to issue.");
+            }
+
+            // update the orders status attribute
+            order.Status = Order.ORDER_STATUSES[5];
+            // add the message to the order notes
+            order.OrderNotes += (" | Driver Note: " + orderIssueDTO.DriverNote);
+            _context.Orders.Update(order);
+            await _context.SaveChangesAsync();
+
+            // returns the relevent route that was reported
             // retrieve all orders for the delivery route
             DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
             await dictionaryOrderDetails.GetOrderDetails(_context);
