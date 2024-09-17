@@ -452,7 +452,8 @@ namespace RoutingData.Controllers
             {
                 return BadRequest("Invalid client request");
             }
-            if( !IsValidEmail(loginDetails.Username) || loginDetails.Password.Length < Account.PASSWORD_LENGTH )
+
+            if (!IsValidEmail(loginDetails.Username) || loginDetails.Password.Length < Account.PASSWORD_LENGTH)
             {
                 return BadRequest("Invalid request data");
             }
@@ -467,15 +468,16 @@ namespace RoutingData.Controllers
                 return Unauthorized();
             }
 
-            // generate JWT Token
+            // generate JWT Token and include the user's role in the token claims
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]); // this key matches the configuration (the key in Program.cs) !! has to match !!
+            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-            new Claim(ClaimTypes.Name, user.Username)
-        }),
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(ClaimTypes.Role, user.Role) // add role to JWT claims
+            }),
                 Expires = DateTime.UtcNow.AddHours(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
@@ -483,9 +485,10 @@ namespace RoutingData.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
 
-            // return the generated token
-            return Ok(new { Token = tokenString });
+            // return the token along with the user's role
+            return Ok(new { Token = tokenString, Role = user.Role });
         }
+
 
         /// <summary>
         /// Method <c>DoesAccountExist</c> helper method to determine existance of Account in database
