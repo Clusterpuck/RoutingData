@@ -331,27 +331,6 @@ namespace RoutingData.Controllers
             await dictionaryOrderDetails.GetOrderDetails(_context);
             CalcRouteOutput routeForFrontend = await DeliveryToCalcRouteOutput(driverRoute, dictionaryOrderDetails.OrderDetailsDict);
 
-            /*var ordersInRoute = await _context.Orders
-                                        .Join(_context.Locations,
-                                                order => order.LocationId,
-                                                location => location.Id,
-                                                (order, location) => new { order, location })
-                                          .Where(joined => joined.order.DeliveryRouteId == driverRoute.Id)
-                                          .Select(joined => new OrderDetailsDTO
-                                          {
-                                              OrderID = joined.order.Id,
-                                              Latitude = joined.location.Latitude,
-                                              Longitude = joined.location.Longitude,
-                                              Status = joined.order.Status,
-                                          })
-                                          .ToListAsync();
-
-            // prepare the CalcRouteOutput to return
-            CalcRouteOutput routeForFrontend = new CalcRouteOutput
-            {
-                Orders = ordersInRoute,
-                VehicleId = driverRoute.VehicleLicense
-            };*/
 
             return Ok(routeForFrontend);
         }
@@ -720,7 +699,7 @@ namespace RoutingData.Controllers
                 // Create and assing values to a new DeliveryRoute object
                 var newRoute = new DeliveryRoute
                 {
-                    DeliveryDate = DateTime.Today,
+                    DeliveryDate = allRoutesCalced[i].DeliveryDate,
                     VehicleLicense = vehicles[i].LicensePlate,
                     DriverUsername = drivers[i].Username,
                     TimeCreated = DateTime.Now,
