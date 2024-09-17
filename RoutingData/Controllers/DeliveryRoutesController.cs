@@ -832,6 +832,7 @@ namespace RoutingData.Controllers
             List<Order> orders = await _context.Orders.ToListAsync();
             int routeID = deliveryRoute.Id;
             calcRouteOutput.DeliveryRouteID = routeID;
+            calcRouteOutput.DeliveryDate = deliveryRoute.DeliveryDate;
 
             foreach (Order order in orders)
             {
@@ -915,15 +916,16 @@ namespace RoutingData.Controllers
                 valid = false;
             }
             var plannedOrders = await _context.Orders
-                .Where(order => routeRequest.Orders.Contains(order.Id) && 
-                                order.Status == Order.ORDER_STATUSES[0]) //Has "Planned" status, meaning order is not yet assigned a route
+                .Where(order => routeRequest.Orders.Contains(order.Id) &&
+                    order.Status == Order.ORDER_STATUSES[0] && // Has "Planned" status
+                    order.DeliveryDate.Date == routeRequest.DeliveryDate.Date) // Matching DeliveryDate
                 .ToListAsync();
-
             if ( routeRequest.Orders.Count != plannedOrders.Count)
             {
-                sb.AppendLine("One or more orders do not have a 'Planned' status.");
+                sb.AppendLine("One or more orders do not have a 'Planned' status or are not the same date as orders.");
                 valid = false;
             }
+
 
             return valid;
         }
@@ -1014,7 +1016,8 @@ namespace RoutingData.Controllers
         /// <param name="orderDetailsDict"></param>
         /// <param name="vehicles"></param>
         /// <returns></returns>
-        private List<CalcRouteOutput> PythonOutputToFront(RouteRequestListDTO routeList, Dictionary<int, OrderDetailsDTO> orderDetailsDict, List<Vehicle> vehicles)
+        private List<CalcRouteOutput> PythonOutputToFront(RouteRequestListDTO routeList, Dictionary<int, OrderDetailsDTO> orderDetailsDict, 
+                                                            List<Vehicle> vehicles)
         {
             //Has a list of list of orderIDs, representing one vehicles routes
 
@@ -1090,6 +1093,11 @@ namespace RoutingData.Controllers
 
                 // Convert routeRequestListDTO to CalcRouteOutput
                 List<CalcRouteOutput> allRoutesCalced = PythonOutputToFront(routeRequestListDTO, dictionaryOrderDetails.OrderDetailsDict, vehicles);
+                //assign the delivery date to all the routes
+                foreach( var route in allRoutesCalced )
+                {
+                    route.DeliveryDate = routeRequest.DeliveryDate;
+                }
 
                 Console.WriteLine("All routes calced object is " + allRoutesCalced.ToString());
 

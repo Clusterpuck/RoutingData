@@ -33,6 +33,7 @@ namespace RoutingData.DTO
 #endif
         public int DeliveryRouteID { get; set; }
         public String DriverUsername { get; set; }
+        public DateTime DeliveryDate { get; set; }
         public List<OrderDetailsDTO> Orders { get; set; }
 
         public CalcRouteOutput() {
