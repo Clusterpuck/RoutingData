@@ -5,7 +5,7 @@ namespace RoutingData.Models
     //comment for change
     public class Order
     {
-        public static readonly String[] ORDER_STATUSES = { "PLANNED", "ON-ROUTE", "DELIVERED", "CANCELLED", "ASSIGNED" };
+        public static readonly String[] ORDER_STATUSES = { "PLANNED", "ON-ROUTE", "DELIVERED", "CANCELLED", "ASSIGNED", "ISSUE" };
 
         [Key]
         public int Id { get; set; }
@@ -17,7 +17,7 @@ namespace RoutingData.Models
         public int PositionNumber { get; set; }
         public string? Status { get; set; }
         public DateTime DeliveryDate {  get; set; } = DateTime.Today;
-        public Boolean Delayed { get; set; } //amira added
+        public Boolean Delayed { get; set; } 
 
 
     }
