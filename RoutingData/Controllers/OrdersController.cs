@@ -147,8 +147,55 @@ namespace RoutingData.Controllers
             return groupedOrderDetails;
         }
 
+        // GET: api/Orders/issues
+        // returns all orders where the status is ISSUE
+        [HttpGet("issues")]
+        public async Task<List<OrderDetailsDTO>> GetIssueOrders()
+        {
+            var orderDetails = await _context.Orders
+                .Join(_context.Locations,
+                    order => order.LocationId,
+                    location => location.Id,
+                    (order, location) => new { order, location })
+                .Join(_context.Customers,
+                    combined => combined.order.CustomerId,
+                    customer => customer.Id,
+                    (combined, customer) => new { combined.order, combined.location, customer })
+                .Join(_context.OrderProducts,
+                    combined => combined.order.Id,
+                    orderProduct => orderProduct.OrderId,
+                    (combined, orderProduct) => new { combined.order, combined.location, combined.customer, orderProduct })
+                .Join(_context.Products,
+                    combined => combined.orderProduct.ProductId,
+                    product => product.Id,
+                    (combined, product) => new { combined.order, combined.location, combined.customer, product })
+                .Where(x => x.order.Status == Order.ORDER_STATUSES[5]) // filter orders by status "ISSUE"
+                .ToListAsync();
 
-        
+            var groupedOrderDetails = orderDetails
+                .GroupBy(g => new { g.order, g.location, g.customer })
+                .Select(g => new OrderDetailsDTO
+                {
+                    OrderID = g.Key.order.Id,
+                    OrderNotes = g.Key.order.OrderNotes,
+                    DateOrdered = g.Key.order.DateOrdered,
+                    Address = g.Key.location.Address,
+                    Latitude = g.Key.location.Latitude,
+                    Longitude = g.Key.location.Longitude,
+                    CustomerName = g.Key.customer.Name,
+                    CustomerPhone = g.Key.customer.Phone,
+                    Status = g.Key.order.Status, 
+                    Delayed = g.Key.order.Delayed, 
+                    ProductNames = g.Select(x => x.product.Name).ToList(),
+                    DeliveryDate = g.Key.order.DeliveryDate,
+                })
+                .ToList();
+
+            return groupedOrderDetails;
+        }
+
+
+
         //TODO Can add get order by status
         // GET: api/Orders/5
         [HttpGet("{id}")]
