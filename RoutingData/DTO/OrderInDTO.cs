@@ -8,4 +8,10 @@
         public int LocationId { get; set; }
         public DateTime DeliveryDate { get; set; } = DateTime.Today;
     }
+
+    public class UpdateOrderStatusDTO
+    { 
+        public int OrderId { get; set; }
+        public string Status { get; set; }
+    }
 }
