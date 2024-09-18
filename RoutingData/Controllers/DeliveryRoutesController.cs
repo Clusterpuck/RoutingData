@@ -433,7 +433,8 @@ namespace RoutingData.Controllers
             // update the orders status attribute
             order.Status = Order.ORDER_STATUSES[5];
             // add the message to the order notes
-            order.OrderNotes += (" | Driver Note: " + orderIssueDTO.DriverNote);
+            string currentDateTime = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
+            order.OrderNotes += $" | {currentDateTime} Driver Note: {orderIssueDTO.DriverNote}";
             _context.Orders.Update(order);
             await _context.SaveChangesAsync();
 
