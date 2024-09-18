@@ -367,6 +367,46 @@ namespace RoutingData.Controllers
             return CreatedAtAction("GetOrder", new { id = dbOrder.Id }, dbOrder);
         }
 
+        [HttpPost("update-order-status")]
+        public async Task<IActionResult> UpdateOrderStatus( UpdateOrderStatusDTO orderStatusDTO)
+        {
+            //Check if a valid status provided before using ay database requests
+            if (!Order.ORDER_STATUSES.Contains(orderStatusDTO.Status))
+            {
+                string availableStatuses = string.Join(", ", Order.ORDER_STATUSES);
+                return BadRequest($"Invalid status sent of {orderStatusDTO.Status} +" +
+                    $" Must be either one of: {availableStatuses}");
+            }
+
+            if (_context.Orders == null)
+            {
+                return NotFound("Orders not found.");
+            }
+
+            // Find the order by the provided OrderId
+            var order = await _context.Orders.FindAsync(orderStatusDTO.OrderId);
+
+            if (order == null)
+            { // return not found if not found
+                return NotFound($"Order with ID {orderStatusDTO.OrderId} not found.");
+            }
+
+            // Update the order status
+            order.Status = orderStatusDTO.Status;
+
+            // Save the changes to the database
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return Problem($"An error occurred while updating the order status: {ex.Message}");
+            }
+
+            return Ok(new { message = "Order status updated successfully", orderId = order.Id, newStatus = order.Status });
+        }
+
         private Order orderDtoToOrder(OrderInDTO orderInDTO)
         {
             Order order = new Order()
