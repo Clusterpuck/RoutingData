@@ -508,6 +508,11 @@ namespace RoutingData.Controllers
                     type = frontEndData.calcType, // "brute";
                     distance = "cartesian",
                     max_solve_size = 5
+                },
+                depot = new Depot
+                {
+                    lat = -31.99635646710069,
+                    lon = 115.89105858643552
                 }
             };
             return calcRoute;
@@ -920,8 +925,8 @@ namespace RoutingData.Controllers
         /// <exception cref="Exception"></exception>
         private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn)
         {
-            string pythonBackendUrl = "https://quantumdeliverybackend.azurewebsites.net/generate-routes";
-            //string pythonBackendUrl = "http://127.0.0.1:8000/generate-routes";
+            //string pythonBackendUrl = "https://quantumdeliverybackend.azurewebsites.net/generate-routes";
+            string pythonBackendUrl = "http://127.0.0.1:8000/generate-routes";
             using (var httpClient = new HttpClient())
             {
                 try
