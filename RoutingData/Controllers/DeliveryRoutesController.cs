@@ -925,8 +925,8 @@ namespace RoutingData.Controllers
         /// <exception cref="Exception"></exception>
         private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn)
         {
-            //string pythonBackendUrl = "https://quantumdeliverybackend.azurewebsites.net/generate-routes";
-            string pythonBackendUrl = "http://127.0.0.1:8000/generate-routes";
+            string pythonBackendUrl = "https://quantumdeliverybackend.azurewebsites.net/generate-routes";
+            //string pythonBackendUrl = "http://127.0.0.1:8000/generate-routes";
             using (var httpClient = new HttpClient())
             {
                 try
@@ -1044,6 +1044,7 @@ namespace RoutingData.Controllers
         [HttpPost]
         public async Task<ActionResult<List<CalcRouteOutput>>> PostDeliveryRoute(RouteRequest routeRequest)
         {
+            Console.WriteLine(routeRequest);
             await CheckRouteMax(routeRequest);
             StringBuilder sb = new StringBuilder();
             if (!await ValidateRouteRequest(routeRequest, sb))
