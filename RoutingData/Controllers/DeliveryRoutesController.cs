@@ -509,6 +509,7 @@ namespace RoutingData.Controllers
                     distance = "cartesian",
                     max_solve_size = 5
                 },
+                // Ideally, search Db for some depot location. For now, hardcoded depot near Uni
                 depot = new Depot
                 {
                     lat = -31.99635646710069,
