@@ -1045,7 +1045,6 @@ namespace RoutingData.Controllers
         [HttpPost]
         public async Task<ActionResult<List<CalcRouteOutput>>> PostDeliveryRoute(RouteRequest routeRequest)
         {
-            Console.WriteLine(routeRequest);
             await CheckRouteMax(routeRequest);
             StringBuilder sb = new StringBuilder();
             if (!await ValidateRouteRequest(routeRequest, sb))
