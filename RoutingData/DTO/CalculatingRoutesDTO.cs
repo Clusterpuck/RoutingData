@@ -8,7 +8,8 @@ namespace RoutingData.DTO
     public class CalculatingRoutesDTO
     {
         public SubCalcSetting vehicle_cluster_config {  get; set; }
-        public SolverCalcSetting solver_config { get; set; }
+        public SolverCalcSetting solver_config { get; set; } 
+        public Depot depot { get; set; }
         public List<OrderInRouteDTO> orders { get; set; }
     }
 
@@ -28,11 +29,17 @@ namespace RoutingData.DTO
         public int k { get; set; }
     }
 
-    public class  SolverCalcSetting
+    public class SolverCalcSetting
     {
         public string type { get; set; }
         public string distance { get; set; }
         public int max_solve_size { get; set; }
+    }
+
+    public class Depot
+    {
+        public double lat { get; set; }
+        public double lon { get; set; }
     }
 
 

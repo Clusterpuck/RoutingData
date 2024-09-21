@@ -14,6 +14,7 @@ namespace RoutingData.DTO
     {
         public int NumVehicle { get; set; }
         public string calcType { get; set; }
+        public int depot { get; set; }
         public DateTime DeliveryDate { get; set; } = DateTime.Today;
         public List<int> Orders { get; set; }
     }

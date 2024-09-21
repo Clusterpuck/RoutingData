@@ -508,6 +508,12 @@ namespace RoutingData.Controllers
                     type = frontEndData.calcType, // "brute";
                     distance = "cartesian",
                     max_solve_size = 5
+                },
+                // Ideally, search Db for some depot location. For now, hardcoded depot near Uni
+                depot = new Depot
+                {
+                    lat = -31.99635646710069,
+                    lon = 115.89105858643552
                 }
             };
             return calcRoute;
