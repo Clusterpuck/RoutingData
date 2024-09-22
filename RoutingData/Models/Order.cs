@@ -15,7 +15,7 @@ namespace RoutingData.Models
         public int LocationId { get; set; }
         public int DeliveryRouteId { get; set; }
         public int PositionNumber { get; set; }
-        private string? status;
+        private string? status = "PLANNED";
         public DateTime DeliveryDate {  get; set; } = DateTime.Today;
         public Boolean Delayed { get; set; }
 
