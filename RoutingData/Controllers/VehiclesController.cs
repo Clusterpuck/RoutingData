@@ -91,6 +91,12 @@ namespace RoutingData.Controllers
             return await _context.Vehicles.ToListAsync();
         }
 
+
+        /// <summary>
+        /// Returns the number of available vehicles on that given date. 
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
         // GET: api/Vehicles
         [HttpGet("num-on-date/{date}")]
         public async Task<ActionResult<int>> GetVehiclesOnDate( DateTime date )
@@ -109,6 +115,12 @@ namespace RoutingData.Controllers
             return activeVehicles - routeCount;
         }
 
+
+        /// <summary>
+        /// Determines the maximum vehicles that can be used in one day
+        /// Factors in number of drivers as well
+        /// </summary>
+        /// <returns>maxVehicles int</returns>
         private async Task<int> GetMaxVehicles()
         {
             // Get the count of drivers (Accounts with Role "Driver")
