@@ -51,7 +51,7 @@ namespace RoutingData.Models
             // Current state to valid states
             return (status == null && value == "PLANNED" ||
             status == "PLANNED" && (value == "ASSIGNED" || value == "CANCELLED") ||
-            status == "ASSIGNED" && (value == "ON-ROUTE" /*|| value == "CANCELLED"*/) ||
+            status == "ASSIGNED" && (value == "ON-ROUTE" || value == "PLANNED" /*|| value == "CANCELLED"*/) ||
             status == "ON-ROUTE" && (value == "DELIVERED" || value == "ISSUE" /*|| value == "CANCELLED"*/) ||
             status == "ISSUE" && (value == "CANCELLED" || value == "PLANNED"));
         }

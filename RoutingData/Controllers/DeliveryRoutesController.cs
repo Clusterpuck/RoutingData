@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using RoutingData.DTO;
 using RoutingData.Models;
@@ -869,6 +870,56 @@ namespace RoutingData.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Route deleted successfully" }); // Return a success message
+        }
+
+
+        [HttpDelete("date/{date}")]
+        public async Task<IActionResult> DeleteRouteByDate(DateTime date)
+        {
+            if (_context.DeliveryRoutes == null)
+            {
+                return NotFound();
+            }
+
+            List<DeliveryRoute> deliveryRoutes = await _context.DeliveryRoutes.
+                Where( route => (route.DeliveryDate.Date == date.Date) ).
+                ToListAsync();
+
+            if ( deliveryRoutes.IsNullOrEmpty() )
+            {
+                return NotFound();
+            }
+
+            //Need to also set all orders in the list of routes to planned status, and their deliveryrouteID and position number
+            //to -1 to effectively delete
+            //First need the list of orders assigned to the routes
+
+            List<int> routeIds = deliveryRoutes.Select( route => route.Id).ToList();
+
+            List<Order> ordersInRoute = await _context.Orders.
+                 Where(order => routeIds.Contains(order.DeliveryRouteId)). //all orders in all routes
+                 ToListAsync();
+
+            foreach (var order in ordersInRoute)
+            {
+                order.ChangeStatus(Order.ORDER_STATUSES[0]); //changes back to planned
+                order.DeliveryRouteId = -1;
+                order.PositionNumber = -1;
+                order.Delayed = bool.Parse("false"); // change delayed status back to false
+
+                //Marking order as modified
+                _context.Orders.Update(order);
+            }
+            int count = 0;
+            foreach( DeliveryRoute route in deliveryRoutes)
+            {
+                _context.DeliveryRoutes.Remove(route);
+                ++count;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = $"{count} routes deleted successfully" }); // Return a success message
         }
 
         /// <summary>
