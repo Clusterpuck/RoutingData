@@ -270,32 +270,123 @@ namespace RoutingData.Controllers
         // PUT: api/Orders/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutOrder(int id, Order order)
+        public async Task<IActionResult> PutOrder(int id, EditOrderDTO orderDTO)
         {
-            if (id != order.Id)
+            if (id != orderDTO.OrderId)
             {
-                return BadRequest();
+                return BadRequest(" Order ID mismatch");
             }
 
-            _context.Entry(order).State = EntityState.Modified;
+            if (!Order.ORDER_STATUSES.Contains(orderDTO.Status))
+            {
+                string availableStatuses = string.Join(", ", Order.ORDER_STATUSES);
+                return BadRequest($"Invalid status sent of {orderDTO.Status} +" +
+                    $" Must be either one of: {availableStatuses}");
+            }
+
+            var productIds = orderDTO.Products.Select(p => p.ProductId).ToList();
+
+            var existingProductIds = await _context.Products.Where(p => productIds.Contains(p.Id)).Select(p => p.Id).ToListAsync();
+
+            var invalidProductIds = productIds.Except(existingProductIds).ToList();
+
+            if (invalidProductIds.Any())
+            {
+                string invalidIds = string.Join(", ", invalidProductIds);
+                return BadRequest($"The following Product IDs do not exist: {invalidIds}");
+            }
+
+            var discontinuedProducts = await _context.Products
+                .Where(p => productIds.Contains(p.Id) && p.Status == Product.PRODUCT_STATUSES[1])
+                .ToListAsync();
+
+            if (discontinuedProducts.Any())
+            {
+                return BadRequest("Some products are discontinued and cannot be ordered.");
+            }
+            // check if the customer is inactive
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == orderDTO.CustomerId);
+            if (customer == null || customer.Status == Customer.CUSTOMER_STATUSES[1])
+            {
+                return BadRequest("The customer is inactive and cannot place orders.");
+            }
+            // check if the location is inactive
+            var location = await _context.Locations.FirstOrDefaultAsync(l => l.Id == orderDTO.LocationId);
+            if (location == null || location.Status == Location.LOCATION_STATUSES[1])
+            {
+                return BadRequest("The location is inactive and cannot be used for deliveries.");
+            }
+            // check if the delivery date is not in the past
+            if (orderDTO.DeliveryDate <= DateTime.Today)
+            {
+                return BadRequest("Cannot change delivery date to a past date.");
+            }
+            if (_context.Orders == null)
+            {
+                return NotFound("Orders not found.");
+            }
+            // Find the order by the provided OrderId
+            var order = await _context.Orders.FindAsync(orderDTO.OrderId);
+
+            if (order == null)
+            { // return not found if not found
+                return NotFound($"Order with ID {orderDTO.OrderId} not found.");
+            }
+
+            order.Status = orderDTO.Status;
+            order.CustomerId = orderDTO.CustomerId;
+            order.LocationId = orderDTO.LocationId;
+            order.DeliveryDate = orderDTO.DeliveryDate;
+            order.OrderNotes = orderDTO.OrderNotes;
+
+
+            var existingOrderProducts = await _context.OrderProducts.Where(op => op.OrderId == orderDTO.OrderId).ToListAsync();
+
+            // Find and remove products that are no longer in the orderDTO.Products list
+            var productsToRemove = existingOrderProducts
+                .Where(op => !productIds.Contains(op.ProductId))
+                .ToList();
+
+            foreach (var productToRemove in productsToRemove)
+            {
+                _context.OrderProducts.Remove(productToRemove);
+            }
+
+            // Add or update products
+            foreach (var productDTO in orderDTO.Products)
+            {
+                var existingProduct = existingOrderProducts
+                    .FirstOrDefault(op => op.ProductId == productDTO.ProductId);
+
+                if (existingProduct != null)
+                {
+                    // Update the quantity if the product is already in the order
+                    existingProduct.Quantity = productDTO.Quantity;
+                }
+                else
+                {
+                    // Add a new product to the order
+                    var newOrderProduct = new OrderProduct
+                    {
+                        OrderId = orderDTO.OrderId,
+                        ProductId = productDTO.ProductId,
+                        Quantity = productDTO.Quantity,
+                        Status = OrderProduct.ORDERPRODUCTS_STATUSES[0]  // Set the appropriate status
+                    };
+                    _context.OrderProducts.Add(newOrderProduct);
+                }
+            }
 
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateException ex)
             {
-                if (!OrderExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return Problem($"An error occurred while updating the order: {ex.Message}");
             }
 
-            return Created("", order);
+            return NoContent();
         }
 
         /// <summary>
