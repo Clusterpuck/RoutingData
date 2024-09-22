@@ -368,7 +368,10 @@ namespace RoutingData.Controllers
             // check if the delivery route matches the provided driver
             var driverRoute = await _context.DeliveryRoutes
                                     .FirstOrDefaultAsync(route => 
-                                        ( (route.Id == order.DeliveryRouteId ) && ( route.DriverUsername.Equals(orderDelayedDTO.Username)));
+                                        ( 
+                                            (route.Id == order.DeliveryRouteId ) && 
+                                            ( route.DriverUsername.Equals( orderDelayedDTO.Username ) ) ) 
+                                        );
 
             if (driverRoute == null )
             {
