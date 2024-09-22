@@ -333,7 +333,8 @@ namespace RoutingData.Controllers
                 return NotFound($"Order with ID {orderDTO.OrderId} not found.");
             }
 
-            order.Status = orderDTO.Status;
+            //order.Status = orderDTO.Status;
+            order.ChangeStatus(orderDTO.Status);
             order.CustomerId = orderDTO.CustomerId;
             order.LocationId = orderDTO.LocationId;
             order.DeliveryDate = orderDTO.DeliveryDate;
@@ -534,7 +535,8 @@ namespace RoutingData.Controllers
             }
 
             // Update the order status
-            order.Status = orderStatusDTO.Status;
+            //order.Status = orderStatusDTO.Status;
+            order.ChangeStatus(orderStatusDTO.Status);
 
             // Save the changes to the database
             try
@@ -553,7 +555,8 @@ namespace RoutingData.Controllers
         {
             Order order = new Order()
             {
-                Status = Order.ORDER_STATUSES[0],
+                //Status = Order.ORDER_STATUSES[0],
+                //Status is automatically set as Planned on creation
                 DateOrdered = orderInDTO.DateOrdered,
                 OrderNotes = orderInDTO.OrderNotes,
                 CustomerId = orderInDTO.CustomerId,
@@ -598,7 +601,8 @@ namespace RoutingData.Controllers
             }
 
             // remove the order if it hasn't been delivered on on delivery
-            order.Status = Order.ORDER_STATUSES[3];
+            //order.Status = Order.ORDER_STATUSES[3];
+            order.ChangeStatus(Order.ORDER_STATUSES[3]);
             List<OrderProduct> orderProducts = await _context.OrderProducts.
                 Where(orderProd => orderProd.OrderId == order.Id).
                 ToListAsync();
