@@ -201,7 +201,7 @@ namespace RoutingData.Controllers
         // GET: api/Orders/issues
         // returns all orders where the status is ISSUE
         [HttpGet("issues")]
-        public async Task<List<OrderDetailsDTO>> GetIssueOrders()
+        public async Task<List<OrderDetailsWithProductsDTO>> GetIssueOrders()
         {
             var orderDetails = await _context.Orders
                 .Join(_context.Locations,
@@ -219,13 +219,13 @@ namespace RoutingData.Controllers
                 .Join(_context.Products,
                     combined => combined.orderProduct.ProductId,
                     product => product.Id,
-                    (combined, product) => new { combined.order, combined.location, combined.customer, product })
+                    (combined, product) => new { combined.order, combined.location, combined.customer, combined.orderProduct, product })
                 .Where(x => x.order.Status == Order.ORDER_STATUSES[5]) // filter orders by status "ISSUE"
                 .ToListAsync();
 
             var groupedOrderDetails = orderDetails
                 .GroupBy(g => new { g.order, g.location, g.customer })
-                .Select(g => new OrderDetailsDTO
+                .Select(g => new OrderDetailsWithProductsDTO
                 {
                     OrderID = g.Key.order.Id,
                     OrderNotes = g.Key.order.OrderNotes,
@@ -236,8 +236,14 @@ namespace RoutingData.Controllers
                     CustomerName = g.Key.customer.Name,
                     CustomerPhone = g.Key.customer.Phone,
                     Status = g.Key.order.Status, 
-                    Delayed = g.Key.order.Delayed, 
-                    ProductNames = g.Select(x => x.product.Name).ToList(),
+                    Delayed = g.Key.order.Delayed,
+                    Products = g.Select(x => new ProductGetOrderDTO
+                    {
+                        ProductID = x.product.Id,
+                        Name = x.product.Name,
+                        Quantity = x.orderProduct.Quantity,
+                        UnitOfMeasure = x.product.UnitOfMeasure
+                    }).ToList(),
                     DeliveryDate = g.Key.order.DeliveryDate,
                 })
                 .ToList();
