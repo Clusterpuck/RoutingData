@@ -293,6 +293,8 @@ namespace RoutingData.Controllers
         [HttpPost("update-status")]
         public async Task<ActionResult<CalcRouteOutput>> UpdateOrderStatus(OrderStatusDTO orderStatusDTO)
         {
+            //Change to ignore case
+            orderStatusDTO.Status = orderStatusDTO.Status.ToUpper();
             //Check if a valid status provided before using ay database requests
             if( !Order.ORDER_STATUSES.Contains(orderStatusDTO.Status) )
             {
@@ -301,24 +303,25 @@ namespace RoutingData.Controllers
                     $" Must be either one of: {availableStatuses}");
             }
 
-            // check if the delivery route exists for the driver
+            // check if the order exists and is part of the driver's delivery route
+            var order = await _context.Orders
+                              .FirstOrDefaultAsync(o => o.Id == orderStatusDTO.OrderId );
+
+            if (order == null)
+            {
+                return NotFound("No matching order in that driver's route");
+            }
+
+            // find the route mathing that order. 
             var driverRoute = await _context.DeliveryRoutes
-                                    .FirstOrDefaultAsync(r => r.DriverUsername == orderStatusDTO.Username);
+                                    .FirstOrDefaultAsync(route => 
+                                    (route.Id == order.DeliveryRouteId ) && (route.DriverUsername.Equals(orderStatusDTO.Username)));
 
             if (driverRoute == null)
             {
                 return NotFound("No route assigned to provided driver");
             }
 
-            // check if the order exists and is part of the driver's delivery route
-            var order = await _context.Orders
-                              .FirstOrDefaultAsync(o => o.Id == orderStatusDTO.OrderId && 
-                              o.DeliveryRouteId == driverRoute.Id);
-
-            if (order == null)
-            {
-                return NotFound("No matching order in that driver's route");
-            }
 
             // update the order status
             order.ChangeStatus(orderStatusDTO.Status);
@@ -344,30 +347,35 @@ namespace RoutingData.Controllers
         [HttpPost("update-delayed")]
         public async Task<ActionResult<CalcRouteOutput>> UpdateOrderDelayed(OrderDelayedDTO orderDelayedDTO)
         {
+            //updated to be non-case sensitive and only accept true. Can't go from true to false for delayed
+            string boolString = orderDelayedDTO.Delayed.ToLowerInvariant();
             //Check if a valid boolean provided before using any database requests
-            if ( !( orderDelayedDTO.Delayed.Equals("true") || orderDelayedDTO.Delayed.Equals("false") ) )
+            if ( !( boolString.Equals("true") ) )
             {
                 return BadRequest($"Invalid Delayed value sent of {orderDelayedDTO.Delayed} +" +
-                    " Must be either: true or false.");
+                    " Can only set to true.");
             }
 
-            // check if the delivery route exists for the driver
-            var driverRoute = await _context.DeliveryRoutes
-                                    .FirstOrDefaultAsync(r => r.DriverUsername == orderDelayedDTO.Username);
-
-            if (driverRoute == null)
-            {
-                return NotFound("No route assigned to provided driver");
-            }
-
-            // check if the order exists and is part of the driver's delivery route
+            // check if the order exists
             var order = await _context.Orders
-                              .FirstOrDefaultAsync(o => o.Id == orderDelayedDTO.OrderId &&
-                              o.DeliveryRouteId == driverRoute.Id);
+                              .FirstOrDefaultAsync(o => o.Id == orderDelayedDTO.OrderId);
 
             if (order == null)
             {
-                return NotFound("No matching order in that driver's route");
+                return NotFound($"No matching order for the given ID: {orderDelayedDTO.OrderId}");
+            }
+
+            // check if the delivery route matches the provided driver
+            var driverRoute = await _context.DeliveryRoutes
+                                    .FirstOrDefaultAsync(route => 
+                                        ( 
+                                            (route.Id == order.DeliveryRouteId ) && 
+                                            ( route.DriverUsername.Equals( orderDelayedDTO.Username ) ) ) 
+                                        );
+
+            if (driverRoute == null )
+            {
+                return NotFound("No matching route assigned to provided driver");
             }
 
             // order must be on route to set the delayed status to true
@@ -405,23 +413,23 @@ namespace RoutingData.Controllers
                 return BadRequest($"DriverNote field is empty. Must provide a note on the issue.");
             }
 
-            // check if the delivery route exists for the driver
-            var driverRoute = await _context.DeliveryRoutes
-                                    .FirstOrDefaultAsync(r => r.DriverUsername == orderIssueDTO.Username);
-
-            if (driverRoute == null)
-            {
-                return NotFound("No route assigned to provided driver");
-            }
-
-            // check if the order exists and is part of the driver's delivery route
+            // check if the order exists 
             var order = await _context.Orders
-                              .FirstOrDefaultAsync(o => o.Id == orderIssueDTO.OrderId &&
-                              o.DeliveryRouteId == driverRoute.Id);
+                              .FirstOrDefaultAsync(o => o.Id == orderIssueDTO.OrderId );
 
             if (order == null)
             {
                 return NotFound("No matching order in that driver's route");
+            }
+
+            // check if the delivery route exists for the driver
+            var driverRoute = await _context.DeliveryRoutes
+                                    .FirstOrDefaultAsync(route => ( route.Id == order.DeliveryRouteId ) && 
+                                    ( route.DriverUsername == orderIssueDTO.Username ) );
+
+            if (driverRoute == null)
+            {
+                return NotFound("No route assigned to provided driver");
             }
 
             // order must be on route to set the status to 'issue'
