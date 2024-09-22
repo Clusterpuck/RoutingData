@@ -91,6 +91,43 @@ namespace RoutingData.Controllers
             return await _context.Vehicles.ToListAsync();
         }
 
+        // GET: api/Vehicles
+        [HttpGet("num-on-date/{date}")]
+        public async Task<ActionResult<int>> GetVehiclesOnDate( DateTime date )
+        {
+            if (_context.Vehicles == null)
+            {
+                return NotFound();
+            }
+            //get number of routes for this date
+            int routeCount = await _context.DeliveryRoutes.Where(route => (route.DeliveryDate.Date == date.Date)).CountAsync();
+
+            //get number or drivers and vehicles that are active, take minimum of the two
+            int activeVehicles = await GetMaxVehicles();
+
+            //subtract the number of routes and return value
+            return activeVehicles - routeCount;
+        }
+
+        private async Task<int> GetMaxVehicles()
+        {
+            // Get the count of drivers (Accounts with Role "Driver")
+            var driverCount = await _context.Accounts
+                .Where(account => (account.Role == Account.ACCOUNT_ROLES[0]) && //Only selecting driver role
+                    (account.Status == Account.ACCOUNT_STATUSES[0])) //That is active
+                .CountAsync();
+
+            // Get the count of vehicles
+            var vehicleCount = await _context.Vehicles
+                .Where(vehicle => vehicle.Status == Vehicle.VEHICLE_STATUSES[0]) //Only selecting active vehicle
+                .CountAsync();
+
+            // Find the minimum of the driver count and vehicle count
+            int maxVehicles = Math.Min(driverCount, vehicleCount);
+
+            return maxVehicles;
+        }
+
         // GET: api/Vehicles/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Vehicle>> GetVehicle(int id)
