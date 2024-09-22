@@ -558,6 +558,84 @@ namespace RoutingData.Controllers
             return Created("", startRoute);
         }
 
+
+
+        /// <summary>
+        /// Assigns a driver to the given routeID
+        /// If driver is assigned to a different route on the same day, they are swapped
+        /// </summary>
+        /// <param name="routeID"></param>
+        /// <param name="driver"></param>
+        /// <returns></returns>
+        [HttpPut("assign-driver/{routeID}/{driver}")]
+        public async Task<IActionResult> PutDeliveryDriver(int routeID, string driver)
+        {
+            //Check driver exists
+            Account inDriver = await _context.Accounts.
+                Where(account => (account.Role == Account.ACCOUNT_ROLES[0])).
+                FirstOrDefaultAsync( account => (account.Username.Equals(driver)));
+            if (inDriver == null)
+            {
+                return BadRequest("Driver doesn't exist");
+            }
+            DeliveryRoute routeAssigning = await _context.DeliveryRoutes.
+                FirstOrDefaultAsync(route => route.Id == routeID);
+            if (routeAssigning == null)
+            {
+                return NotFound("Delivery route id not in database");
+            }
+            //Get the date of the route
+            DateTime routeDate = routeAssigning.DeliveryDate;
+            
+            //Get all other routes on this date
+            List<DeliveryRoute> routesOnDay = await _context.DeliveryRoutes.
+                    Where(route => (route.DeliveryDate.Date == routeDate.Date)).
+                    ToListAsync();
+
+            if (routesOnDay.Count == 1)
+            {//only one route, not need to swap any other
+                routeAssigning.DriverUsername = driver;
+                await _context.SaveChangesAsync();
+                return Ok(routeAssigning);
+            }
+            else
+            {
+            // Check if driver is busy (assigned to another route on the same day)
+                bool driverBusy = routesOnDay
+                    .FirstOrDefault(route => (route.DriverUsername.Equals(driver)) && (route.Id != routeID)) != null;
+
+
+                if (!driverBusy)
+                {//driver not assigned to any other routes
+                    routeAssigning.DriverUsername = driver;
+                    await _context.SaveChangesAsync();
+                    return Ok(routeAssigning);
+                }
+                else
+                {
+                    // Driver is already assigned to another route, attempt to find another route for swapping
+                    DeliveryRoute nextRoute = routesOnDay
+                        .FirstOrDefault(route => !route.DriverUsername.Equals(driver) && route.Id != routeID);
+
+                    if (nextRoute != null)
+                    {//found another route to give other driver
+                        nextRoute.DriverUsername = routeAssigning.DriverUsername;
+                        routeAssigning.DriverUsername = driver;
+                    }
+                    else
+                    {//no other routes to swap driver to, jut replace
+                        routeAssigning.DriverUsername = driver;
+                    }
+
+                    await _context.SaveChangesAsync();
+                    return Ok(routeAssigning);
+
+
+                }
+            }
+
+        }
+
         /// <summary>
         /// Method <c>GetdeliveryRoutes</c>
         /// returns a list of full detail routes of all routes in the system. 
