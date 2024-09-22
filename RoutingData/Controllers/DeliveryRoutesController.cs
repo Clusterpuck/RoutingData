@@ -595,6 +595,8 @@ namespace RoutingData.Controllers
             if (routesOnDay.Count == 1)
             {//only one route, not need to swap any other
                 routeAssigning.DriverUsername = driver;
+                await _context.SaveChangesAsync();
+                return Ok(routeAssigning);
             }
             else
             {
