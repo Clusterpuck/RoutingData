@@ -43,6 +43,11 @@ namespace RoutingData.Models
 
         private bool IsValidStateChange(string value)
         {
+            // Handle reflexive case
+            if (status == value)
+            {
+                return true;
+            }
             // Current state to valid states
             return (status == null && value == "PLANNED" ||
             status == "PLANNED" && (value == "ASSIGNED" || value == "CANCELLED") ||
