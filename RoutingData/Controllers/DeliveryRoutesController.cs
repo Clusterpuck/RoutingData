@@ -592,37 +592,44 @@ namespace RoutingData.Controllers
                     Where(route => (route.DeliveryDate.Date == routeDate.Date)).
                     ToListAsync();
 
-            // Check if driver is busy (assigned to another route on the same day)
-            bool driverBusy = routesOnDay
-                .FirstOrDefault(route => (route.DriverUsername.Equals(driver)) && (route.Id != routeID)) != null;
-
-
-            if (!driverBusy)
-            {//driver not assigned to any other routes
+            if (routesOnDay.Count == 1)
+            {//only one route, not need to swap any other
                 routeAssigning.DriverUsername = driver;
-                await _context.SaveChangesAsync();
-                return Ok(routeAssigning);
             }
             else
             {
-             // Driver is already assigned to another route, attempt to find another route for swapping
-                DeliveryRoute nextRoute = routesOnDay
-                    .FirstOrDefault(route => !route.DriverUsername.Equals(driver) && route.Id != routeID);
+            // Check if driver is busy (assigned to another route on the same day)
+                bool driverBusy = routesOnDay
+                    .FirstOrDefault(route => (route.DriverUsername.Equals(driver)) && (route.Id != routeID)) != null;
 
-                if (nextRoute != null)
-                {//found another route to give other driver
-                    nextRoute.DriverUsername = routeAssigning.DriverUsername;
+
+                if (!driverBusy)
+                {//driver not assigned to any other routes
                     routeAssigning.DriverUsername = driver;
+                    await _context.SaveChangesAsync();
+                    return Ok(routeAssigning);
                 }
                 else
-                {//no other routes to swap driver to, jut replace
-                    routeAssigning.DriverUsername = driver;
+                {
+                    // Driver is already assigned to another route, attempt to find another route for swapping
+                    DeliveryRoute nextRoute = routesOnDay
+                        .FirstOrDefault(route => !route.DriverUsername.Equals(driver) && route.Id != routeID);
+
+                    if (nextRoute != null)
+                    {//found another route to give other driver
+                        nextRoute.DriverUsername = routeAssigning.DriverUsername;
+                        routeAssigning.DriverUsername = driver;
+                    }
+                    else
+                    {//no other routes to swap driver to, jut replace
+                        routeAssigning.DriverUsername = driver;
+                    }
+
+                    await _context.SaveChangesAsync();
+                    return Ok(routeAssigning);
+
+
                 }
-
-                await _context.SaveChangesAsync();
-                return Ok(routeAssigning);
-
-
             }
 
         }
