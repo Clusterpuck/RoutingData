@@ -321,7 +321,7 @@ namespace RoutingData.Controllers
             }
 
             // update the order status
-            order.Status = orderStatusDTO.Status;
+            order.ChangeStatus(orderStatusDTO.Status);
             _context.Orders.Update(order);
             await _context.SaveChangesAsync();
 
@@ -431,7 +431,7 @@ namespace RoutingData.Controllers
             }
 
             // update the orders status attribute
-            order.Status = Order.ORDER_STATUSES[5];
+            order.ChangeStatus(Order.ORDER_STATUSES[5]);
             // add the message to the order notes
             string currentDateTime = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
             order.OrderNotes += $" | {currentDateTime} Driver Note: {orderIssueDTO.DriverNote}";
@@ -549,7 +549,7 @@ namespace RoutingData.Controllers
             // Update the Status for all found orders
             foreach (var order in ordersToUpdate)
             {
-                order.Status = Order.ORDER_STATUSES[1];//assigned On-Route
+                order.ChangeStatus(Order.ORDER_STATUSES[1]); //assigned On-Route
             }
 
             // Save changes to the database
@@ -729,7 +729,7 @@ namespace RoutingData.Controllers
                     {
                         dbOrder.DeliveryRouteId = newRoute.Id;  // Assign the newly generated DeliveryRouteId
                         dbOrder.PositionNumber = pos;           // Assign the position number
-                        dbOrder.Status = Order.ORDER_STATUSES[4];//Status of order set to assigned
+                        dbOrder.ChangeStatus(Order.ORDER_STATUSES[4]); //Status of order set to assigned
                         pos++;
                     }
                 }
@@ -769,7 +769,7 @@ namespace RoutingData.Controllers
                 ToListAsync();
             foreach (var order in ordersInRoute)
             {
-                order.Status = Order.ORDER_STATUSES[0]; //changes back to planned
+                order.ChangeStatus(Order.ORDER_STATUSES[0]); //changes back to planned
                 order.DeliveryRouteId = -1;
                 order.PositionNumber = -1;
                 order.Delayed = bool.Parse("false"); // change delayed status back to false
