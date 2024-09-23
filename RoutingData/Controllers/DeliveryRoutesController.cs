@@ -323,9 +323,16 @@ namespace RoutingData.Controllers
                 return NotFound("No route assigned to provided driver");
             }
 
-
             // update the order status
-            order.ChangeStatus(orderStatusDTO.Status);
+            try
+            {
+                order.ChangeStatus(orderStatusDTO.Status);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest($"Error in changing order's state: {ex.Message}");
+            }
+
             _context.Orders.Update(order);
             await _context.SaveChangesAsync();
 
@@ -440,7 +447,14 @@ namespace RoutingData.Controllers
             }
 
             // update the orders status attribute
-            order.ChangeStatus(Order.ORDER_STATUSES[5]);
+            try
+            {
+                order.ChangeStatus(Order.ORDER_STATUSES[5]);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest($"Error in changing order's state: {ex.Message}");
+            }
             // add the message to the order notes
             string currentDateTime = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
             order.OrderNotes += $" | {currentDateTime} Driver Note: {orderIssueDTO.DriverNote}";
@@ -558,7 +572,14 @@ namespace RoutingData.Controllers
             // Update the Status for all found orders
             foreach (var order in ordersToUpdate)
             {
-                order.ChangeStatus(Order.ORDER_STATUSES[1]); //assigned On-Route
+                try
+                {
+                    order.ChangeStatus(Order.ORDER_STATUSES[1]); //assigned On-Route
+                }
+                catch (ArgumentException ex)
+                {
+                    return BadRequest($"Error in changing order's state: {ex.Message}");
+                }
             }
 
             // Save changes to the database
@@ -816,7 +837,14 @@ namespace RoutingData.Controllers
                     {
                         dbOrder.DeliveryRouteId = newRoute.Id;  // Assign the newly generated DeliveryRouteId
                         dbOrder.PositionNumber = pos;           // Assign the position number
-                        dbOrder.ChangeStatus(Order.ORDER_STATUSES[4]); //Status of order set to assigned
+                        try
+                        {
+                            dbOrder.ChangeStatus(Order.ORDER_STATUSES[4]); //Status of order set to assigned
+                        }
+                        catch (ArgumentException)
+                        {
+                            throw; // Invalid state transition
+                        }
                         pos++;
                     }
                 }
@@ -856,7 +884,14 @@ namespace RoutingData.Controllers
                 ToListAsync();
             foreach (var order in ordersInRoute)
             {
-                order.ChangeStatus(Order.ORDER_STATUSES[0]); //changes back to planned
+                try
+                {
+                    order.ChangeStatus(Order.ORDER_STATUSES[0]); //changes back to planned
+                }
+                catch (ArgumentException ex)
+                {
+                    return BadRequest($"Error in changing order's state: {ex.Message}");
+                }
                 order.DeliveryRouteId = -1;
                 order.PositionNumber = -1;
                 order.Delayed = bool.Parse("false"); // change delayed status back to false
@@ -902,7 +937,14 @@ namespace RoutingData.Controllers
 
             foreach (var order in ordersInRoute)
             {
-                order.ChangeStatus(Order.ORDER_STATUSES[0]); //changes back to planned
+                try
+                {
+                    order.ChangeStatus(Order.ORDER_STATUSES[0]); //changes back to planned
+                }
+                catch (ArgumentException ex)
+                {
+                    return BadRequest($"Error in changing order's state: {ex.Message}");
+                }
                 order.DeliveryRouteId = -1;
                 order.PositionNumber = -1;
                 order.Delayed = bool.Parse("false"); // change delayed status back to false
@@ -1228,7 +1270,14 @@ namespace RoutingData.Controllers
                 
                 AssignPosAndDelivery(allRoutesCalced, routeRequest );
 #else
-                await AssignPosAndDeliveryAsync(allRoutesCalced);
+                try
+                {
+                    await AssignPosAndDeliveryAsync(allRoutesCalced);
+                }
+                catch (ArgumentException ex)
+                {
+                    return BadRequest($"Error in changing order's state: {ex.Message}");
+                }
 #endif
                 return Ok(allRoutesCalced);
             }
