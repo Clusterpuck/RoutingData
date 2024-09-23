@@ -841,9 +841,9 @@ namespace RoutingData.Controllers
                         {
                             dbOrder.ChangeStatus(Order.ORDER_STATUSES[4]); //Status of order set to assigned
                         }
-                        catch (ArgumentException ex)
+                        catch (ArgumentException)
                         {
-                            throw ex; // Invalid state transition
+                            throw; // Invalid state transition
                         }
                         pos++;
                     }
