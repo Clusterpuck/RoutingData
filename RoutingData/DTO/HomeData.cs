@@ -10,6 +10,7 @@
         //the total number of orders on theat date
         public int OrdersCount { get; set; }
         //number of orders today that have delayed status
+        public int ActiveOrdersCount { get; set; }
         public int DelaysCount { get; set; }
 
         //any orders that have been assigned issue status
@@ -17,7 +18,7 @@
         //number of routes assigned to today
         public int RoutesCount { get; set; }
         //list of drivers that have routes today
-        public List<Account> DriversOnRoutes { get; set; }
+        public List<string> DriversOnRoutes { get; set; }
 
     }
 }

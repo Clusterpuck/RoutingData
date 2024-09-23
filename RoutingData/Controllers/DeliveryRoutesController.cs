@@ -1230,7 +1230,6 @@ namespace RoutingData.Controllers
         {
             await CheckRouteMax(routeRequest);
             StringBuilder sb = new StringBuilder();
-            long timestamp = routeRequest.DeliveryDate;
 
             if (!await ValidateRouteRequest(routeRequest, sb))
             {//invalid routeRequest object
