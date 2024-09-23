@@ -1080,14 +1080,18 @@ namespace RoutingData.Controllers
                 sb.AppendLine("Date set before current date");
                 valid = false;
             }
+            var startOfDay = routeRequest.DeliveryDate.Date;
+            var endOfDay = startOfDay.AddDays(1).AddTicks(-1); // End of the day
+
             var plannedOrders = await _context.Orders
                 .Where(order => routeRequest.Orders.Contains(order.Id) &&
                     order.Status == Order.ORDER_STATUSES[0] && // Has "Planned" status
-                    order.DeliveryDate.Date == routeRequest.DeliveryDate.Date) // Matching DeliveryDate
+                    order.DeliveryDate >= startOfDay && order.DeliveryDate <= endOfDay) // Matching DeliveryDate range
                 .ToListAsync();
+
             if ( routeRequest.Orders.Count != plannedOrders.Count)
             {
-                sb.AppendLine("One or more orders do not have a 'Planned' status or are not the same date as orders.");
+                sb.AppendLine($"There are {plannedOrders.Count} planned orders but {routeRequest.Orders.Count} orders requested. One or more orders do not have a 'Planned' status or are not the same date as orders.");
                 valid = false;
             }
 
@@ -1226,6 +1230,7 @@ namespace RoutingData.Controllers
         {
             await CheckRouteMax(routeRequest);
             StringBuilder sb = new StringBuilder();
+
             if (!await ValidateRouteRequest(routeRequest, sb))
             {//invalid routeRequest object
                 return BadRequest( sb.ToString() );
