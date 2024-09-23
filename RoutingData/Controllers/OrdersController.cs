@@ -339,7 +339,15 @@ namespace RoutingData.Controllers
                 return NotFound($"Order with ID {orderDTO.OrderId} not found.");
             }
 
-            order.ChangeStatus(orderDTO.Status);
+            try
+            {
+                order.ChangeStatus(orderDTO.Status);
+            }
+            catch(ArgumentException ex)
+            {
+                return BadRequest($"Error in editing order's state: {ex.Message}");
+            }
+
             order.CustomerId = orderDTO.CustomerId;
             order.LocationId = orderDTO.LocationId;
             order.DeliveryDate = orderDTO.DeliveryDate;
@@ -540,7 +548,14 @@ namespace RoutingData.Controllers
             }
 
             // Update the order status
-            order.ChangeStatus(orderStatusDTO.Status);
+            try
+            {
+                order.ChangeStatus(orderStatusDTO.Status);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest($"Error in updating order's state: {ex.Message}");
+            }
 
             // Save the changes to the database
             try
@@ -603,7 +618,15 @@ namespace RoutingData.Controllers
             }
 
             // remove the order if it hasn't been delivered on on delivery
-            order.ChangeStatus(Order.ORDER_STATUSES[3]);
+            try
+            {
+                order.ChangeStatus(Order.ORDER_STATUSES[3]);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest($"Error in setting order's state: {ex.Message}");
+            }
+
             List<OrderProduct> orderProducts = await _context.OrderProducts.
                 Where(orderProd => orderProd.OrderId == order.Id).
                 ToListAsync();
