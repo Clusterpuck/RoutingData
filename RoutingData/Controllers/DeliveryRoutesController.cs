@@ -333,6 +333,23 @@ namespace RoutingData.Controllers
                 return BadRequest($"Error in changing order's state: {ex.Message}");
             }
 
+            // check if any orders in the route must be set to delayed
+
+            //get orders in the route
+            var routeOrders = await _context.Orders
+                                    .Where(o => o.DeliveryRouteId == driverRoute.Id)
+                                    .ToListAsync();
+
+            foreach (var routeOrder in routeOrders)
+            {
+                // check if the delivery time is more than 1 hour past the current time
+                if (routeOrder.DeliveryDate.AddHours(1) < DateTime.Now)
+                {
+                    routeOrder.Delayed = true;
+                    _context.Orders.Update(routeOrder);
+                }
+            }
+
             _context.Orders.Update(order);
             await _context.SaveChangesAsync();
 
