@@ -577,6 +577,68 @@ namespace RoutingData.Controllers
             }
         }
 
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDTO)
+        {
+            // Validate input data
+            if (string.IsNullOrEmpty(changePasswordDTO.Username) ||
+                string.IsNullOrEmpty(changePasswordDTO.CurrentPassword) ||
+                string.IsNullOrEmpty(changePasswordDTO.NewPassword))
+            {
+                return BadRequest("Invalid request data");
+            }
+
+            // Validate if the username is a valid email (optional depending on your system requirements)
+            if (!IsValidEmail(changePasswordDTO.Username))
+            {
+                return BadRequest("Invalid username/email format.");
+            }
+
+            // Check if the user exists in the database
+            var user = await _context.Accounts.FirstOrDefaultAsync(u => u.Username == changePasswordDTO.Username);
+            if (user == null)
+            {
+                return NotFound("Account not found.");
+            }
+
+            // Verify that the current password matches the one in the database
+            if (user.Password != changePasswordDTO.CurrentPassword)
+            {
+                return Unauthorized("Current password is incorrect.");
+            }
+
+            // Validate the new password (e.g., length check, complexity, etc.)
+            if (changePasswordDTO.NewPassword.Length < 6)
+            {
+                return BadRequest("New password is too short.");
+            }
+
+            // Update the password
+            user.Password = changePasswordDTO.NewPassword;
+            _context.Entry(user).State = EntityState.Modified;
+
+            try
+            {
+                // Save the changes to the database
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Handle potential concurrency issues
+                if (!DoesAccountExist(changePasswordDTO.Username))
+                {
+                    return NotFound("Account not found during update.");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return Ok("Password changed successfully.");
+        }
+
+
 
 #endif
 
