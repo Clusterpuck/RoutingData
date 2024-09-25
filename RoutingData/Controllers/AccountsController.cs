@@ -604,7 +604,10 @@ namespace RoutingData.Controllers
             // Verify that the current password matches the one in the database
             if (user.Password != changePasswordDTO.CurrentPassword)
             {
-                return Unauthorized("Current password is incorrect.");
+                return Unauthorized(new
+                {
+                    message = "Current password is incorrect."
+                });
             }
 
             // Validate the new password (e.g., length check, complexity, etc.)
@@ -635,8 +638,9 @@ namespace RoutingData.Controllers
                 }
             }
 
-            return Ok("Password changed successfully.");
+            return Ok(new { message = "Password changed successfully." });
         }
+
 
 
 
