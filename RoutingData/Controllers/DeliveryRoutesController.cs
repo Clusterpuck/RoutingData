@@ -1060,20 +1060,28 @@ namespace RoutingData.Controllers
                 return BadRequest("Email is not a valid format");
             }
 
-            DeliveryRoute driverRoute = _context.DeliveryRoutes
-                                               .FirstOrDefault(r => r.DriverUsername == driverUsername);
+            var driverRoutes = await _context.DeliveryRoutes
+                                    .Where(r => r.DriverUsername == driverUsername)
+                                    .ToListAsync();
 
-            if (driverRoute == null)
+            if (!driverRoutes.Any())
             {
                 return NotFound($"No delivery routes found for driver with username {driverUsername}");
             }
             DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
             await dictionaryOrderDetails.GetOrderDetails( _context );
-            CalcRouteOutput calcOutput = await DeliveryToCalcRouteOutput(driverRoute, dictionaryOrderDetails.OrderDetailsDict);
+
+            var calcRouteOutputs = new List<CalcRouteOutput>();
+
+            foreach (var route in driverRoutes)
+            {
+                var calcOutput = await DeliveryToCalcRouteOutput(route, dictionaryOrderDetails.OrderDetailsDict);
+                calcRouteOutputs.Add(calcOutput);
+            }
 
             //Now need to build the CalcRouteOutput and return that object 
 
-            return calcOutput;
+            return Ok(calcRouteOutputs);
         }
         
         
