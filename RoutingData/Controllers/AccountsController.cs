@@ -641,6 +641,55 @@ namespace RoutingData.Controllers
             return Ok(new { message = "Password changed successfully." });
         }
 
+        // change account state back to active
+        [HttpPost("reactivate/{id}")]
+        public async Task<IActionResult> ReactivateAccount(string id)
+        {
+            if (_context.Accounts == null)
+            {
+                return NotFound("Accounts data is not available.");
+            }
+
+            // Check if the account exists in the database
+            var account = await _context.Accounts.FindAsync(id);
+            if (account == null)
+            {
+                return NotFound($"Account with ID {id} not found.");
+            }
+
+            // Check if the account is already active
+            if (account.Status == Account.ACCOUNT_STATUSES[0])
+            {
+                return BadRequest("Account is already active.");
+            }
+
+            // Reactivate the account by setting its status to Active
+            account.Status = Account.ACCOUNT_STATUSES[0]; // Assuming ACCOUNT_STATUSES[0] corresponds to "Active"
+
+            // Update the account in the context and save changes to the database
+            _context.Entry(account).State = EntityState.Modified;
+
+            try
+            {
+                // Save changes asynchronously
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Check if the account still exists in the database
+                if (!DoesAccountExist(id))
+                {
+                    return NotFound($"Account with ID {id} no longer exists.");
+                }
+                else
+                {
+                    throw; // If it's a different concurrency issue
+                }
+            }
+
+            return Ok(new { message = "Account reactivated successfully." });
+        }
+
 
 
 
