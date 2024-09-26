@@ -996,16 +996,19 @@ namespace RoutingData.Controllers
                 return NotFound();
             }
 
-            List<DeliveryRoute> deliveryRoutes = await _context.DeliveryRoutes.
-                Where( route => (route.DeliveryDate.Date == date.Date) ).
-                ToListAsync();
+            //Need to also select only routes that have all orders in ASSIGNED or CANCELLED status
+            List<DeliveryRoute> deliveryRoutes = await _context.DeliveryRoutes
+                .Where(route => route.DeliveryDate.Date == date.Date)
+                .Where(route => _context.Orders
+                    .Where(order => order.DeliveryRouteId == route.Id)
+                    .All(order => order.Status == "ASSIGNED" || order.Status == "CANCELLED"))
+                .ToListAsync();
 
             if ( deliveryRoutes.IsNullOrEmpty() )
-            {
+            {//no routes that aren't started
                 return NotFound();
             }
 
-            //Need to also set all orders in the list of routes to planned status, and their deliveryrouteID and position number
             //to -1 to effectively delete
             //First need the list of orders assigned to the routes
 
@@ -1022,7 +1025,8 @@ namespace RoutingData.Controllers
                     order.ChangeStatus(Order.ORDER_STATUSES[0]); //changes back to planned
                 }
                 catch (ArgumentException ex)
-                {
+                {//this should be absolute last resort check.
+                    //As at this point some orders in the route will already be changed
                     return BadRequest($"Error in changing order's state: {ex.Message}");
                 }
                 order.DeliveryRouteId = -1;
@@ -1304,6 +1308,60 @@ namespace RoutingData.Controllers
         }
 
 
+        //This is essentailly a copy of delete by date, but needs to return the deleted order ID
+        //And can't return a BadRequest as not intended as a endpoint
+        private async Task<int> RemoveExistingRoutes( DateTime date, List<int> ordersRemoved )
+        {//get all routes on the same date as the routerequest
+         //Need to also select only routes that have all orders in ASSIGNED or CANCELLED status
+
+            List<DeliveryRoute> deliveryRoutes = await _context.DeliveryRoutes
+                .Where(route => route.DeliveryDate.Date == date.Date)
+                .Where(route => _context.Orders
+                    .Where(order => order.DeliveryRouteId == route.Id)
+                    .All(order => order.Status == "ASSIGNED" || order.Status == "CANCELLED"))
+                .ToListAsync();
+            //If no routes found, that is fine, just continue by doing nothing
+
+            List<int> routeIds = deliveryRoutes.Select(route => route.Id).ToList();
+
+            List<Order> ordersInRoute = await _context.Orders.
+                 Where(order => routeIds.Contains(order.DeliveryRouteId)). //all orders in all routes
+                 ToListAsync();
+
+            foreach (var order in ordersInRoute)
+            {
+                try
+                {
+                    order.ChangeStatus(Order.ORDER_STATUSES[0]); //changes back to planned
+                    ordersRemoved.Add(order.Id);
+                }
+                catch (ArgumentException ex)
+                {//this should be absolute last resort check.
+                    //As at this point some orders in the route will already be changed
+                    return 0;
+                }
+                order.DeliveryRouteId = -1;
+                order.PositionNumber = -1;
+                order.Delayed = false; // change delayed status back to false
+
+                //Marking order as modified
+                _context.Orders.Update(order);
+            }
+            int count = 0;
+            foreach (DeliveryRoute route in deliveryRoutes)
+            {
+                _context.DeliveryRoutes.Remove(route);
+                ++count;
+            }
+
+            await _context.SaveChangesAsync();
+            return count;
+
+            //delete those routes and add the orders to the routeRequest. 
+
+
+        }
+
         /// <summary>
         /// Method <c>PostDeliveryRoute</c>
         /// Uses the DTO or a list of orders and number of vehicles
@@ -1333,6 +1391,16 @@ namespace RoutingData.Controllers
                 List<Vehicle> vehicles = _offlineDatabase.Vehicles;
 
 #else
+                List<int> olderOrders = new();
+                //gets all the routes on the date and deletes. return the orders now freed up. 
+                int newVehicles = await RemoveExistingRoutes(routeRequest.DeliveryDate, olderOrders);
+
+                //vehicles freed up from route now included in the new request
+                routeRequest.NumVehicle += newVehicles;
+
+                //Adds the older oders to the request, avoiding duplicates
+                routeRequest.Orders = routeRequest.Orders.Union(olderOrders).ToList();
+
                 //Creates a dictionary from the datbase of order details required
                 DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
                 await dictionaryOrderDetails.GetOrderDetails( _context );
