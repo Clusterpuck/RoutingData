@@ -76,4 +76,12 @@ namespace RoutingData.DTO
         public int OrderId { get; set; }
         public string DriverNote { get; set; }
     }
+
+    // used when updating the route
+    public class UpdateRouteDTO
+    {
+        public int routeID { get; set; }
+        public string driverUsername { get; set; }
+        public string vehicleID { get; set; }
+    }
 }

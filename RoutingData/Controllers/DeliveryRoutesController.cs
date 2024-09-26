@@ -741,32 +741,95 @@ namespace RoutingData.Controllers
         // PUT: api/DeliveryRoutes/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutDeliveryRoute(int id, DeliveryRoute deliveryRoute)
+        public async Task<IActionResult> PutDeliveryRoute(int id, UpdateRouteDTO routeDTO)
         {
-            if (id != deliveryRoute.Id)
+            if (id != routeDTO.routeID) // checking IDs match
             {
-                return BadRequest();
+                return BadRequest(" Route ID mismatch");
             }
 
-            _context.Entry(deliveryRoute).State = EntityState.Modified;
+            if (_context.DeliveryRoutes == null) // checking routes exist
+            {
+                return NotFound("Delivery routes not found.");
+            }
+
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Username == routeDTO.driverUsername);
+            if (account == null || account.Status == Account.ACCOUNT_STATUSES[1])
+            {
+                return BadRequest("The account is inactive and cannot be assigned a route.");
+            }
+
+            if (account.Role != Account.ACCOUNT_ROLES[0])
+            {
+                return BadRequest("The account does not have the 'driver' role and cannot be assigned a route.");
+            }
+
+            var vehicle = await _context.Vehicles.FirstOrDefaultAsync(a => a.LicensePlate == routeDTO.vehicleID);
+            if (vehicle == null || vehicle.Status == Vehicle.VEHICLE_STATUSES[1])
+            {
+                return BadRequest("The vehicle is inactive and cannot be assigned a route.");
+            }
+
+
+
+            var route = await _context.DeliveryRoutes.FirstOrDefaultAsync(a => a.Id == id);
+
+            if (route == null)
+            {
+                return NotFound("The specified route was not found.");
+            }
+
+            // Check if the driver or vehicle is already assigned a route on the same date
+            var existingRouteForDriver = await _context.DeliveryRoutes
+                .Where(r => r.DriverUsername == routeDTO.driverUsername && r.DeliveryDate == route.DeliveryDate && r.Id != id)
+                .FirstOrDefaultAsync();
+
+            if (existingRouteForDriver != null)
+            {
+                return BadRequest("The driver is already assigned to a route on this date.");
+            }
+
+            var existingRouteForVehicle = await _context.DeliveryRoutes
+                .Where(r => r.VehicleLicense == routeDTO.vehicleID && r.DeliveryDate == route.DeliveryDate && r.Id != id)
+                .FirstOrDefaultAsync();
+
+            if (existingRouteForVehicle != null)
+            {
+                return BadRequest("The vehicle is already assigned to a route on this date.");
+            }
+
+            var routeOrders = await _context.Orders
+                                    .Where(o => o.DeliveryRouteId == route.Id)
+                                    .ToListAsync();
+
+            foreach (var routeOrder in routeOrders)
+            {
+                // check that each order has status ASSIGNED
+                if (routeOrder.Status != Order.ORDER_STATUSES[4])
+                {
+                    return BadRequest("All orders in the delivery route must have status ASSIGNED to update driver / vehicle details.");
+                }
+            }
+
+            // Check if the driver or vehicle details have changed
+            if (route.DriverUsername == routeDTO.driverUsername && route.VehicleLicense == routeDTO.vehicleID)
+            {
+                return BadRequest("No changes were made because the driver and vehicle details entered are the same as the current assigned details.");
+            }
+
+            route.DriverUsername = routeDTO.driverUsername;
+            route.VehicleLicense = routeDTO.vehicleID;
 
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateException ex)
             {
-                if (!DeliveryRouteExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return Problem($"An error occurred while updating the route: {ex.Message}");
             }
 
-            return Created("", deliveryRoute);
+            return NoContent();
         }
 
 
