@@ -933,16 +933,19 @@ namespace RoutingData.Controllers
                 return NotFound();
             }
 
-            List<DeliveryRoute> deliveryRoutes = await _context.DeliveryRoutes.
-                Where( route => (route.DeliveryDate.Date == date.Date) ).
-                ToListAsync();
+            //Need to also select only routes that have all orders in ASSIGNED or CANCELLED status
+            List<DeliveryRoute> deliveryRoutes = await _context.DeliveryRoutes
+                .Where(route => route.DeliveryDate.Date == date.Date)
+                .Where(route => _context.Orders
+                    .Where(order => order.DeliveryRouteId == route.Id)
+                    .All(order => order.Status == "ASSIGNED" || order.Status == "CANCELLED"))
+                .ToListAsync();
 
             if ( deliveryRoutes.IsNullOrEmpty() )
-            {
+            {//no routes that aren't started
                 return NotFound();
             }
 
-            //Need to also set all orders in the list of routes to planned status, and their deliveryrouteID and position number
             //to -1 to effectively delete
             //First need the list of orders assigned to the routes
 
@@ -959,7 +962,8 @@ namespace RoutingData.Controllers
                     order.ChangeStatus(Order.ORDER_STATUSES[0]); //changes back to planned
                 }
                 catch (ArgumentException ex)
-                {
+                {//this should be absolute last resort check.
+                    //As at this point some orders in the route will already be changed
                     return BadRequest($"Error in changing order's state: {ex.Message}");
                 }
                 order.DeliveryRouteId = -1;
@@ -1240,6 +1244,17 @@ namespace RoutingData.Controllers
 
         }
 
+
+
+        private void RefreshExistingRoutes( RouteRequest routeRequest, DictionaryOrderDetails orderDetails)
+        {//get all routes on the same date as the routerequest
+            List
+
+
+
+            //delete those routes and add the orders to the routeRequest. 
+
+        }
 
         /// <summary>
         /// Method <c>PostDeliveryRoute</c>
