@@ -13,6 +13,7 @@ namespace RoutingData.DTO
         public List<OrderInRouteDTO> orders { get; set; }
     }
 
+
     //Populated objects in the list to be sent to order calculator
     public class OrderInRouteDTO
     {
@@ -26,8 +27,17 @@ namespace RoutingData.DTO
     public class SubCalcSetting
     {
         public string type { get; set; }
+
+        //only used for kmeans type
         public int k { get; set; }
+
+        //only used for xmeans types
+        public int k_max { get; set; }
+        public int k_init { get; set; }
     }
+
+
+   
 
     public class SolverCalcSetting
     {

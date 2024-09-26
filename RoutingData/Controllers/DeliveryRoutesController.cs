@@ -540,8 +540,10 @@ namespace RoutingData.Controllers
                 orders = routesForPython,
                 vehicle_cluster_config = new SubCalcSetting
                 {
-                    type = "kmeans",
-                    k = frontEndData.NumVehicle
+                    type = "xmeans",
+                    k = frontEndData.NumVehicle,
+                    k_max = frontEndData.NumVehicle,
+                    k_init = 1
                 },
                 solver_config = new SolverCalcSetting
                 {
