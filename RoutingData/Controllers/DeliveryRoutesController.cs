@@ -540,15 +540,15 @@ namespace RoutingData.Controllers
                 orders = routesForPython,
                 vehicle_cluster_config = new SubCalcSetting
                 {
-                    type = "xmeans",
+                    type = frontEndData.Type,
                     k = frontEndData.NumVehicle,
                     k_max = frontEndData.NumVehicle,
                     k_init = 1
                 },
                 solver_config = new SolverCalcSetting
                 {
-                    type = frontEndData.calcType, // "brute";
-                    distance = "cartesian",
+                    type = frontEndData.CalcType, // "brute";
+                    distance = frontEndData.Distance,
                     max_solve_size = 5
                 },
                 // Ideally, search Db for some depot location. For now, hardcoded depot near Uni

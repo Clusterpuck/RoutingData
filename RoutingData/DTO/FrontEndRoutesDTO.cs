@@ -13,7 +13,10 @@ namespace RoutingData.DTO
     public class RouteRequest
     {
         public int NumVehicle { get; set; }
-        public string calcType { get; set; }
+        public string CalcType { get; set; } = "brute";
+        public string Distance { get; set; } = "cartesian";
+        public string Type { get; set; } = "xmeans";
+
         public int depot { get; set; }
         public DateTime DeliveryDate { get; set; } = DateTime.Today;
         public List<int> Orders { get; set; }
