@@ -186,6 +186,31 @@ namespace RoutingData.Controllers
         {
             return (_context.Locations?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+
+
+        // GET: api/Locations/{id}
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Location>> GetLocationDetails(int id)
+        {
+            // Check if the Locations set is available in the database context
+            if (_context.Locations == null)
+            {
+                return NotFound(new { message = "Locations not available in the database." });
+            }
+
+            // Find the location by its ID
+            var location = await _context.Locations.FindAsync(id);
+
+            // Return 404 if no location is found
+            if (location == null)
+            {
+                return NotFound(new { message = $"No location found with ID: {id}" });
+            }
+
+            // Return the location details
+            return Ok(location);
+        }
+
 #endif
     }
 }
