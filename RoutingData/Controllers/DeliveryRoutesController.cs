@@ -547,7 +547,7 @@ namespace RoutingData.Controllers
                 },
                 solver_config = new SolverCalcSetting
                 {
-                    type = frontEndData.CalcType, // "brute";
+                    type = "brute",//frontEndData.CalcType, // 
                     distance = frontEndData.Distance,
                     max_solve_size = 5
                 },
