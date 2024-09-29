@@ -339,6 +339,32 @@ namespace RoutingData.Controllers
                 return NotFound($"Order with ID {orderDTO.OrderId} not found.");
             }
 
+            if (order.Status == Order.ORDER_STATUSES[5])  // if an order is issue status
+            {
+                // If the order is set to cancelled
+                if (orderDTO.Status == Order.ORDER_STATUSES[3]) 
+                {
+                    order.DeliveryRouteId = -1; // remove order from route
+                }
+
+                // If the order is set to "Planned"
+                if (orderDTO.Status == Order.ORDER_STATUSES[0])  
+                {
+                    order.DeliveryRouteId = -1;
+                }
+
+                // If the delivery date is changed AND user tries to mark is as delivered
+                if ( (order.DeliveryDate.Date != orderDTO.DeliveryDate.Date) && (orderDTO.Status == Order.ORDER_STATUSES[2])) 
+                {
+                    return BadRequest("Cannot set order to delivered and change delivery date.");
+                }
+                if (order.DeliveryDate.Date != orderDTO.DeliveryDate.Date) // if delivery date is changed
+                {
+                    order.DeliveryRouteId = -1; // remove order from route
+                    orderDTO.Status = Order.ORDER_STATUSES[0]; // set order status to planned
+                }
+            }
+
             try
             {
                 order.ChangeStatus(orderDTO.Status);
@@ -611,8 +637,13 @@ namespace RoutingData.Controllers
             {
                 return BadRequest("Cannot delete a delivered order.");
             }
+            // if the order has status issue, remove it from the route
+            else if (order.Status == Order.ORDER_STATUSES[5])
+            { 
+                order.DeliveryRouteId = -1;
+            }
             //if is anything other than planned then should not delete
-            else if( order.Status != Order.ORDER_STATUSES[0])
+            else if (order.Status != Order.ORDER_STATUSES[0])
             {
                 return BadRequest("Cannot delete on on route order. Cancel route first");
             }
