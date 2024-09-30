@@ -374,9 +374,8 @@ namespace RoutingData.Controllers
 
 
         /// <summary>
-        /// Method <c>PutAccount</c> Checks if the provided Username is in database
-        /// Confirms all details of the new Account object are valid
-        /// Then applies all fields except Status to the dbAccount record
+        /// Method <c>PutAccount</c> Checks if the provided Username is in database.
+        /// Confirms all details of the new Account object are valid, then applies all fields except Status and Username to the dbAccount record.
         /// </summary>
         /// <param name="id"></param>
         /// <param name="inAccount"></param>
@@ -386,53 +385,61 @@ namespace RoutingData.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAccount(string id, AccountInDTO inAccount)
         {
-            if( !IsValidEmail(id) || !IsValidEmail(inAccount.Username) )
+            // Validate that both the provided id and inAccount.Username are valid emails
+            if (!IsValidEmail(id) || !IsValidEmail(inAccount.Username))
             {
-                return BadRequest("Not a valid email");
+                return BadRequest("Not a valid email.");
             }
-            //check if the account id exists in database
+
+            // Ensure the id matches the inAccount.Username to prevent any manipulation of the primary key
+            if (id != inAccount.Username)
+            {
+                return BadRequest("Username cannot be changed.");
+            }
+
+            // Check if the account ID exists in the database
             StringBuilder sb = new StringBuilder();
             Account updatedAccount = ValidateAndMakeNewAccount(inAccount, sb);
-            
-            if( updatedAccount == null )
+
+            if (updatedAccount == null)
             {
                 return BadRequest($"Details not valid in provided account: {sb.ToString()}");
             }
+
+            // Retrieve the existing account from the database
             Account dbAccount = await _context.Accounts.FindAsync(id);
-            if (dbAccount == null )
+            if (dbAccount == null)
             {
                 return NotFound($"No such account in database with id {id}.");
             }
 
-            dbAccount.Username = updatedAccount.Username;
+            // Apply all fields except the Username (since it's the primary key)
             dbAccount.Name = updatedAccount.Name;
             dbAccount.Phone = updatedAccount.Phone;
             dbAccount.Password = updatedAccount.Password;
             dbAccount.Role = updatedAccount.Role;
             dbAccount.Address = updatedAccount.Address;
 
-            // update the account in the context and save changes to the database
+            // Mark the account for update and save changes asynchronously
             _context.Entry(dbAccount).State = EntityState.Modified;
 
             try
             {
-                // save changes asynchronously
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                // check if the account still exists in the database
                 if (!DoesAccountExist(id))
                 {
                     return NotFound($"Account with ID {id} no longer exists.");
                 }
                 else
                 {
-                    throw; // if it's a different concurrency issue
+                    throw; // If it's a different concurrency issue
                 }
             }
 
-            return Created("", dbAccount);
+            return Created("", dbAccount); // Return the updated account
         }
 
 
