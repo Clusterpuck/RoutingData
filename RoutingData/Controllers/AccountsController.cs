@@ -468,6 +468,13 @@ namespace RoutingData.Controllers
                 return Unauthorized();
             }
 
+            // Check if the account is inactive
+            if (user.Status == "Inactive")
+            {
+                // Return Forbidden status if the user's account is inactive
+                return Forbid("Account is inactive. Please contact support.");
+            }
+
             // generate JWT Token and include the user's role in the token claims
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]);
@@ -571,7 +578,7 @@ namespace RoutingData.Controllers
                 if (admin != null && admin.Password == request.Password)
                 {
                     // Generate and return a token
-                    return Ok(new { Token = "your-generated-token" });
+                    return Ok(new { Token = "" });
                 }
                 return Unauthorized();
             }
