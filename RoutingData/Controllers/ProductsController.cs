@@ -186,17 +186,28 @@ namespace RoutingData.Controllers
             }
             var product = await _context.Products.FindAsync(id);
             if (product == null || ( product.Status == Product.PRODUCT_STATUSES[1] ) )
-            {//Null product or a product already set to InActive is considered delted already
+            {//Null product or a product already set to InActive is considered deleted already
                 return NotFound();
             }
-            //Instead of removing, simply set the product status to InActive
-            product.Status = Product.PRODUCT_STATUSES[1];
-            await _context.SaveChangesAsync();
-            
-            //Also need to update any order that is "Planned" to remove this product.
-            await RemoveProductFromOrders(id);
+            //first check orders associated in valid state
+            Boolean canDelete =  await RemoveProductFromOrders(id);
 
-            return Ok(new { message = "Product deleted successfully" }); // Return a success message
+            //Instead of removing, simply set the product status to InActive
+            //confirm any orders the product is on are either planned or cancelled
+            if (canDelete)
+            {
+                product.Status = Product.PRODUCT_STATUSES[1];
+                await _context.SaveChangesAsync();
+            
+                //Also need to update any order that is "Planned" to remove this product.
+
+                return Ok(new { message = "Product deleted successfully" }); // Return a success message
+            }
+            else
+            {
+                return BadRequest("Some product are on active orders");
+            }
+
         }
 
 
@@ -206,8 +217,22 @@ namespace RoutingData.Controllers
         /// </summary>
         /// <param name="productId"></param>
         /// <returns></returns>
-        private async Task<IActionResult> RemoveProductFromOrders(int productId)
+        private async Task<Boolean> RemoveProductFromOrders(int productId)
         {
+            // Check if any orders related to the product have a status other than 0 or 3
+            var hasInvalidStatus = await (
+                from op in _context.OrderProducts
+                join o in _context.Orders on op.OrderId equals o.Id
+                where op.ProductId == productId && o.Status != Order.ORDER_STATUSES[0] && o.Status != Order.ORDER_STATUSES[3]
+                select o
+            ).AnyAsync();
+
+            // If any order has an invalid status, return false
+            if (hasInvalidStatus)
+            {
+                return false;
+            }
+
             // Find all OrderProducts for the given product where the related order is in "Planned" status
             var orderProductsToRemove = await (
                 from op in _context.OrderProducts
@@ -217,8 +242,8 @@ namespace RoutingData.Controllers
             ).ToListAsync();
 
             if (!orderProductsToRemove.Any())
-            {
-                return NotFound();
+            {//no invlaid status, not valid status other, no orders
+                return true;
             }
 
             // Remove the found OrderProducts
@@ -227,7 +252,7 @@ namespace RoutingData.Controllers
             // Save changes to the database
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return true;
         }
 
         /// <summary>
