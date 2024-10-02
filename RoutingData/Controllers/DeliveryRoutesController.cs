@@ -711,6 +711,36 @@ namespace RoutingData.Controllers
 
 
         /// <summary>
+        /// Method <c>GetdeliveryRoutes</c>
+        /// returns a list of full detail routes of all routes in the system. 
+        /// </summary>
+        /// <returns></returns>
+        // GET: api/DeliveryRoutes
+        [HttpGet("active")]
+        public async Task<ActionResult<IEnumerable<CalcRouteOutput>>> GetActiveDeliveryRoutes()
+        {
+            if (_context.DeliveryRoutes == null)
+            {
+                return NotFound();
+            }
+            DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
+            await dictionaryOrderDetails.GetOrderDetails(_context);
+            List<CalcRouteOutput> routesDetailed = new List<CalcRouteOutput>();
+            List<DeliveryRoute> deliveryRoutes = await _context.DeliveryRoutes.ToListAsync();
+            foreach (var route in deliveryRoutes)
+            {
+                CalcRouteOutput routeOutput = await DeliveryToCalcRouteOutputActive(route, dictionaryOrderDetails.OrderDetailsDict);
+                if (routeOutput != null)
+                {//previous returns null it is not an active route
+                    routesDetailed.Add(routeOutput);
+                }
+
+            }
+            return routesDetailed;//await _context.DeliveryRoutes.ToListAsync();
+        }
+
+
+        /// <summary>
         /// Method <c>CalcRouteOutput</c> 
         /// Get the delivery and return as a CalcRouteOutput object which offers more detail
         /// </summary>
@@ -1097,6 +1127,58 @@ namespace RoutingData.Controllers
 
             }
             return calcRouteOutput;
+
+        }
+
+        /// <summary>
+        /// Method <c>DeliveryToCalcRouteOutput</c>
+        /// Using the OrderDetails dictionary, populates a CalcRouteOutput object
+        /// For the front end to have the required details
+        /// </summary>
+        /// <param name="deliveryRoute"></param>
+        /// <returns></returns>
+        private async Task<CalcRouteOutput> DeliveryToCalcRouteOutputActive(DeliveryRoute deliveryRoute, Dictionary<int, OrderDetailsDTO> orderDetailsDict)
+        {
+            CalcRouteOutput calcRouteOutput = new CalcRouteOutput();
+            calcRouteOutput.VehicleId = deliveryRoute.VehicleLicense;
+            calcRouteOutput.DriverUsername = deliveryRoute.DriverUsername;
+            //TODO Add conversion
+
+
+
+            //dictionary to reference each order to get details
+            //This is a dictionary that gets order details from order IDs
+            //Now need match orderIDs to the deliveryRoute ID, building a list of order
+            //In that route, then converting those to OrderDetails. 
+
+            List<Order> orders = await _context.Orders.ToListAsync();
+            int routeID = deliveryRoute.Id;
+            calcRouteOutput.DeliveryRouteID = routeID;
+            calcRouteOutput.DeliveryDate = deliveryRoute.DeliveryDate;
+
+            foreach (Order order in orders)
+            {
+                if (order.DeliveryRouteId == routeID)
+                {//Finding the matching orderDetail that belongs to the route
+                    //Adding to the calcRouteOutput
+                    OrderDetailsDTO orderDetail = orderDetailsDict[order.Id];
+                    calcRouteOutput.Orders.Add(orderDetail);
+
+                }
+
+            }
+            foreach (OrderDetailsDTO orderDet in calcRouteOutput.Orders)
+            {//If any order in the route is Assigned or On-route then route is active
+                if( orderDet.Status == Order.ORDER_STATUSES[1] || orderDet.Status == Order.ORDER_STATUSES[4])
+                {
+                    return calcRouteOutput;
+
+                }
+
+            }
+
+            //returns null if route isn't active
+            return null;
 
         }
 
