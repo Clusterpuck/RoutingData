@@ -1,59 +1,78 @@
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Runtime.CompilerServices;
 using RoutingData.Models;
-using RoutingData.DTO;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using RoutingData.DTO;
+using Microsoft.OpenApi.Models;  // Import for Swagger OpenApi
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Add Swagger/OpenAPI and configure JWT support
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter token as Bearer {token}",
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
 
-//Adding offline database singleton
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+// Add the singleton service for OfflineDatabase
 builder.Services.AddSingleton<OfflineDatabase>();
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
-
-var connection = String.Empty;
+// Set up CORS for local development
+var connection = string.Empty;
 Console.WriteLine($"Current Environment: {builder.Environment.EnvironmentName}");
+
 if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowLocalhostFrontend", policy =>
         {
-            policy.AllowAnyOrigin()//WithOrigins("http://localhost:5173")
+            policy.AllowAnyOrigin()
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
     });
-    Console.WriteLine("Set cors for local environment");
 
+    Console.WriteLine("Set CORS for local environment");
+
+    // Load environment variables and development-specific settings
     builder.Configuration.AddEnvironmentVariables().AddJsonFile("appsettings.Development.json");
     connection = builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
-    Console.WriteLine("On development condition");
+    Console.WriteLine("In development condition");
 }
 else
 {
-    //temporary literal to bypass env issues. 
     connection = "Server=tcp:quantumsqlserver.database.windows.net,1433;Initial Catalog=quantumDelivery;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=Active Directory Default";
-    //connection = Environment.GetEnvironmentVariable("SQLCONNSTR_AZURE_SQL_CONNECTIONSTRING");
-
 }
 
-Console.WriteLine("Testing console message");
-
-var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]); 
+// JWT Authentication setup
+var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -70,35 +89,32 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Add DbContext with the connection string
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connection));
 
+// Build the app
 var app = builder.Build();
 
+// Set up CORS and Swagger in development environment
 if (builder.Environment.IsDevelopment())
 {
     app.UseCors("AllowLocalhostFrontend");
-}
 
-
-// Configure the HTTP request pipeline.
-//TODO: Uncomment condition for proper deployment
-//if (app.Environment.IsDevelopment())
-{
+    // Configure Swagger
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// Middleware for authentication and authorization
 app.UseAuthentication();
-
 app.UseAuthorization();
 
+// Redirect HTTP to HTTPS
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
-
+// Map the controllers
 app.MapControllers();
 
-
+// Run the app
 app.Run();
-

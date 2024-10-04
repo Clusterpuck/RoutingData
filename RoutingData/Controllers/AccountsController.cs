@@ -205,6 +205,7 @@ namespace RoutingData.Controllers
         // POST: api/Accounts
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Account>> PostAccount(AccountInDTO inAccount)
         {
             if (_context.Accounts == null)
@@ -315,6 +316,7 @@ namespace RoutingData.Controllers
         /// </summary>
         /// <returns></returns>
         // GET: api/Accounts
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Account>>> GetAccounts()
         {
@@ -348,6 +350,7 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         // GET: api/Accounts/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Account>> GetAccount(string id)
         {
             // check if the Accounts table exists in the database context
@@ -383,6 +386,7 @@ namespace RoutingData.Controllers
         // PUT: api/Accounts/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> PutAccount(string id, AccountInDTO inAccount)
         {
             // Validate that both the provided id and inAccount.Username are valid emails
@@ -521,6 +525,7 @@ namespace RoutingData.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         // DELETE: api/Accounts/5
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAccount(string id)
         {
@@ -568,7 +573,7 @@ namespace RoutingData.Controllers
         /// </summary>
         [ApiController]
         [Route("api/[controller]")]
-        //[Authorize]
+        [Authorize]
         public class AuthController : ControllerBase
         {
             private readonly ApplicationDbContext _context;
@@ -592,6 +597,7 @@ namespace RoutingData.Controllers
         }
 
         [HttpPost("change-password")]
+        [Authorize]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDTO)
         {
             // Validate input data
@@ -657,6 +663,7 @@ namespace RoutingData.Controllers
 
         // change account state back to active
         [HttpPost("reactivate/{id}")]
+        [Authorize]
         public async Task<IActionResult> ReactivateAccount(string id)
         {
             if (_context.Accounts == null)

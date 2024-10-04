@@ -105,6 +105,7 @@ namespace RoutingData.Controllers
 
         //TODO Get Orders can potentially just return Not cancelled orders review options
         // GET: api/Orders
+        [Authorize]
         [HttpGet]
         public async Task<List<OrderDetailsDTO>> GetOrders()
         {
@@ -150,6 +151,7 @@ namespace RoutingData.Controllers
         // GET: api/Orders/issues
         // returns all orders where the status is ISSUE
         [HttpGet("issues")]
+        [Authorize]
         public async Task<List<OrderDetailsDTO>> GetIssueOrders()
         {
             var orderDetails = await _context.Orders
@@ -199,6 +201,7 @@ namespace RoutingData.Controllers
         //TODO Can add get order by status
         // GET: api/Orders/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Order>> GetOrder(int id)
         {
             if (_context.Orders == null)
@@ -219,6 +222,7 @@ namespace RoutingData.Controllers
         // PUT: api/Orders/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> PutOrder(int id, Order order)
         {
             if (id != order.Id)
@@ -268,7 +272,7 @@ namespace RoutingData.Controllers
 
 
         [HttpPost]
-        //[Authorize]
+        [Authorize]
         public async Task<ActionResult<Order>> PostOrder(OrderWithProductsDTO orderDTO)
         {
             if (_context.Orders == null || _context.OrderProducts == null)
@@ -368,6 +372,7 @@ namespace RoutingData.Controllers
         }
 
         [HttpPost("update-order-status")]
+        [Authorize]
         public async Task<IActionResult> UpdateOrderStatus( UpdateOrderStatusDTO orderStatusDTO)
         {
             //Check if a valid status provided before using ay database requests
@@ -428,6 +433,7 @@ namespace RoutingData.Controllers
 
 
         // DELETE: api/Orders/5
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteOrder(int id)
         {

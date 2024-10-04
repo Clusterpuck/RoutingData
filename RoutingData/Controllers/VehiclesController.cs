@@ -82,6 +82,7 @@ namespace RoutingData.Controllers
 
         // GET: api/Vehicles
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Vehicle>>> GetVehicles()
         {
           if (_context.Vehicles == null)
@@ -93,6 +94,7 @@ namespace RoutingData.Controllers
 
         // GET: api/Vehicles/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Vehicle>> GetVehicle(int id)
         {
           if (_context.Vehicles == null)
@@ -112,6 +114,7 @@ namespace RoutingData.Controllers
         // PUT: api/Vehicles/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> PutVehicle(String id, VehicleInDTO vehicle)
         {
             if (id != vehicle.LicensePlate)
@@ -148,6 +151,7 @@ namespace RoutingData.Controllers
         // POST: api/Vehicles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Vehicle>> PostVehicle(VehicleInDTO vehicle)
         {
           if (_context.Vehicles == null)
@@ -184,6 +188,7 @@ namespace RoutingData.Controllers
 
         // DELETE: api/Vehicles/5
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteVehicle(int id)
         {
             if (_context.Vehicles == null)

@@ -54,6 +54,7 @@ namespace RoutingData.Controllers
         }
         // GET: api/Locations
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Location>>> GetLocations()
         {
           if (_context.Locations == null)
@@ -65,6 +66,7 @@ namespace RoutingData.Controllers
 
         // GET: api/Locations/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Location>> GetLocation(int id)
         {
           if (_context.Locations == null)
@@ -84,6 +86,7 @@ namespace RoutingData.Controllers
         // PUT: api/Locations/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> PutLocation(int id, LocationInDTO location)
         {
             Location dbLocation = await _context.Locations.FindAsync(id);
@@ -148,6 +151,7 @@ namespace RoutingData.Controllers
         }
         // DELETE: api/Locations/5
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteLocation(int id)
         {
             // first check location table isnt empty
