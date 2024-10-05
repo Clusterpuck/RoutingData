@@ -60,6 +60,7 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         // GET: api/Products
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
           if (_context.Products == null)
@@ -80,6 +81,7 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         // GET: api/Products/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
           if (_context.Products == null)
@@ -106,6 +108,7 @@ namespace RoutingData.Controllers
         // PUT: api/Products/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> PutProduct(int id, ProductInDTO inProduct)
         {
             Product dbProduct = await _context.Products.FindAsync(id);
@@ -147,6 +150,7 @@ namespace RoutingData.Controllers
         // POST: api/Products
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Product>> PostProduct(ProductInDTO inProduct)
         {
             if (_context.Products == null)
@@ -178,6 +182,7 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         // DELETE: api/Products/5
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteProduct(int id)
         {
             if (_context.Products == null)

@@ -39,6 +39,7 @@ namespace RoutingData.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<HomeData>> GetHomeData()
         {//Uses orders and routes and accounts data. Must first confirm these are all present
             if( _context.Orders == null || _context.DeliveryRoutes == null  || _context.Accounts == null )
