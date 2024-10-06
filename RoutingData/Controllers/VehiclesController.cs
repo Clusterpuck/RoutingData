@@ -83,6 +83,7 @@ namespace RoutingData.Controllers
         // GET: api/Vehicles
         [Authorize]
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Vehicle>>> GetVehicles()
         {
           if (_context.Vehicles == null)

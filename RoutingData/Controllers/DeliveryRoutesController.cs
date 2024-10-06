@@ -292,6 +292,7 @@ namespace RoutingData.Controllers
         /// <param name="orderStatusDTO"></param>
         /// <returns></returns>
         [HttpPost("update-status")]
+        [Authorize]
         public async Task<ActionResult<CalcRouteOutput>> UpdateOrderStatus(OrderStatusDTO orderStatusDTO)
         {
             //Change to ignore case
@@ -370,6 +371,7 @@ namespace RoutingData.Controllers
         /// <param name="orderDelayedDTO"></param>
         /// <returns></returns>
         [HttpPost("update-delayed")]
+        [Authorize]
         public async Task<ActionResult<CalcRouteOutput>> UpdateOrderDelayed(OrderDelayedDTO orderDelayedDTO)
         {
             //updated to be non-case sensitive and only accept true. Can't go from true to false for delayed
@@ -430,6 +432,7 @@ namespace RoutingData.Controllers
         /// <param name="orderIssueDTO"></param>
         /// <returns></returns>
         [HttpPost("update-issue")]
+        [Authorize]
         public async Task<ActionResult<CalcRouteOutput>> UpdateOrderIssue(OrderIssueDTO orderIssueDTO)
         {
             //Check if a valid message is provided before using any database requests
@@ -1028,6 +1031,7 @@ namespace RoutingData.Controllers
 
 
         [HttpDelete("date/{date}")]
+        [Authorize]
         public async Task<IActionResult> DeleteRouteByDate(DateTime date)
         {
             if (_context.DeliveryRoutes == null)

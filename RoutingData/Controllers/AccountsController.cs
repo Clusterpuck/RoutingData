@@ -572,6 +572,7 @@ namespace RoutingData.Controllers
         /// Used to authenticate users and generate the JWT tokens. 
         /// </summary>
         [ApiController]
+        [Authorize]
         [Route("api/[controller]")]
         [Authorize]
         //[Authorize]
