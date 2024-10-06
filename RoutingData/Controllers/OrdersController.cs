@@ -106,6 +106,7 @@ namespace RoutingData.Controllers
         //TODO Get Orders can potentially just return Not cancelled orders review options
         // GET: api/Orders
         [HttpGet]
+        [Authorize]
         public async Task<List<OrderDetailsDTO>> GetOrders()
         {
             var orderDetails = await _context.Orders
@@ -149,6 +150,7 @@ namespace RoutingData.Controllers
         // GET: api/Orders/with-products
         // returns all orders including product info --> product id, product name, quantity and unit of measure
         [HttpGet("with-products")]
+        [Authorize]
         public async Task<List<OrderDetailsWithProductsDTO>> GetOrdersWithProducts()
         {
             var orderDetails = await _context.Orders
@@ -201,6 +203,7 @@ namespace RoutingData.Controllers
         // GET: api/Orders/issues
         // returns all orders where the status is ISSUE
         [HttpGet("issues")]
+        [Authorize]
         public async Task<List<OrderDetailsWithProductsDTO>> GetIssueOrders()
         {
             var orderDetails = await _context.Orders
@@ -256,6 +259,7 @@ namespace RoutingData.Controllers
         //TODO Can add get order by status
         // GET: api/Orders/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Order>> GetOrder(int id)
         {
             if (_context.Orders == null)
@@ -276,6 +280,7 @@ namespace RoutingData.Controllers
         // PUT: api/Orders/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> PutOrder(int id, EditOrderDTO orderDTO)
         {
             if (id != orderDTO.OrderId)
@@ -450,6 +455,7 @@ namespace RoutingData.Controllers
 
 
         [HttpPost]
+        [Authorize]
         //[Authorize]
         public async Task<ActionResult<Order>> PostOrder(OrderWithProductsDTO orderDTO)
         {
@@ -550,6 +556,7 @@ namespace RoutingData.Controllers
         }
 
         [HttpPost("update-order-status")]
+        [Authorize]
         public async Task<IActionResult> UpdateOrderStatus( UpdateOrderStatusDTO orderStatusDTO)
         {
             //Check if a valid status provided before using ay database requests
@@ -617,6 +624,7 @@ namespace RoutingData.Controllers
 
         // DELETE: api/Orders/5
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteOrder(int id)
         {
             // first check if rhere are any orders
