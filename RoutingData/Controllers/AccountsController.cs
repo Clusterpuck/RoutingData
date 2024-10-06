@@ -574,6 +574,7 @@ namespace RoutingData.Controllers
         [ApiController]
         [Authorize]
         [Route("api/[controller]")]
+        [Authorize]
         //[Authorize]
         public class AuthController : ControllerBase
         {

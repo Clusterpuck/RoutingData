@@ -456,7 +456,6 @@ namespace RoutingData.Controllers
 
         [HttpPost]
         [Authorize]
-        //[Authorize]
         public async Task<ActionResult<Order>> PostOrder(OrderWithProductsDTO orderDTO)
         {
             if (_context.Orders == null || _context.OrderProducts == null)

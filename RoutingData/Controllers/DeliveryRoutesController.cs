@@ -621,6 +621,7 @@ namespace RoutingData.Controllers
         /// <param name="driver"></param>
         /// <returns></returns>
         [HttpPut("assign-driver/{routeID}/{driver}")]
+        [Authorize]
         public async Task<IActionResult> PutDeliveryDriver(int routeID, string driver)
         {
             //Check driver exists
@@ -1214,7 +1215,6 @@ namespace RoutingData.Controllers
         // GET: api/DeliveryRoutes/driver/{driverUsername}
         [HttpGet("driver/{driverUsername}")]
         [Authorize]
-        //[Authorize]
         public async Task<ActionResult<CalcRouteOutput>> GetDeliveryRoutesByDriver(string driverUsername)
         {
             if (!IsValidEmail(driverUsername) )
