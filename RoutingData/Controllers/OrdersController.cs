@@ -450,7 +450,7 @@ namespace RoutingData.Controllers
 
 
         [HttpPost]
-        //[Authorize]
+        [Authorize]
         public async Task<ActionResult<Order>> PostOrder(OrderWithProductsDTO orderDTO)
         {
             if (_context.Orders == null || _context.OrderProducts == null)
@@ -550,6 +550,7 @@ namespace RoutingData.Controllers
         }
 
         [HttpPost("update-order-status")]
+        [Authorize]
         public async Task<IActionResult> UpdateOrderStatus( UpdateOrderStatusDTO orderStatusDTO)
         {
             //Check if a valid status provided before using ay database requests
@@ -617,6 +618,7 @@ namespace RoutingData.Controllers
 
         // DELETE: api/Orders/5
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteOrder(int id)
         {
             // first check if rhere are any orders

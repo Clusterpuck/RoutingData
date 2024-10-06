@@ -65,6 +65,7 @@ namespace RoutingData.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Customer>>> GetCustomers()
         {
             if (_context.Customers == null)
@@ -85,6 +86,7 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         // GET: api/Customers/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<Customer>> GetCustomer(int id)
         {
 
@@ -112,6 +114,7 @@ namespace RoutingData.Controllers
         // PUT: api/Customers/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> PutCustomer(int id, CustomerInDTO inCustomer)
         {
             Customer dbCustomer = await _context.Customers.FindAsync(id);
@@ -156,6 +159,7 @@ namespace RoutingData.Controllers
         // POST: api/Customers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Customer>> PostCustomer(CustomerInDTO inCustomer)
         {
             if (_context.Customers == null)
@@ -189,6 +193,7 @@ namespace RoutingData.Controllers
         // DELETE: api/Customers/5
         //Should not be able to delete customers that are assigned any active orders at all
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteCustomer(int id)
         {
             if (_context.Customers == null)

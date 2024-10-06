@@ -570,6 +570,7 @@ namespace RoutingData.Controllers
         // PUT: api/DeliveryRoutes/Start/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("start/{id}")]
+        [Authorize]
         public async Task<IActionResult> PutDeliveryRoute(int id)
         {
             //Get the delivery route matching the id
@@ -617,6 +618,7 @@ namespace RoutingData.Controllers
         /// <param name="driver"></param>
         /// <returns></returns>
         [HttpPut("assign-driver/{routeID}/{driver}")]
+        [Authorize]
         public async Task<IActionResult> PutDeliveryDriver(int routeID, string driver)
         {
             //Check driver exists
@@ -692,6 +694,7 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         // GET: api/DeliveryRoutes
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<CalcRouteOutput>>> GetDeliveryRoutes()
         {
           if (_context.DeliveryRoutes == null)
@@ -717,6 +720,7 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         // GET: api/DeliveryRoutes
         [HttpGet("active")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<CalcRouteOutput>>> GetActiveDeliveryRoutes()
         {
             if (_context.DeliveryRoutes == null)
@@ -748,6 +752,7 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         // GET: api/DeliveryRoutes/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<CalcRouteOutput>> GetDeliveryRoute(int id)
         {
           if (_context.DeliveryRoutes == null)
@@ -773,6 +778,7 @@ namespace RoutingData.Controllers
         // PUT: api/DeliveryRoutes/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> PutDeliveryRoute(int id, UpdateRouteDTO routeDTO)
         {
             if (id != routeDTO.routeID) // checking IDs match
@@ -977,6 +983,7 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         // DELETE: api/DeliveryRoutes/5
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteDeliveryRoute(int id)
         {
             if (_context.DeliveryRoutes == null)
@@ -1203,7 +1210,7 @@ namespace RoutingData.Controllers
 
         // GET: api/DeliveryRoutes/driver/{driverUsername}
         [HttpGet("driver/{driverUsername}")]
-        //[Authorize]
+        [Authorize]
         public async Task<ActionResult<CalcRouteOutput>> GetDeliveryRoutesByDriver(string driverUsername)
         {
             if (!IsValidEmail(driverUsername) )
@@ -1456,6 +1463,7 @@ namespace RoutingData.Controllers
         /// <param name="routeRequest"></param>
         /// <returns></returns>
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<List<CalcRouteOutput>>> PostDeliveryRoute(RouteRequest routeRequest)
         {
             await CheckRouteMax(routeRequest);
