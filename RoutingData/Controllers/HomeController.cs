@@ -66,6 +66,33 @@ namespace RoutingData.Controllers
                 Where(route => (route.DeliveryDate.Date == today.Date)).
                 ToListAsync();
             int routeCount = routesToday.Count;
+
+            var ordersByRouteId = todayOrders
+                .GroupBy(order => order.DeliveryRouteId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            int activeRouteCount = 0;
+            int plannedRouteCount = 0;
+            int finishedRouteCount = 0;
+
+            foreach (var route in routesToday)
+            {
+                // Check if the route has any associated orders
+                if (ordersByRouteId.TryGetValue(route.Id, out var ordersInRoute))
+                {
+                    bool hasActiveOrder = ordersInRoute.Any(order => order.Status == "ON-ROUTE");
+                    bool hasPlannedOrder = ordersInRoute.Any(order => order.Status == "ASSIGNED");
+                    bool areAllFinished = ordersInRoute.All(order =>
+                        order.Status == "DELIVERED" ||
+                        order.Status == "ISSUE" ||
+                        order.Status == "CANCELLED");
+
+                    if (hasActiveOrder) activeRouteCount++;
+                    if (hasPlannedOrder) plannedRouteCount++;
+                    if (areAllFinished) finishedRouteCount++;
+                }
+            }
+
             List<string> drivers = routesToday.Select(route => route.DriverUsername).ToList();
             HomeData homeData = new HomeData()
             {
@@ -75,6 +102,9 @@ namespace RoutingData.Controllers
                 DelaysCount = delayedCount,
                 OrdersWithIssues = issueOrders,
                 RoutesCount = routeCount,
+                ActiveRouteCount = activeRouteCount,
+                PlannedRouteCount = plannedRouteCount,
+                FinishedRouteCount = finishedRouteCount,
             };
 
             return homeData;

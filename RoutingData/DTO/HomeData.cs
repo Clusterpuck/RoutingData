@@ -19,6 +19,9 @@
         public int RoutesCount { get; set; }
         //list of drivers that have routes today
         public List<string> DriversOnRoutes { get; set; }
+        public int ActiveRouteCount { get; set; }
+        public int PlannedRouteCount { get; set; }
+        public int FinishedRouteCount { get; set; }
 
     }
 }
