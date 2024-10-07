@@ -9,6 +9,7 @@
     {
         //the total number of orders on theat date
         public int OrdersCount { get; set; }
+        public int DeliveredCount { get; set; }
         //number of orders today that have delayed status
         public int ActiveOrdersCount { get; set; }
         public int DelaysCount { get; set; }
