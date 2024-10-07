@@ -77,15 +77,15 @@ namespace RoutingData.Controllers
 
             foreach (var route in routesToday)
             {
-                // Check if the route has any associated orders
                 if (ordersByRouteId.TryGetValue(route.Id, out var ordersInRoute))
                 {
-                    bool hasActiveOrder = ordersInRoute.Any(order => order.Status == "ON-ROUTE");
-                    bool hasPlannedOrder = ordersInRoute.Any(order => order.Status == "ASSIGNED");
+                    // Reference the status constants using the indices from ORDER_STATUSES array
+                    bool hasActiveOrder = ordersInRoute.Any(order => order.Status == Order.ORDER_STATUSES[1]); // "ON-ROUTE"
+                    bool hasPlannedOrder = ordersInRoute.Any(order => order.Status == Order.ORDER_STATUSES[4]); // "ASSIGNED"
                     bool areAllFinished = ordersInRoute.All(order =>
-                        order.Status == "DELIVERED" ||
-                        order.Status == "ISSUE" ||
-                        order.Status == "CANCELLED");
+                        order.Status == Order.ORDER_STATUSES[2] ||  // "DELIVERED"
+                        order.Status == Order.ORDER_STATUSES[5] ||  // "ISSUE"
+                        order.Status == Order.ORDER_STATUSES[3]);   // "CANCELLED"
 
                     if (hasActiveOrder) activeRouteCount++;
                     if (hasPlannedOrder) plannedRouteCount++;
