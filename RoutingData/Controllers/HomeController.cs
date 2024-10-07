@@ -58,6 +58,7 @@ namespace RoutingData.Controllers
                 ToList();//filters to issue status only
             int numOrders = todayOrders.Count;
             int delayedCount = todayOrders.Where(order => (order.Delayed)).Count(); //counts orders with delayed status
+            int deliveredCount = todayOrders.Where(order => (order.Status == Order.ORDER_STATUSES[2])).Count();
             //on route orders include orders that have any issues
             int ordersOnRouteCount = todayOrders.
                 Where(order => (order.Status == Order.ORDER_STATUSES[1])).Count() + issueOrders.Count;
@@ -99,6 +100,7 @@ namespace RoutingData.Controllers
                 DriversOnRoutes = drivers,
                 OrdersCount = numOrders,
                 ActiveOrdersCount = ordersOnRouteCount,
+                DeliveredCount = deliveredCount,
                 DelaysCount = delayedCount,
                 OrdersWithIssues = issueOrders,
                 RoutesCount = routeCount,
