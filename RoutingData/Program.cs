@@ -97,7 +97,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 var app = builder.Build();
 
 // Set up CORS and Swagger in development environment
-if (builder.Environment.IsDevelopment())
+// Configure the HTTP request pipeline.
+//TODO: Uncomment condition for proper deployment
+//if (builder.Environment.IsDevelopment())
 {
     app.UseCors("AllowLocalhostFrontend");
 
