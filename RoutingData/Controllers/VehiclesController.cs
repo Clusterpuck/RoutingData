@@ -142,16 +142,19 @@ namespace RoutingData.Controllers
             return maxVehicles;
         }
 
-        // GET: api/Vehicles/5
-        [HttpGet("{id}")]
+        // GET: api/Vehicles/{licensePlate}
+        [HttpGet("{licensePlate}")]
         [Authorize]
-        public async Task<ActionResult<Vehicle>> GetVehicle(int id)
+        public async Task<ActionResult<Vehicle>> GetVehicle(string licensePlate)
         {
-          if (_context.Vehicles == null)
-          {
-              return NotFound();
-          }
-            var vehicle = await _context.Vehicles.FindAsync(id);
+            if (_context.Vehicles == null)
+            {
+                return NotFound();
+            }
+
+            // Search for the vehicle using the licensePlate
+            var vehicle = await _context.Vehicles
+                .FirstOrDefaultAsync(v => v.LicensePlate == licensePlate);
 
             if (vehicle == null)
             {
@@ -160,6 +163,7 @@ namespace RoutingData.Controllers
 
             return vehicle;
         }
+
 
         // PUT: api/Vehicles/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
