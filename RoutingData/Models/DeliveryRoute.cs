@@ -17,5 +17,6 @@ namespace RoutingData.Models
         public String VehicleLicense { get; set; }
 #endif
         public String DriverUsername { get; set; }
+        public int DepotID { get; set; } //references a location object
     }
 }

@@ -64,6 +64,18 @@ namespace RoutingData.Controllers
             return await _context.Locations.ToListAsync();
         }
 
+        // GET: api/Locations
+       /* [HttpGet("depots")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<Location>>> GetDepots()
+        {
+            if (_context.Locations == null)
+            {
+                return NotFound();
+            }
+            return await _context.Locations.Where( location => location.IsDepot).ToListAsync();
+        }*/
+
         // GET: api/Locations/5
         [HttpGet("{id}")]
         [Authorize]

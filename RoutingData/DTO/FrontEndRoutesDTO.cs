@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using Microsoft.CodeAnalysis;
+using System.Text;
 
 namespace RoutingData.DTO
 {
@@ -17,7 +18,7 @@ namespace RoutingData.DTO
         public string Distance { get; set; } = "cartesian";
         public string Type { get; set; } = "xmeans";
 
-        public int depot { get; set; }
+        public int depot { get; set; } //should represent a location id that has field depot set to true
         public DateTime DeliveryDate { get; set; } = DateTime.Today;
         public List<int> Orders { get; set; }
     }
@@ -39,6 +40,7 @@ namespace RoutingData.DTO
         public String DriverUsername { get; set; }
         public DateTime DeliveryDate { get; set; }
         public List<OrderDetailsDTO> Orders { get; set; }
+        public Location Depot {  get; set; }
 
         public CalcRouteOutput() {
             Orders = new List<OrderDetailsDTO>();

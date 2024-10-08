@@ -17,6 +17,8 @@ namespace RoutingData.Models
         public string Country { get; set; }
         public string Description { get; set; }
         public string Status { get; set; }
+        public Boolean IsDepot { get; set; } = false;
+        public int CustomerID { get; set; }
 
     }
 }
