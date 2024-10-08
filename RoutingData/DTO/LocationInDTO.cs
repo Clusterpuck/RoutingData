@@ -10,5 +10,6 @@
         public int PostCode { get; set; }
         public string Country { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public int CustomerID { get; set; } = 0;
     }
 }

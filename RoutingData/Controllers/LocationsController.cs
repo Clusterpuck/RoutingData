@@ -115,8 +115,9 @@ namespace RoutingData.Controllers
             dbLocation.PostCode = location.PostCode;
             dbLocation.Country = location.Country;
             dbLocation.Description = location.Description;
+            dbLocation.CustomerID = location.CustomerID;
 
-            _context.Entry(location).State = EntityState.Modified;
+            _context.Entry(dbLocation).State = EntityState.Modified;
 
             try
             {
