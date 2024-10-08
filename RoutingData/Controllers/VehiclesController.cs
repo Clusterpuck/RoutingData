@@ -270,8 +270,8 @@ namespace RoutingData.Controllers
                 return BadRequest(new { message = "Vehicle is associated with active routes and cannot be deleted" });
             }
 
-            // Mark the vehicle status as 'deleted' (assuming index 2 is the "deleted" status)
-            vehicle.Status = Vehicle.VEHICLE_STATUSES[2];  // Replace index 2 with actual 'deleted' status if necessary
+            // Mark the vehicle status as 'deleted' 
+            vehicle.Status = Vehicle.VEHICLE_STATUSES[1];  
             await _context.SaveChangesAsync();
 
             return NoContent();
