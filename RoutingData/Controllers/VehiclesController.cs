@@ -274,7 +274,7 @@ namespace RoutingData.Controllers
             vehicle.Status = Vehicle.VEHICLE_STATUSES[2];  // Replace index 2 with actual 'deleted' status if necessary
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Vehicle deleted successfully" });
+            return NoContent();
         }
 
         // Check if vehicle exists using string (LicensePlate)
