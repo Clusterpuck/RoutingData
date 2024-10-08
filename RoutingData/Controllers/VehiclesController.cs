@@ -234,47 +234,54 @@ namespace RoutingData.Controllers
                     return Conflict($"Vehicle with plate '{vehicle.LicensePlate}' already exists.");
                 }
 
-                // Log and return a general error message
-                return Problem($"An error occurred while trying to add the vehicle. {ex.InnerException}");
+                return Problem($"An error occurred while trying to add");
+                // Log and return a general error message the vehicle. {ex.InnerException}");
             }
 
-            return CreatedAtAction("GetVehicle", new { id = vehicle.LicensePlate }, vehicle);
+            return CreatedAtAction(nameof(GetVehicle), new { licensePlate = vehicle.LicensePlate }, vehicle);
         }
 
-        // DELETE: api/Vehicles/5
+        // DELETE: api/Vehicles/{id}
         [HttpDelete("{id}")]
         [Authorize]
-        public async Task<IActionResult> DeleteVehicle(int id)
+        public async Task<IActionResult> DeleteVehicle(string id)
         {
             if (_context.Vehicles == null)
             {
                 return NotFound();
             }
-            var vehicle = await _context.Vehicles.FindAsync(id);
+
+            // Find vehicle by LicensePlate (which is now the string 'id')
+            var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.LicensePlate == id);
             if (vehicle == null)
             {
                 return NotFound();
             }
 
-            //Find any routes that are associated with this vehicle
-            List<DeliveryRoute> routes = await _context.DeliveryRoutes.
-                Where(route => route.VehicleLicense == vehicle.LicensePlate).
-                ToListAsync();
+            // Find any routes that are associated with this vehicle
+            List<DeliveryRoute> routes = await _context.DeliveryRoutes
+                .Where(route => route.VehicleLicense == vehicle.LicensePlate)
+                .ToListAsync();
+
+            // Return an error if the vehicle is associated with any active routes
             if (routes.Any())
             {
                 return BadRequest("Vehicle is associated with active route");
             }
 
-            vehicle.Status = Vehicle.VEHICLE_STATUSES[2];
+            // Mark the vehicle status as 'deleted' (or equivalent status)
+            vehicle.Status = Vehicle.VEHICLE_STATUSES[2]; // Assuming index 2 is the "deleted" status
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Vehicle deleted successfully" }); // Return a success message
+            return Ok(new { message = "Vehicle deleted successfully" });
         }
 
-        private bool VehicleExists(String id)
+        // Check if vehicle exists using string (LicensePlate)
+        private bool VehicleExists(string id)
         {
             return (_context.Vehicles?.Any(e => e.LicensePlate == id)).GetValueOrDefault();
         }
+
 #endif
     }
 }
