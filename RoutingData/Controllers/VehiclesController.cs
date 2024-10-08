@@ -247,14 +247,14 @@ namespace RoutingData.Controllers
         {
             if (_context.Vehicles == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Vehicle data context not found" });
             }
 
             // Find vehicle by LicensePlate (which is now the string 'id')
             var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.LicensePlate == id);
             if (vehicle == null)
             {
-                return NotFound();
+                return NotFound(new { message = $"Vehicle with license plate '{id}' not found" });
             }
 
             // Find any routes that are associated with this vehicle
@@ -265,11 +265,11 @@ namespace RoutingData.Controllers
             // Return an error if the vehicle is associated with any active routes
             if (routes.Any())
             {
-                return BadRequest("Vehicle is associated with active route");
+                return BadRequest(new { message = "Vehicle is associated with active routes and cannot be deleted" });
             }
 
-            // Mark the vehicle status as 'deleted' (or equivalent status)
-            vehicle.Status = Vehicle.VEHICLE_STATUSES[2]; // Assuming index 2 is the "deleted" status
+            // Mark the vehicle status as 'deleted' (assuming index 2 is the "deleted" status)
+            vehicle.Status = Vehicle.VEHICLE_STATUSES[2];  // Replace index 2 with actual 'deleted' status if necessary
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Vehicle deleted successfully" });
@@ -280,6 +280,7 @@ namespace RoutingData.Controllers
         {
             return (_context.Vehicles?.Any(e => e.LicensePlate == id)).GetValueOrDefault();
         }
+
 
 #endif
     }
