@@ -234,7 +234,7 @@ namespace RoutingData.Controllers
                     return Conflict($"Vehicle with plate '{vehicle.LicensePlate}' already exists.");
                 }
 
-                return Problem($"An error occurred while trying to add
+                return Problem($"An error occurred while trying to add");
                 // Log and return a general error message the vehicle. {ex.InnerException}");
             }
 
