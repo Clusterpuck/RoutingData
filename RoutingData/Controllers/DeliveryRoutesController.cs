@@ -980,7 +980,8 @@ namespace RoutingData.Controllers
 
         /// <summary>
         /// Method <c>DeleteDeliveryRoute</c> Turns all orders in route back to planned
-        /// And set their position and routeIds to -1 before removing the entity from database
+        /// And sets their position and routeIds to -1 before removing the entity from database.
+        /// It prevents deletion if any orders are marked as delivered.
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -993,41 +994,52 @@ namespace RoutingData.Controllers
             {
                 return NotFound();
             }
+
             var deliveryRoute = await _context.DeliveryRoutes.FindAsync(id);
             if (deliveryRoute == null)
             {
                 return NotFound();
             }
-            //Need to also set all orders in the route back to planned status, and their deliveryrouteID and position number
-            //to -1 to effectively delete
-           //First need the list of orders assigned to that route
-           List<Order> ordersInRoute = await _context.Orders.
-                Where(order => order.DeliveryRouteId == deliveryRoute.Id). //all orders in route
-                ToListAsync();
+
+            // First, get the list of orders assigned to that route
+            List<Order> ordersInRoute = await _context.Orders
+                .Where(order => order.DeliveryRouteId == deliveryRoute.Id)
+                .ToListAsync();
+
+            // Check if any of the orders have the status "delivered"
+            if (ordersInRoute.Any(order => order.Status == Order.ORDER_STATUSES[2]))
+            {
+                return BadRequest("Cannot delete route because some orders are marked as delivered.");
+            }
+
+            // If no orders are delivered, proceed to update and delete the route
             foreach (var order in ordersInRoute)
             {
                 try
                 {
-                    order.ChangeStatus(Order.ORDER_STATUSES[0]); //changes back to planned
+                    order.ChangeStatus(Order.ORDER_STATUSES[0]); // Changes back to "planned"
                 }
                 catch (ArgumentException ex)
                 {
                     return BadRequest($"Error in changing order's state: {ex.Message}");
                 }
+
+                // Reset the order's delivery route and position
                 order.DeliveryRouteId = -1;
                 order.PositionNumber = -1;
-                order.Delayed = bool.Parse("false"); // change delayed status back to false
+                order.Delayed = false; // Reset delayed status to false
 
-                //Marking order as modified
+                // Mark the order as modified
                 _context.Orders.Update(order);
             }
 
-
+            // Remove the delivery route
             _context.DeliveryRoutes.Remove(deliveryRoute);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Route deleted successfully" }); // Return a success message
+            return Ok(new { message = "Route deleted successfully" });
         }
+
 
 
         [HttpDelete("date/{date}")]
