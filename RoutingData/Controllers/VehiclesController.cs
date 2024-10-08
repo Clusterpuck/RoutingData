@@ -209,10 +209,11 @@ namespace RoutingData.Controllers
         [Authorize]
         public async Task<ActionResult<Vehicle>> PostVehicle(VehicleInDTO vehicle)
         {
-          if (_context.Vehicles == null)
-          {
-              return Problem("Entity set 'ApplicationDbContext.Vehicles'  is null.");
-          }
+            if (_context.Vehicles == null)
+            {
+                return Problem("Entity set 'ApplicationDbContext.Vehicles' is null.");
+            }
+
             Vehicle newVehicle = new Vehicle()
             {
                 LicensePlate = vehicle.LicensePlate,
@@ -224,22 +225,20 @@ namespace RoutingData.Controllers
             try
             {
                 await _context.SaveChangesAsync();
-
             }
             catch (DbUpdateException ex)
             {
-                // Check for specific error related to unique constraint violation
                 if (ex.InnerException != null && ex.InnerException.Message.Contains("PRIMARY KEY constraint"))
                 {
                     return Conflict($"Vehicle with plate '{vehicle.LicensePlate}' already exists.");
                 }
 
-                return Problem($"An error occurred while trying to add");
-                // Log and return a general error message the vehicle. {ex.InnerException}");
+                return Problem($"An error occurred while trying to add the vehicle. {ex.InnerException}");
             }
 
-            return CreatedAtAction(nameof(GetVehicle), new { licensePlate = vehicle.LicensePlate }, vehicle);
+            return CreatedAtAction(nameof(GetVehicle), new { licensePlate = newVehicle.LicensePlate }, newVehicle);
         }
+
 
         // DELETE: api/Vehicles/{id}
         [HttpDelete("{id}")]
