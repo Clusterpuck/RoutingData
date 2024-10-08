@@ -932,6 +932,7 @@ namespace RoutingData.Controllers
 
             for (int i = 0; i < allRoutesCalced.Count; i++)
             {
+                Console.WriteLine("Assigning vehicle " + vehicles[i].LicensePlate);
                 // Create and assing values to a new DeliveryRoute object
                 var newRoute = new DeliveryRoute
                 {
@@ -1170,6 +1171,7 @@ namespace RoutingData.Controllers
             int routeID = deliveryRoute.Id;
             calcRouteOutput.DeliveryRouteID = routeID;
             calcRouteOutput.DeliveryDate = deliveryRoute.DeliveryDate;
+            calcRouteOutput.Depot = await _context.Locations.FirstOrDefaultAsync(location => location.Id == deliveryRoute.DepotID );
 
             foreach (Order order in orders)
             {
