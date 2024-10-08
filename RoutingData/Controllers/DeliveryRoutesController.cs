@@ -1422,13 +1422,14 @@ namespace RoutingData.Controllers
 
 
         //This is essentailly a copy of delete by date, but needs to return the deleted order ID
+        //But should only delete the routes from the same depot
         //And can't return a BadRequest as not intended as a endpoint
-        private async Task<int> RemoveExistingRoutes( DateTime date, List<int> ordersRemoved )
+        private async Task<int> RemoveExistingRoutes( DateTime date, List<int> ordersRemoved, int depotID )
         {//get all routes on the same date as the routerequest
          //Need to also select only routes that have all orders in ASSIGNED or CANCELLED status
 
             List<DeliveryRoute> deliveryRoutes = await _context.DeliveryRoutes
-                .Where(route => route.DeliveryDate.Date == date.Date)
+                .Where(route => route.DeliveryDate.Date == date.Date && route.DepotID == depotID)
                 .Where(route => _context.Orders
                     .Where(order => order.DeliveryRouteId == route.Id)
                     .All(order => order.Status == "ASSIGNED" || order.Status == "CANCELLED"))
@@ -1536,7 +1537,7 @@ namespace RoutingData.Controllers
 #else
                 List<int> olderOrders = new();
                 //gets all the routes on the date and deletes. return the orders now freed up. 
-                int newVehicles = await RemoveExistingRoutes(routeRequest.DeliveryDate, olderOrders);
+                int newVehicles = await RemoveExistingRoutes(routeRequest.DeliveryDate, olderOrders, routeRequest.Depot);
 
                 //vehicles freed up from route now included in the new request
                 routeRequest.NumVehicle += newVehicles;
