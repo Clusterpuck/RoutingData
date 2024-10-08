@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using RoutingData.DTO;
 using RoutingData.Models;
@@ -52,10 +54,12 @@ namespace RoutingData.Controllers
         {
             _context = context;
         }
+
+
         // GET: api/Locations
         [HttpGet]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<Location>>> GetLocations()
+        public async Task<ActionResult<IEnumerable<RoutingData.Models.Location>>> GetLocations()
         {
           if (_context.Locations == null)
           {
@@ -65,9 +69,29 @@ namespace RoutingData.Controllers
         }
 
         // GET: api/Locations
+        [HttpGet("for-customer/{customerID}")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<RoutingData.Models.Location>>> GetLocationsForCustomer( int customerID)
+        {
+            if (_context.Locations == null)
+            {
+                return NotFound();
+            }
+            Customer locCustomer = await GetCustomerIfValid(customerID);
+            if (locCustomer == null)
+            {
+                return BadRequest("Customer ID is not valid");
+            }
+
+            return await _context.Locations.
+                Where( location => (location.CustomerID == customerID) ).
+                ToListAsync();
+        }
+
+        // GET: api/Locations
         [HttpGet("depots")]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<Location>>> GetDepots()
+        public async Task<ActionResult<IEnumerable<RoutingData.Models.Location>>> GetDepots()
         {
             if (_context.Locations == null)
             {
@@ -79,7 +103,7 @@ namespace RoutingData.Controllers
         // GET: api/Locations/5
         [HttpGet("{id}")]
         [Authorize]
-        public async Task<ActionResult<Location>> GetLocation(int id)
+        public async Task<ActionResult<RoutingData.Models.Location>> GetLocation(int id)
         {
           if (_context.Locations == null)
           {
@@ -95,17 +119,42 @@ namespace RoutingData.Controllers
             return location;
         }
 
+        private async Task<Customer> GetCustomerIfValid( int customerID )
+        {
+            Customer locCustomer = await _context.Customers.
+              FirstOrDefaultAsync(customer => (customer.Id == customerID && //found customer
+                  customer.Status == Customer.CUSTOMER_STATUSES[0])); //customer is active
+            return locCustomer;
+        }
+
         // PUT: api/Locations/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         [Authorize]
         public async Task<IActionResult> PutLocation(int id, LocationInDTO location)
-        {
-            Location dbLocation = await _context.Locations.FindAsync(id);
+        {//TODO Restrict to only locations not associated with active orders
+            RoutingData.Models.Location dbLocation = await _context.Locations.FindAsync(id);
             if (dbLocation == null)
             {
                 return BadRequest("Location ID does not exist");
             }
+            Customer locCustomer = await GetCustomerIfValid(location.CustomerID);
+            if ( !dbLocation.IsDepot && locCustomer == null)//depots don't need customers
+            {
+                return BadRequest("Customer ID is not valid");
+            }
+
+            // before updating, make sure location isnt apart of any active delivery
+            bool hasOngoingOrders = await _context.Orders
+                .AnyAsync(order => order.LocationId == id &&
+                    (order.Status != Order.ORDER_STATUSES[2] && order.Status != Order.ORDER_STATUSES[3])); //Any that are not Delivered or cancelled
+            //Unless cancelled or delivered, should not be able to set location to inactive
+            if (hasOngoingOrders)
+            {
+                return BadRequest("Location is part of an active delivery");
+            }
+
+
             //Update database object with new details
             dbLocation.Longitude = location.Longitude;
             dbLocation.Latitude = location.Latitude;
@@ -142,13 +191,18 @@ namespace RoutingData.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult<Location>> PostLocation(LocationInDTO location)
+        public async Task<ActionResult<RoutingData.Models.Location>> PostLocation(LocationInDTO location)
         {
             if (_context.Locations == null)
             {
                 return Problem("Entity set 'ApplicationDbContext.Locations'  is null.");
             }
-            Location dbLocation = new Location();
+            Customer locCustomer = await GetCustomerIfValid(location.CustomerID);
+            if ( locCustomer == null)
+            {
+                return BadRequest("Customer ID is not valid");
+            }
+            RoutingData.Models.Location dbLocation = new RoutingData.Models.Location();
                 dbLocation.Longitude = location.Longitude;
                 dbLocation.Latitude = location.Latitude;
                 dbLocation.Address = location.Address;
@@ -157,7 +211,8 @@ namespace RoutingData.Controllers
                 dbLocation.PostCode = location.PostCode;
                 dbLocation.Country = location.Country;
                 dbLocation.Description = location.Description;
-                dbLocation.Status = Location.LOCATION_STATUSES[0];
+                dbLocation.Status = RoutingData.Models.Location.LOCATION_STATUSES[0];
+                dbLocation.CustomerID = location.CustomerID;
             _context.Locations.Add(dbLocation);
             await _context.SaveChangesAsync();
 
@@ -193,7 +248,7 @@ namespace RoutingData.Controllers
             }
 
             // finally, remove location (set to inactive)
-            location.Status = Location.LOCATION_STATUSES[1]; 
+            location.Status = RoutingData.Models.Location.LOCATION_STATUSES[1]; 
             _context.Entry(location).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
