@@ -65,7 +65,7 @@ namespace RoutingData.Controllers
         }
 
         // GET: api/Locations
-       /* [HttpGet("depots")]
+        [HttpGet("depots")]
         [Authorize]
         public async Task<ActionResult<IEnumerable<Location>>> GetDepots()
         {
@@ -73,8 +73,8 @@ namespace RoutingData.Controllers
             {
                 return NotFound();
             }
-            return await _context.Locations.Where( location => location.IsDepot).ToListAsync();
-        }*/
+            return await _context.Locations.Where(location => location.IsDepot).ToListAsync();
+        }
 
         // GET: api/Locations/5
         [HttpGet("{id}")]

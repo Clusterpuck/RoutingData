@@ -40,7 +40,7 @@ namespace RoutingData.DTO
         public String DriverUsername { get; set; }
         public DateTime DeliveryDate { get; set; }
         public List<OrderDetailsDTO> Orders { get; set; }
-        public Location Depot {  get; set; }
+        public RoutingData.Models.Location Depot {  get; set; }
 
         public CalcRouteOutput() {
             Orders = new List<OrderDetailsDTO>();
