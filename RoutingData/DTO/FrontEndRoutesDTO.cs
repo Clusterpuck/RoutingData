@@ -18,7 +18,7 @@ namespace RoutingData.DTO
         public string Distance { get; set; } = "cartesian";
         public string Type { get; set; } = "xmeans";
 
-        public int depot { get; set; } //should represent a location id that has field depot set to true
+        public int Depot { get; set; } //should represent a location id that has field depot set to true
         public DateTime DeliveryDate { get; set; } = DateTime.Today;
         public List<int> Orders { get; set; }
     }

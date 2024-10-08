@@ -498,7 +498,7 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         // ONLINE VERSION
         //converts front end data to the required input for python end point
-        private async Task<CalculatingRoutesDTO> FrontDataToPythonDataAsync(RouteRequest frontEndData)
+        private async Task<CalculatingRoutesDTO> FrontDataToPythonDataAsync(RouteRequest frontEndData, RoutingData.Models.Location depot)
         {
             // Fetch the order details directly from the database based on the provided order IDs
             DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
@@ -522,7 +522,7 @@ namespace RoutingData.Controllers
                 routesForPython.Add(routeDTO);
             }
 
-            CalculatingRoutesDTO calcRoute = BuildCalcRoute(frontEndData, routesForPython);
+            CalculatingRoutesDTO calcRoute = BuildCalcRoute(frontEndData, routesForPython, depot);
 
             return calcRoute;
         }
@@ -536,7 +536,7 @@ namespace RoutingData.Controllers
         /// <param name="frontEndData"></param>
         /// <param name="routesForPython"></param>
         /// <returns></returns>
-        private CalculatingRoutesDTO BuildCalcRoute(RouteRequest frontEndData, List<OrderInRouteDTO> routesForPython)
+        private CalculatingRoutesDTO BuildCalcRoute(RouteRequest frontEndData, List<OrderInRouteDTO> routesForPython, RoutingData.Models.Location depot)
         {
             CalculatingRoutesDTO calcRoute = new CalculatingRoutesDTO
             {
@@ -557,8 +557,8 @@ namespace RoutingData.Controllers
                 // Ideally, search Db for some depot location. For now, hardcoded depot near Uni
                 depot = new Depot
                 {
-                    lat = -31.99635646710069,
-                    lon = 115.89105858643552
+                    lat = depot.Latitude,
+                    lon = depot.Longitude,
                 }
             };
             return calcRoute;
@@ -939,6 +939,8 @@ namespace RoutingData.Controllers
                     VehicleLicense = vehicles[i].LicensePlate,
                     DriverUsername = drivers[i].Username,
                     TimeCreated = DateTime.Now,
+                    //defaults to -1 if Depot was not assigned correctly
+                    DepotID =  allRoutesCalced[i].Depot != null ? allRoutesCalced[i].Depot.Id : -1,
                     //CreatorAdminId = routeRequest.CreatorAdminId // Need to add this field in the RouteRequest
                 };
 
@@ -1122,6 +1124,8 @@ namespace RoutingData.Controllers
             //In that route, then converting those to OrderDetails. 
 
             List<Order> orders = await _context.Orders.ToListAsync();
+            calcRouteOutput.Depot = await _context.Locations.
+                FirstOrDefaultAsync(location => location.Id == deliveryRoute.DepotID);
             int routeID = deliveryRoute.Id;
             calcRouteOutput.DeliveryRouteID = routeID;
             calcRouteOutput.DeliveryDate = deliveryRoute.DeliveryDate;
@@ -1276,7 +1280,7 @@ namespace RoutingData.Controllers
                     order.DeliveryDate >= startOfDay && order.DeliveryDate <= endOfDay) // Matching DeliveryDate range
                 .ToListAsync();
 
-            if ( routeRequest.Orders.Count != plannedOrders.Count)
+            if (routeRequest.Orders.Count != plannedOrders.Count)
             {
                 sb.AppendLine($"There are {plannedOrders.Count} planned orders but {routeRequest.Orders.Count} orders requested. One or more orders do not have a 'Planned' status or are not the same date as orders.");
                 valid = false;
@@ -1457,6 +1461,27 @@ namespace RoutingData.Controllers
 
         }
 
+        private async Task<RoutingData.Models.Location> DepotExists( int DepotID )
+        {
+            RoutingData.Models.Location foundDepot = await _context.Locations.
+                FirstOrDefaultAsync(location => (location.Id == DepotID && location.IsDepot));
+            return foundDepot;
+
+        }
+
+        //Test with
+        /*     {
+       "numVehicle": 2,
+       "calcType": "k",
+       "distance": "cartesian",
+       "type": "kmeans",
+       "depot": 81,
+       "deliveryDate": "2024-11-15T15:20:00",
+       "orders": [
+         218
+       ]
+         }*/
+
         /// <summary>
         /// Method <c>PostDeliveryRoute</c>
         /// Uses the DTO or a list of orders and number of vehicles
@@ -1477,6 +1502,14 @@ namespace RoutingData.Controllers
             {//invalid routeRequest object
                 return BadRequest( sb.ToString() );
             }
+
+            RoutingData.Models.Location routeDepot = await DepotExists(routeRequest.Depot);
+            if (routeDepot == null)
+            {
+                return BadRequest("Depot was not valid");
+            }
+
+
             //ensures route doesn't out number the available vehicles or drivers
             try
             {
@@ -1502,7 +1535,7 @@ namespace RoutingData.Controllers
                 await dictionaryOrderDetails.GetOrderDetails( _context );
 
                 // Convert data input to type for Python input
-                CalculatingRoutesDTO calcRoute = await FrontDataToPythonDataAsync(routeRequest);
+                CalculatingRoutesDTO calcRoute = await FrontDataToPythonDataAsync(routeRequest, routeDepot);
 
                 List<Vehicle> vehicles = await _context.Vehicles
                     .Where(vehicle => vehicle.Status == Vehicle.VEHICLE_STATUSES[0])//all active vehicles
@@ -1515,13 +1548,14 @@ namespace RoutingData.Controllers
 
                 // Convert routeRequestListDTO to CalcRouteOutput
                 List<CalcRouteOutput> allRoutesCalced = PythonOutputToFront(routeRequestListDTO, dictionaryOrderDetails.OrderDetailsDict, vehicles);
-                //assign the delivery date to all the routes
+                //assign the delivery date to all the routes and the depot
                 foreach( var route in allRoutesCalced )
                 {
                     route.DeliveryDate = routeRequest.DeliveryDate;
+                    route.Depot = routeDepot;
                 }
 
-                Console.WriteLine("All routes calced object is " + allRoutesCalced.ToString());
+                Console.WriteLine("All routes calced object is " + allRoutesCalced[0].ToString());
 
 #if OFFLINE_DATA
                 
