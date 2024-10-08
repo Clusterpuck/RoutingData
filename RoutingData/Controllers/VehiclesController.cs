@@ -166,23 +166,24 @@ namespace RoutingData.Controllers
         }
 
 
-        // PUT: api/Vehicles/5
+        // PUT: api/Vehicles/{id}
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         [Authorize]
-        public async Task<IActionResult> PutVehicle(String id, VehicleInDTO vehicle)
+        public async Task<IActionResult> PutVehicle(string id, VehicleInDTO vehicle)
         {
             if (id != vehicle.LicensePlate)
             {
-                return BadRequest();
+                return BadRequest("Vehicle license plate mismatch.");
             }
-            Vehicle newVehicle = new Vehicle()
+
+            Vehicle updatedVehicle = new Vehicle()
             {
                 LicensePlate = vehicle.LicensePlate,
                 Status = Vehicle.VEHICLE_STATUSES[0]
             };
 
-            _context.Entry(newVehicle).State = EntityState.Modified;
+            _context.Entry(updatedVehicle).State = EntityState.Modified;
 
             try
             {
@@ -192,7 +193,7 @@ namespace RoutingData.Controllers
             {
                 if (!VehicleExists(id))
                 {
-                    return NotFound();
+                    return NotFound(new { message = "Vehicle not found." });
                 }
                 else
                 {
@@ -200,8 +201,9 @@ namespace RoutingData.Controllers
                 }
             }
 
-            return Created("", vehicle);
+            return Ok(new { message = "Vehicle updated successfully.", vehicle = updatedVehicle });
         }
+
 
         // POST: api/Vehicles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -272,7 +274,7 @@ namespace RoutingData.Controllers
             vehicle.Status = Vehicle.VEHICLE_STATUSES[2];  // Replace index 2 with actual 'deleted' status if necessary
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Vehicle deleted successfully" });
+            return NoContent();
         }
 
         // Check if vehicle exists using string (LicensePlate)
