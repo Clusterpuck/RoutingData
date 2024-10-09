@@ -7,11 +7,11 @@ namespace RoutingData.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CaclulationController : Controller
+    public class CalculationController : Controller
     {
         public readonly ApplicationDbContext _context;
 
-        public CaclulationController( ApplicationDbContext context)
+        public CalculationController( ApplicationDbContext context)
         {
 
             _context = context; 
@@ -37,7 +37,7 @@ namespace RoutingData.Controllers
 
         // POST: api/Calculation
         // Initiates a new calculation and returns the unique request ID
-        [HttpPost]
+        /*[HttpPost]
         [Authorize]
         public async Task<ActionResult<Calculation>> PostCalculation()
         {
@@ -50,6 +50,8 @@ namespace RoutingData.Controllers
             // Return the created calculation object, including its unique ID
             return CreatedAtAction(nameof(GetCalculationById), new { id = calculation.ID }, calculation);
         }
+
+*/
 
         // GET: api/Calculation/{id}
         // Retrieves the status of a specific calculation by ID

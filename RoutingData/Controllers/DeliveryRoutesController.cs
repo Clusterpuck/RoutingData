@@ -6,11 +6,13 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Azure.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using RoutingData.DTO;
@@ -277,12 +279,15 @@ namespace RoutingData.Controllers
 
 #else
         private readonly ApplicationDbContext _context;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
 
 
-        public DeliveryRoutesController(ApplicationDbContext context)
+        public DeliveryRoutesController(ApplicationDbContext context, IServiceScopeFactory serviceScopeFactory)
         {
             _context = context;
+            //added to make a context avaialble outside the scope of the call for long running requests
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
 
@@ -498,11 +503,12 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         // ONLINE VERSION
         //converts front end data to the required input for python end point
-        private async Task<CalculatingRoutesDTO> FrontDataToPythonDataAsync(RouteRequest frontEndData, RoutingData.Models.Location depot)
+        private async Task<CalculatingRoutesDTO> FrontDataToPythonDataAsync(RouteRequest frontEndData, 
+                            RoutingData.Models.Location depot, DictionaryOrderDetails dictionaryOrderDetails)
         {
             // Fetch the order details directly from the database based on the provided order IDs
-            DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
-            await dictionaryOrderDetails.GetOrderDetails( _context );
+            //DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
+            //await dictionaryOrderDetails.GetOrderDetails( scopedContext );
            
 
             // Mapping order details to OrderInRouteDTO
@@ -913,19 +919,19 @@ namespace RoutingData.Controllers
         /// </summary>
         /// <param name="allRoutesCalced"></param>
         /// <returns></returns>
-        private async Task AssignPosAndDeliveryAsync(List<CalcRouteOutput> allRoutesCalced)
+        private async Task AssignPosAndDeliveryAsync(List<CalcRouteOutput> allRoutesCalced, ApplicationDbContext scopedContext)
         {
             Console.WriteLine("Entering Assign Position and Delivery");
             // Fetch all necessary data from the database
 
-            var ordersDict = await _context.Orders.
+            var ordersDict = await scopedContext.Orders.
                 Where(order => order.Status == Order.ORDER_STATUSES[0]).
                 ToDictionaryAsync(o => o.Id);
-            var drivers = await _context.Accounts.
+            var drivers = await scopedContext.Accounts.
                 Where(account => (account.Role == Account.ACCOUNT_ROLES[0] && //Driver roles only 
                     account.Status == Account.ACCOUNT_STATUSES[0]) ). //Active Drivers only
                 ToListAsync();
-            var vehicles = await _context.Vehicles.
+            var vehicles = await scopedContext.Vehicles.
                 Where(vehicle => vehicle.Status == Vehicle.VEHICLE_STATUSES[0]).//Active vehicles only
                 ToListAsync();
 
@@ -946,8 +952,8 @@ namespace RoutingData.Controllers
                 };
 
                 // Add the new route to the database and save it to generate the ID
-                _context.DeliveryRoutes.Add(newRoute);
-                await _context.SaveChangesAsync();
+                scopedContext.DeliveryRoutes.Add(newRoute);
+                await scopedContext.SaveChangesAsync();
                 //save route id to return object
                 allRoutesCalced[i].DeliveryRouteID = newRoute.Id;
 
@@ -974,7 +980,7 @@ namespace RoutingData.Controllers
                 }
 
                 // Save all updated orders in the current route
-                await _context.SaveChangesAsync();
+                await scopedContext.SaveChangesAsync();
             }
 
             Console.WriteLine("Routes and orders updated successfully.");
@@ -1314,6 +1320,9 @@ namespace RoutingData.Controllers
         /// <exception cref="Exception"></exception>
         private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn)
         {
+          
+
+
             string pythonBackendUrl = "https://quantumdeliverybackend.azurewebsites.net/generate-routes";
             //string pythonBackendUrl = "http://127.0.0.1:8000/generate-routes";
             using (var httpClient = new HttpClient())
@@ -1424,13 +1433,14 @@ namespace RoutingData.Controllers
         //This is essentailly a copy of delete by date, but needs to return the deleted order ID
         //But should only delete the routes from the same depot
         //And can't return a BadRequest as not intended as a endpoint
-        private async Task<int> RemoveExistingRoutes( DateTime date, List<int> ordersRemoved, int depotID )
+        private async Task<int> RemoveExistingRoutes( DateTime date, List<int> ordersRemoved, 
+                                                    int depotID, ApplicationDbContext scopedContext )
         {//get all routes on the same date as the routerequest
          //Need to also select only routes that have all orders in ASSIGNED or CANCELLED status
 
-            List<DeliveryRoute> deliveryRoutes = await _context.DeliveryRoutes
+            List<DeliveryRoute> deliveryRoutes = await scopedContext.DeliveryRoutes
                 .Where(route => route.DeliveryDate.Date == date.Date && route.DepotID == depotID)
-                .Where(route => _context.Orders
+                .Where(route => scopedContext.Orders
                     .Where(order => order.DeliveryRouteId == route.Id)
                     .All(order => order.Status == "ASSIGNED" || order.Status == "CANCELLED"))
                 .ToListAsync();
@@ -1438,7 +1448,7 @@ namespace RoutingData.Controllers
 
             List<int> routeIds = deliveryRoutes.Select(route => route.Id).ToList();
 
-            List<Order> ordersInRoute = await _context.Orders.
+            List<Order> ordersInRoute = await scopedContext.Orders.
                  Where(order => routeIds.Contains(order.DeliveryRouteId)). //all orders in all routes
                  ToListAsync();
 
@@ -1459,16 +1469,16 @@ namespace RoutingData.Controllers
                 order.Delayed = false; // change delayed status back to false
 
                 //Marking order as modified
-                _context.Orders.Update(order);
+                scopedContext.Orders.Update(order);
             }
             int count = 0;
             foreach (DeliveryRoute route in deliveryRoutes)
             {
-                _context.DeliveryRoutes.Remove(route);
+                scopedContext.DeliveryRoutes.Remove(route);
                 ++count;
             }
 
-            await _context.SaveChangesAsync();
+            await scopedContext.SaveChangesAsync();
             return count;
 
             //delete those routes and add the orders to the routeRequest. 
@@ -1487,7 +1497,7 @@ namespace RoutingData.Controllers
         //Test with
         /*     {
        "numVehicle": 2,
-       "calcType": "k",
+       "calcType": "brute",
        "distance": "cartesian",
        "type": "kmeans",
        "depot": 81,
@@ -1508,7 +1518,7 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult<List<CalcRouteOutput>>> PostDeliveryRoute(RouteRequest routeRequest)
+        public async Task<ActionResult<List<string>>> PostDeliveryRoute(RouteRequest routeRequest)
         {
             await CheckRouteMax(routeRequest);
             StringBuilder sb = new StringBuilder();
@@ -1523,21 +1533,51 @@ namespace RoutingData.Controllers
             {
                 return BadRequest("Depot was not valid");
             }
+            //Request status is valid, so make the request ID object, and returns it's ID with an accepted value
+            //Run everything else Asynchronously. 
+            //create a calculation status object
+            Calculation calculation = buildCalculationDetail(routeRequest);
+            _context.Calculations.Add(calculation);
+            await _context.SaveChangesAsync();
+            //Runs the full calculation asynchronously, not awaited on purpose. 
+            Task.Run(async () =>
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var scopedContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    Calculation scopedCalc = await scopedContext.Calculations.FindAsync(calculation.ID);
+                    await ProcessRouteCalculation(routeRequest, scopedCalc, routeDepot, scopedContext);
+                }
+            });
+            var response = new RequestAcceptedDTO
+            {
+                RequestID = calculation.ID,
+                Message = "Your request has been accepted and is being processed."
+            };
+            return Accepted(response);
+        }
 
 
-            //ensures route doesn't out number the available vehicles or drivers
+        /// <summary>
+        /// Performs all the async calls to calculatate the routes
+        /// To be continued and run after controller has responded to request to calculate
+        /// </summary>
+        /// <param name="routeRequest"></param>
+        /// <param name="calculation"></param>
+        /// <param name="routeDepot"></param>
+        /// <param name="scopedContext"></param>
+        /// <returns></returns>
+        private async Task ProcessRouteCalculation( RouteRequest routeRequest, Calculation calculation, 
+                                                RoutingData.Models.Location routeDepot, ApplicationDbContext scopedContext  )
+        {//TODO add a notes or message detail to the calculation object to store these error values as they can't be returned with the HTTP request
+
+
             try
             {
-#if OFFLINE_DATA
-                Dictionary<int, OrderDetailsDTO> orderDetailsDict = _offlineDatabase.MakeOrdersDictionary();
-                // Convert data input to type for Python input
-                CalculatingRoutesDTO calcRoute = frontDataToPythonData(routeRequest, orderDetailsDict);
-                List<Vehicle> vehicles = _offlineDatabase.Vehicles;
 
-#else
                 List<int> olderOrders = new();
                 //gets all the routes on the date and deletes. return the orders now freed up. 
-                int newVehicles = await RemoveExistingRoutes(routeRequest.DeliveryDate, olderOrders, routeRequest.Depot);
+                int newVehicles = await RemoveExistingRoutes(routeRequest.DeliveryDate, olderOrders, routeRequest.Depot, scopedContext);
 
                 //vehicles freed up from route now included in the new request
                 routeRequest.NumVehicle += newVehicles;
@@ -1547,15 +1587,15 @@ namespace RoutingData.Controllers
 
                 //Creates a dictionary from the datbase of order details required
                 DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
-                await dictionaryOrderDetails.GetOrderDetails( _context );
+                await dictionaryOrderDetails.GetOrderDetails(scopedContext);
 
                 // Convert data input to type for Python input
-                CalculatingRoutesDTO calcRoute = await FrontDataToPythonDataAsync(routeRequest, routeDepot);
+                CalculatingRoutesDTO calcRoute = await FrontDataToPythonDataAsync(routeRequest, routeDepot, dictionaryOrderDetails);
 
-                List<Vehicle> vehicles = await _context.Vehicles
+                List<Vehicle> vehicles = await scopedContext.Vehicles
                     .Where(vehicle => vehicle.Status == Vehicle.VEHICLE_STATUSES[0])//all active vehicles
                     .ToListAsync();
-#endif
+
                 // Make the request to the Python backend
                 RouteRequestListDTO routeRequestListDTO = await PythonRequest(calcRoute);
 
@@ -1564,48 +1604,69 @@ namespace RoutingData.Controllers
                 // Convert routeRequestListDTO to CalcRouteOutput
                 List<CalcRouteOutput> allRoutesCalced = PythonOutputToFront(routeRequestListDTO, dictionaryOrderDetails.OrderDetailsDict, vehicles);
                 //assign the delivery date to all the routes and the depot
-                foreach( var route in allRoutesCalced )
+                foreach (var route in allRoutesCalced)
                 {
                     route.DeliveryDate = routeRequest.DeliveryDate;
                     route.Depot = routeDepot;
                 }
 
-                Console.WriteLine("All routes calced object is " + allRoutesCalced[0].ToString());
 
-#if OFFLINE_DATA
-                
-                AssignPosAndDelivery(allRoutesCalced, routeRequest );
-#else
                 try
                 {
-                    await AssignPosAndDeliveryAsync(allRoutesCalced);
+                    await AssignPosAndDeliveryAsync(allRoutesCalced, scopedContext);
+                    // Mark the calculation as completed and update the end time
+                    calculation.Status = Calculation.CALCULATION_STATUS[0]; // "COMPLETED"
+                    calculation.EndTime = DateTime.Now;
+
                 }
                 catch (ArgumentException ex)
                 {
-                    return BadRequest($"Error in changing order's state: {ex.Message}");
+                    calculation.Status = Calculation.CALCULATION_STATUS[2]; // calculation failed
+                    calculation.ErrorMessage += $"Argument Error: {ex.Message}\n"; // Append error message
                 }
-#endif
-                return Ok(allRoutesCalced);
             }
             catch (HttpRequestException ex)
             {
                 // Handle HTTP-specific exceptions and include detailed error from response
                 Console.WriteLine($"HTTP error while processing the route request: {ex.Message}");
-                return StatusCode(StatusCodes.Status503ServiceUnavailable, ex.Message);
+                calculation.Status = Calculation.CALCULATION_STATUS[2]; // calculation failed
+                calculation.ErrorMessage += $"HTTP Error: {ex.Message}\n"; // Append error message
             }
             catch (JsonSerializationException ex)
             {
                 // Handle JSON-specific exceptions
                 Console.WriteLine($"JSON processing error: {ex.Message}");
-                return BadRequest("Invalid data format received. Please check the request.");
+                calculation.Status = Calculation.CALCULATION_STATUS[2]; // calculation failed
+                calculation.ErrorMessage += $"JSON Error: {ex.Message}\n"; // Append error message
             }
             catch (Exception ex)
             {
                 // Handle any other exceptions
                 Console.WriteLine($"Unexpected error: {ex.Message}");
-                return StatusCode(StatusCodes.Status500InternalServerError, $"An unexpected error occurred: {ex.Message}");
+                calculation.Status = Calculation.CALCULATION_STATUS[2]; // calculation failed
+                calculation.ErrorMessage += $"Unexpected Error: {ex.Message}\n"; // Append error message
             }
+            finally
+            {
+                scopedContext.Entry(calculation).State = EntityState.Modified;
+                await scopedContext.SaveChangesAsync();
+            }
+
+
         }
 
+
+        private Calculation buildCalculationDetail( RouteRequest routeRequest )
+        {//can't be done in constructor as dependent on the scope of routeRequest
+            //And as is DB model, it cannot depend on outside scope values
+            Calculation calculationDetail = new Calculation();
+            calculationDetail.NumOfOrders = routeRequest.Orders.Count;
+            calculationDetail.MaxVehicles = routeRequest.NumVehicle;
+            calculationDetail.UsedQuantum = routeRequest.CalcType.Equals("quantum");
+            calculationDetail.UsedMapBox = routeRequest.Distance.Equals("mapbox");
+            calculationDetail.UsedXMeans = routeRequest.Type.Equals("xmeans");
+            return calculationDetail;
+
+        }
     }
 }
