@@ -71,8 +71,36 @@ namespace RoutingData.Controllers
 
             return calculation;
         }
-    }
 
-    //Need to add POSTCalculation and Get calculation by id to get a status of a specific calculation
+        // PUT: api/Calculation/{id}
+        // Updates the specified calculation object
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<IActionResult> PutCalculation(string id, Calculation updatedCalculation)
+        {
+            if (id != updatedCalculation.ID)
+            {
+                return BadRequest();
+            }
+
+            var existingCalculation = await _context.Calculations.FindAsync(id);
+            if (existingCalculation == null)
+            {
+                return NotFound();
+            }
+
+            // Update the properties as needed
+            existingCalculation.Status = updatedCalculation.Status;
+            existingCalculation.EndTime = updatedCalculation.EndTime; 
+            // No other properties should change
+
+            // Save changes to the database
+            _context.Entry(existingCalculation).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            return NoContent(); // Return 204 No Content
+        }
+    }
 }
-}
+
+
