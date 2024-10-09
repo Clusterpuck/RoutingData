@@ -17,5 +17,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<OrderProduct> OrderProducts { get; set; } = null!;
     public DbSet<Product> Products { get; set; } = null!;
     public DbSet<Vehicle> Vehicles { get; set; } = null!;
+    public DbSet<Calculation> Calculations { get; set; } = null!;
 
 }
