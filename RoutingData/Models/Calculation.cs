@@ -12,6 +12,7 @@ namespace RoutingData.Models
         public String Status { get; set; } = CALCULATION_STATUS[1]; //each new calc should always start as calculating
         public DateTime StartTime { get; set; } = DateTime.Now;
         public DateTime EndTime { get; set; }
+        public DateTime DeliveryDate { get; set; }
         public String ErrorMessage { get; set; } = "";
         public int NumOfOrders { get; set; }
         public int MaxVehicles { get; set; }

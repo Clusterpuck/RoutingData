@@ -76,7 +76,7 @@ namespace RoutingData.Controllers
 
         // PUT: api/Calculation/{id}
         // Updates the specified calculation object
-        [HttpPut("{id}")]
+       /* [HttpPut("{id}")]
         [Authorize]
         public async Task<IActionResult> PutCalculation(string id, Calculation updatedCalculation)
         {
@@ -101,7 +101,7 @@ namespace RoutingData.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent(); // Return 204 No Content
-        }
+        }*/
     }
 }
 

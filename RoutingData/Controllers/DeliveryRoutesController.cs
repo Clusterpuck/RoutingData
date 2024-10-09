@@ -1306,6 +1306,18 @@ namespace RoutingData.Controllers
                 valid = false;
             }
 
+            DateTime deliverDate = routeRequest.DeliveryDate.Date;
+            bool sameDateCalc = await _context.Calculations
+                 .Where(c => c.Status == Calculation.CALCULATION_STATUS[1] && // Assuming 'CALCULATING' is at index 1
+                             c.DeliveryDate.Date == deliverDate) // Compare only the date parts
+                 .AnyAsync(); // Check if any records match the criteria
+            if (sameDateCalc)
+            {
+                sb.AppendLine("A calculation already running for this day, please try again later");
+                valid = false;
+            }
+
+
 
             return valid;
         }
@@ -1520,6 +1532,8 @@ namespace RoutingData.Controllers
         [Authorize]
         public async Task<ActionResult<List<string>>> PostDeliveryRoute(RouteRequest routeRequest)
         {
+            //TODO add deliverydate field to calculation object and check if calculation already running for that date first
+            //re check on 30 second delay, then tell user busy
             await CheckRouteMax(routeRequest);
             StringBuilder sb = new StringBuilder();
 
@@ -1665,6 +1679,7 @@ namespace RoutingData.Controllers
             calculationDetail.UsedQuantum = routeRequest.CalcType.Equals("quantum");
             calculationDetail.UsedMapBox = routeRequest.Distance.Equals("mapbox");
             calculationDetail.UsedXMeans = routeRequest.Type.Equals("xmeans");
+            calculationDetail.DeliveryDate = routeRequest.DeliveryDate.Date;
             return calculationDetail;
 
         }
