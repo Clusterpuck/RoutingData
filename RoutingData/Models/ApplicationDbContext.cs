@@ -19,4 +19,16 @@ public class ApplicationDbContext : DbContext
     public DbSet<Vehicle> Vehicles { get; set; } = null!;
     public DbSet<Calculation> Calculations { get; set; } = null!;
 
+    // Overriding OnModelCreating to set up unique constraints and configurations
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);  // Ensures the base configurations are called
+
+        // Adding a unique constraint on Longitude, Latitude, and CustomerName in Locations
+        modelBuilder.Entity<Location>()
+            .HasIndex(l => new { l.Longitude, l.Latitude, l.CustomerName })
+            .IsUnique();  // Enforce uniqueness on the composite key
+
+    }
+
 }

@@ -85,16 +85,16 @@ namespace RoutingData.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         // GET: api/Customers/5
-        [HttpGet("{id}")]
+        [HttpGet("{name}")]
         [Authorize]
-        public async Task<ActionResult<Customer>> GetCustomer(int id)
+        public async Task<ActionResult<Customer>> GetCustomer(string name)
         {
 
             if (_context.Customers == null)
           {
               return NotFound();
           }
-            var customer = await _context.Customers.FindAsync(id);
+            var customer = await _context.Customers.FindAsync(name);
 
             if (customer == null)
             {
@@ -113,11 +113,11 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         // PUT: api/Customers/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
+        [HttpPut("{name}")]
         [Authorize]
-        public async Task<IActionResult> PutCustomer(int id, CustomerInDTO inCustomer)
+        public async Task<IActionResult> PutCustomer(string name, CustomerInDTO inCustomer)
         {
-            Customer dbCustomer = await _context.Customers.FindAsync(id);
+            Customer dbCustomer = await _context.Customers.FindAsync(name);
             if (dbCustomer == null) {
                 return BadRequest("No such Customer");
             }
@@ -128,6 +128,7 @@ namespace RoutingData.Controllers
 
             dbCustomer.Name = inCustomer.Name;
             dbCustomer.Phone =inCustomer.Phone;
+            dbCustomer.Email = inCustomer.Email;
 
             try
             {
@@ -135,7 +136,7 @@ namespace RoutingData.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!CustomerExists(id))
+                if (!CustomerExists(name))
                 {
                     return NotFound();
                 }
@@ -166,7 +167,7 @@ namespace RoutingData.Controllers
             {
                 return Problem("Entity set 'ApplicationDbContext.Customers'  is null.");
             }
-            if (inCustomer.Name.IsNullOrEmpty() || inCustomer.Phone.IsNullOrEmpty())
+            if (inCustomer.Name.IsNullOrEmpty() || inCustomer.Phone.IsNullOrEmpty() || inCustomer.Email.IsNullOrEmpty() )
             {
                 return BadRequest("Values missing for customer");
             }
@@ -174,13 +175,14 @@ namespace RoutingData.Controllers
             {
                 Name = inCustomer.Name,
                 Phone = inCustomer.Phone,
+                Email = inCustomer.Email,
                 Status = Customer.CUSTOMER_STATUSES[0]
             };
 
             _context.Customers.Add(customer);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetCustomer", new { id = customer.Id }, customer);
+            return CreatedAtAction("GetCustomer", new { name = customer.Name }, customer);
         }
 
         /// <summary>
@@ -192,16 +194,16 @@ namespace RoutingData.Controllers
         /// <returns></returns>
         // DELETE: api/Customers/5
         //Should not be able to delete customers that are assigned any active orders at all
-        [HttpDelete("{id}")]
+        [HttpDelete("{name}")]
         [Authorize]
-        public async Task<IActionResult> DeleteCustomer(int id)
+        public async Task<IActionResult> DeleteCustomer(string name)
         {
             if (_context.Customers == null)
             {
                 return NotFound();
             }
 
-            var customer = await _context.Customers.FindAsync(id);
+            var customer = await _context.Customers.FindAsync(name);
             if (customer == null)
             {
                 return NotFound();
@@ -209,7 +211,7 @@ namespace RoutingData.Controllers
             //Check for any orders associated that aren't cancelled
             //Sets customer to Inactive instead of deleting
             List<Order> activeOrders = await _context.Orders.
-                Where(order => order.CustomerId == customer.Id && 
+                Where(order => order.CustomerName == customer.Name && 
                     order.Status != Order.ORDER_STATUSES[3] && //not cancelled
                     order.Status != Order.ORDER_STATUSES[2]).//not delivered
                     ToListAsync(); 
@@ -227,9 +229,9 @@ namespace RoutingData.Controllers
             return Ok(new { message = "Customer deleted successfully" }); // Return a success message
         }
 
-        private bool CustomerExists(int id)
+        private bool CustomerExists(string name)
         {
-            return (_context.Customers?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.Customers?.Any(e => e.Name == name)).GetValueOrDefault();
         }
 #endif
     }

@@ -33,7 +33,6 @@ namespace RoutingData.DTO
                 Customer customer = new Customer();
                 customer.Name = "Test Customer " + i;
                 customer.Phone = $"{i:D10}";
-                customer.Id = i;
                 Customers.Add(customer);
             }
         }
@@ -113,7 +112,7 @@ namespace RoutingData.DTO
                     Id = 1,
                     DateOrdered = DateTime.Now,
                     OrderNotes = "Order 1 Notes",
-                    CustomerId = 1,
+                    CustomerName = "1",
                     LocationId = 13,
                     DeliveryRouteId = 1,
                     PositionNumber = 1,
@@ -123,7 +122,7 @@ namespace RoutingData.DTO
                     Id = 2,
                     DateOrdered = DateTime.Now.AddDays(-1),
                     OrderNotes = "Order 2 Notes",
-                    CustomerId = 2,
+                    CustomerName = "2",
                     LocationId = 2,
                     DeliveryRouteId = 1,
                     PositionNumber = 2,
@@ -133,7 +132,7 @@ namespace RoutingData.DTO
                     Id = 3,
                     DateOrdered = DateTime.Now.AddDays(-2),
                     OrderNotes = "Order 3 Notes",
-                    CustomerId = 3,
+                    CustomerName = "3",
                     LocationId = 3,
                     DeliveryRouteId = 2,
                     PositionNumber = 3,
@@ -187,8 +186,8 @@ namespace RoutingData.DTO
 
             Dictionary<int, RoutingData.Models.Location> locationDict =
                 Locations.ToDictionary(l => l.Id);
-            Dictionary<int, Customer> customerDict =
-                Customers.ToDictionary(c => c.Id);
+            Dictionary<string, Customer> customerDict =
+                Customers.ToDictionary(c => c.Name);
             Dictionary<int, Product> productDict =
                 Products.ToDictionary(p => p.Id);
 
@@ -199,7 +198,7 @@ namespace RoutingData.DTO
             {
                 // Get the location, customer, and order products associated with this order
                 RoutingData.Models.Location location = locationDict[order.LocationId];
-                Customer customer = customerDict[order.CustomerId];
+                Customer customer = customerDict[order.CustomerName];
 
                 // Get all products associated with this order
                 var orderProductList =
