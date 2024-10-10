@@ -115,8 +115,8 @@ namespace RoutingData.Controllers
                     location => location.Id,
                     (order, location) => new { order, location })
                 .Join(_context.Customers,
-                    combined => combined.order.CustomerId,
-                    customer => customer.Id,
+                    combined => combined.order.CustomerName,
+                    customer => customer.Name,
                     (combined, customer) => new { combined.order, combined.location, customer })
                 .Join(_context.OrderProducts,
                     combined => combined.order.Id,
@@ -159,8 +159,8 @@ namespace RoutingData.Controllers
                     location => location.Id,
                     (order, location) => new { order, location })
                 .Join(_context.Customers,
-                    combined => combined.order.CustomerId,
-                    customer => customer.Id,
+                    combined => combined.order.CustomerName,
+                    customer => customer.Name,
                     (combined, customer) => new { combined.order, combined.location, customer })
                 .Join(_context.OrderProducts,
                     combined => combined.order.Id,
@@ -212,8 +212,8 @@ namespace RoutingData.Controllers
                     location => location.Id,
                     (order, location) => new { order, location })
                 .Join(_context.Customers,
-                    combined => combined.order.CustomerId,
-                    customer => customer.Id,
+                    combined => combined.order.CustomerName,
+                    customer => customer.Name,
                     (combined, customer) => new { combined.order, combined.location, customer })
                 .Join(_context.OrderProducts,
                     combined => combined.order.Id,
@@ -316,7 +316,7 @@ namespace RoutingData.Controllers
                 return BadRequest("Some products are discontinued and cannot be ordered.");
             }
             // check if the customer is inactive
-            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == orderDTO.CustomerId);
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Name == orderDTO.CustomerName);
             if (customer == null || customer.Status == Customer.CUSTOMER_STATUSES[1])
             {
                 return BadRequest("The customer is inactive and cannot place orders.");
@@ -379,7 +379,7 @@ namespace RoutingData.Controllers
                 return BadRequest($"Error in editing order's state: {ex.Message}");
             }
 
-            order.CustomerId = orderDTO.CustomerId;
+            order.CustomerName = orderDTO.CustomerName;
             order.LocationId = orderDTO.LocationId;
             order.DeliveryDate = orderDTO.DeliveryDate;
             order.OrderNotes = orderDTO.OrderNotes;
@@ -483,7 +483,7 @@ namespace RoutingData.Controllers
             }
 
             // check if the customer is inactive
-            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == orderDTO.Order.CustomerId);
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Name == orderDTO.Order.CustomerName);
             if (customer == null || customer.Status == Customer.CUSTOMER_STATUSES[1])
             {
                 return BadRequest("The customer is inactive and cannot place orders.");
@@ -608,7 +608,7 @@ namespace RoutingData.Controllers
             {
                 DateOrdered = orderInDTO.DateOrdered,
                 OrderNotes = orderInDTO.OrderNotes,
-                CustomerId = orderInDTO.CustomerId,
+                CustomerName = orderInDTO.CustomerName,
                 LocationId = orderInDTO.LocationId,
                 DeliveryRouteId = -1,
                 PositionNumber = -1,

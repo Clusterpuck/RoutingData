@@ -4,7 +4,7 @@
     {
         public DateTime DateOrdered { get; set; }
         public string OrderNotes { get; set; }
-        public int CustomerId { get; set; }
+        public string CustomerName { get; set; }
         public int LocationId { get; set; }
         public DateTime DeliveryDate { get; set; } = DateTime.Today;
     }
@@ -19,7 +19,7 @@
     { 
         public int OrderId { get; set; }
         public string Status { get; set; }
-        public int CustomerId { get; set; }
+        public string CustomerName { get; set; }
         public int LocationId { get; set; }
         public DateTime DeliveryDate { get;set; }
         public string OrderNotes { get; set; }

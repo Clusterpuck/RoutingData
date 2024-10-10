@@ -65,26 +65,30 @@ namespace RoutingData.Controllers
           {
               return NotFound();
           }
-            return await _context.Locations.ToListAsync();
+            return await _context.Locations.
+                Where( location => location.Status == RoutingData.Models.Location.LOCATION_STATUSES[0]).
+                //return active locations only
+                ToListAsync();
         }
 
         // GET: api/Locations
-        [HttpGet("for-customer/{customerID}")]
+        [HttpGet("for-customer/{customerName}")]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<RoutingData.Models.Location>>> GetLocationsForCustomer( int customerID)
+        public async Task<ActionResult<IEnumerable<RoutingData.Models.Location>>> GetLocationsForCustomer( string customerName)
         {
             if (_context.Locations == null)
             {
                 return NotFound();
             }
-            Customer locCustomer = await GetCustomerIfValid(customerID);
+            Customer locCustomer = await GetCustomerIfValid(customerName);
             if (locCustomer == null)
             {
                 return BadRequest("Customer ID is not valid");
             }
 
             return await _context.Locations.
-                Where( location => (location.CustomerID == customerID) ).
+                Where( location => (location.CustomerName == customerName) && location.Status == RoutingData.Models.Location.LOCATION_STATUSES[0] ).
+                //return active locations only
                 ToListAsync();
         }
 
@@ -109,7 +113,9 @@ namespace RoutingData.Controllers
           {
               return NotFound();
           }
-            var location = await _context.Locations.FindAsync(id);
+            var location = await _context.Locations.
+                FirstOrDefaultAsync( location => location.Id == id && location.Status == RoutingData.Models.Location.LOCATION_STATUSES[0]);
+            //return active location only
 
             if (location == null)
             {
@@ -119,10 +125,11 @@ namespace RoutingData.Controllers
             return location;
         }
 
-        private async Task<Customer> GetCustomerIfValid( int customerID )
+        private async Task<Customer> GetCustomerIfValid( string customerName )
         {
+            Console.WriteLine("Checking for valid customer with name " + customerName);
             Customer locCustomer = await _context.Customers.
-              FirstOrDefaultAsync(customer => (customer.Id == customerID && //found customer
+              FirstOrDefaultAsync(customer => (customer.Name == customerName && //found customer
                   customer.Status == Customer.CUSTOMER_STATUSES[0])); //customer is active
             return locCustomer;
         }
@@ -133,12 +140,15 @@ namespace RoutingData.Controllers
         [Authorize]
         public async Task<IActionResult> PutLocation(int id, LocationInDTO location)
         {//TODO Restrict to only locations not associated with active orders
-            RoutingData.Models.Location dbLocation = await _context.Locations.FindAsync(id);
+            RoutingData.Models.Location dbLocation = await _context.Locations.
+                Where( location => location.Id == id && location.Status == RoutingData.Models.Location.LOCATION_STATUSES[0]).
+                //Get active locations only
+                FirstOrDefaultAsync();
             if (dbLocation == null)
             {
                 return BadRequest("Location ID does not exist");
             }
-            Customer locCustomer = await GetCustomerIfValid(location.CustomerID);
+            Customer locCustomer = await GetCustomerIfValid(location.CustomerName);
             if ( !dbLocation.IsDepot && locCustomer == null)//depots don't need customers
             {
                 return BadRequest("Customer ID is not valid");
@@ -164,7 +174,7 @@ namespace RoutingData.Controllers
             dbLocation.PostCode = location.PostCode;
             dbLocation.Country = location.Country;
             dbLocation.Description = location.Description;
-            dbLocation.CustomerID = location.CustomerID;
+            dbLocation.CustomerName = location.CustomerName;
 
             _context.Entry(dbLocation).State = EntityState.Modified;
 
@@ -197,7 +207,7 @@ namespace RoutingData.Controllers
             {
                 return Problem("Entity set 'ApplicationDbContext.Locations'  is null.");
             }
-            Customer locCustomer = await GetCustomerIfValid(location.CustomerID);
+            Customer locCustomer = await GetCustomerIfValid(location.CustomerName);
             if ( locCustomer == null)
             {
                 return BadRequest("Customer ID is not valid");
@@ -212,12 +222,14 @@ namespace RoutingData.Controllers
                 dbLocation.Country = location.Country;
                 dbLocation.Description = location.Description;
                 dbLocation.Status = RoutingData.Models.Location.LOCATION_STATUSES[0];
-                dbLocation.CustomerID = location.CustomerID;
+                dbLocation.CustomerName = location.CustomerName;
             _context.Locations.Add(dbLocation);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetLocation", new { id = dbLocation.Id }, dbLocation);
         }
+
+
         // DELETE: api/Locations/5
         [HttpDelete("{id}")]
         [Authorize]
@@ -230,7 +242,9 @@ namespace RoutingData.Controllers
             }
 
             // then find the location by the given ID
-            var location = await _context.Locations.FindAsync(id);
+            var location = await _context.Locations.
+                Where( location => location.Id == id && location.Status == RoutingData.Models.Location.LOCATION_STATUSES[0]).
+                FirstOrDefaultAsync();
             if (location == null)
             {
                 return NotFound("Location not found.");

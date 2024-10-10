@@ -27,8 +27,8 @@ namespace RoutingData.DTO
                     (order, location) => new { order, location })
                 .Join(_context.Customers.
                     Where(customer => customer.Status == Customer.CUSTOMER_STATUSES[0]),
-                    combined => combined.order.CustomerId,
-                    customer => customer.Id,
+                    combined => combined.order.CustomerName,
+                    customer => customer.Name,
                     (combined, customer) => new { combined.order, combined.location, customer })
                 .Join(_context.OrderProducts,
                     combined => combined.order.Id,
