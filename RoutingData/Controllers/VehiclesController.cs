@@ -83,7 +83,6 @@ namespace RoutingData.Controllers
         // GET: api/Vehicles
         [Authorize]
         [HttpGet]
-        [Authorize]
         public async Task<ActionResult<IEnumerable<Vehicle>>> GetVehicles()
         {
           if (_context.Vehicles == null)
@@ -180,6 +179,10 @@ namespace RoutingData.Controllers
             Vehicle updatedVehicle = new Vehicle()
             {
                 LicensePlate = vehicle.LicensePlate,
+                Make = vehicle.Make,
+                Model = vehicle.Model,
+                Colour = vehicle.Colour,
+                Capacity = vehicle.Capacity,
                 Status = Vehicle.VEHICLE_STATUSES[0]
             };
 
@@ -205,6 +208,7 @@ namespace RoutingData.Controllers
         }
 
 
+
         // POST: api/Vehicles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
@@ -219,6 +223,10 @@ namespace RoutingData.Controllers
             Vehicle newVehicle = new Vehicle()
             {
                 LicensePlate = vehicle.LicensePlate,
+                Make = vehicle.Make,
+                Model = vehicle.Model,
+                Colour = vehicle.Colour,
+                Capacity = vehicle.Capacity,
                 Status = Vehicle.VEHICLE_STATUSES[0]
             };
 
