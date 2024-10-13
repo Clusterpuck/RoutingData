@@ -342,6 +342,48 @@ namespace RoutingData.Controllers
         }
 
 
+
+        /// <summary>
+        /// Method <c>GetAccounts</c> Determines if accounts are active
+        /// Returns list of only drivers with routes on that specific date
+        /// </summary>
+        /// <returns></returns>
+        // GET: api/GetACtiveDrivers
+        [HttpGet("activedrivers/{date}")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<Account>>> GetActiveDrivers(DateTime date)
+        {
+            // check if the accounts table exists and has data
+            if (_context.Accounts == null)
+            {
+                return NotFound("Accounts data is not available.");
+            }
+            List<DeliveryRoute> routes = await _context.DeliveryRoutes.
+                Where( route => route.DeliveryDate.Date ==  date.Date).
+                ToListAsync();
+            if( routes == null )
+            {
+                return NotFound("No routes for given date");
+            }
+
+            var driversInRoutes = routes.Select(route => route.DriverUsername).Distinct();
+
+            // Fetch the active accounts of the drivers assigned to the routes
+            var accounts = await _context.Accounts
+                .Where(a => a.Status == "Active" && driversInRoutes.Contains(a.Username))
+                .ToListAsync();
+
+
+            // check if the accounts list is empty
+            if (!accounts.Any())
+            {
+                return NotFound("No accounts found.");
+            }
+
+            return Ok(accounts);
+        }
+
+
         /// <summary>
         /// Method <c>GetAccount</c> returns an account if found
         /// Includes returning an Inactive account
