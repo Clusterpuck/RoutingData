@@ -370,7 +370,7 @@ namespace RoutingData.Controllers
 
             // Fetch the active accounts of the drivers assigned to the routes
             var accounts = await _context.Accounts
-                .Where(a => a.Status == "Active" && driversInRoutes.Contains(a.Username))
+                .Where(a => a.Status == Account.ACCOUNT_STATUSES[0] && driversInRoutes.Contains(a.Username))
                 .ToListAsync();
 
 
