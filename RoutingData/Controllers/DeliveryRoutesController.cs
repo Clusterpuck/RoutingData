@@ -1602,6 +1602,12 @@ namespace RoutingData.Controllers
                 //Creates a dictionary from the datbase of order details required
                 DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
                 await dictionaryOrderDetails.GetOrderDetails(scopedContext);
+                //Update calculation data here if orders were recalculated
+                if (olderOrders != null && olderOrders.Count > 0) {
+                    int countOldOrders = olderOrders.Count;
+                    calculation.NumOfOrders += countOldOrders;
+                    calculation.ErrorMessage += $"{countOldOrders} orders included from old routes";
+                }
 
                 // Convert data input to type for Python input
                 CalculatingRoutesDTO calcRoute = await FrontDataToPythonDataAsync(routeRequest, routeDepot, dictionaryOrderDetails);
