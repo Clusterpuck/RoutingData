@@ -1604,9 +1604,10 @@ namespace RoutingData.Controllers
                 await dictionaryOrderDetails.GetOrderDetails(scopedContext);
                 //Update calculation data here if orders were recalculated
                 if (olderOrders != null && olderOrders.Count > 0) {
+                    calculation.MaxVehicles = routeRequest.NumVehicle;
                     int countOldOrders = olderOrders.Count;
                     calculation.NumOfOrders += countOldOrders;
-                    calculation.ErrorMessage += $"{countOldOrders} orders included from old routes";
+                    calculation.ErrorMessage += $"{countOldOrders} orders included from old routes and ${newVehicles} more vehicles";
                 }
 
                 // Convert data input to type for Python input
