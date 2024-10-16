@@ -1580,10 +1580,9 @@ namespace RoutingData.Controllers
                                                 RoutingData.Models.Location routeDepot )
         {//TODO add a notes or message detail to the calculation object to store these error values as they can't be returned with the HTTP request
 
-
-         /*   try
-            {*/
-
+            int response = -1;
+            try
+            { 
                 List<int> olderOrders = new();
                 //gets all the routes on the date and deletes. return the orders now freed up. 
                 int newVehicles = await RemoveExistingRoutes(routeRequest.DeliveryDate, olderOrders, routeRequest.Depot, _context);
@@ -1614,38 +1613,9 @@ namespace RoutingData.Controllers
                 // Log the JSON payload
                 calculation.PythonPayload = $"Payload sent to python: {jsonContent}";
                 // Make the request to the Python backend
-                int response = await PythonRequest(calcRoute);
-                return response;
-            
-                //Save the python output data here. To ensure Calc completion is saved. 
-             /*   calculation.Status = Calculation.CALCULATION_STATUS[0]; // "COMPLETED"
-                calculation.EndTime = DateTime.Now;
-
-                Console.WriteLine("Returned object from Python is " + routeRequestListDTO.ToString());
-
-                // Convert routeRequestListDTO to CalcRouteOutput
-                List<CalcRouteOutput> allRoutesCalced = PythonOutputToFront(routeRequestListDTO, dictionaryOrderDetails.OrderDetailsDict, vehicles);
-                //assign the delivery date to all the routes and the depot
-                foreach (var route in allRoutesCalced)
-                {
-                    route.DeliveryDate = routeRequest.DeliveryDate;
-                    route.Depot = routeDepot;
-                }
-
-
-                try
-                {
-                    await AssignPosAndDeliveryAsync(allRoutesCalced, scopedContext);
-                    // Mark the calculation as completed and update the end time
-                    calculation.Status = Calculation.CALCULATION_STATUS[0]; // "COMPLETED"
-                    calculation.EndTime = DateTime.Now;
-
-                }
-                catch (ArgumentException ex)
-                {
-                    calculation.Status = Calculation.CALCULATION_STATUS[2]; // calculation failed
-                    calculation.ErrorMessage += $"Argument Error: {ex.Message}\n"; // Append error message
-                }
+                response = await PythonRequest(calcRoute);
+                
+           
             }
             catch (HttpRequestException ex)
             {
@@ -1670,12 +1640,13 @@ namespace RoutingData.Controllers
             }
             finally
             {
-                scopedContext.Entry(calculation).State = EntityState.Modified;
-                await scopedContext.SaveChangesAsync();
+                _context.Entry(calculation).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
             }
 
-            scopedContext.Entry(calculation).State = EntityState.Modified;
-            await scopedContext.SaveChangesAsync();*/
+            _context.Entry(calculation).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return response;
 
 
         }
