@@ -1587,8 +1587,8 @@ namespace RoutingData.Controllers
         {//TODO add a notes or message detail to the calculation object to store these error values as they can't be returned with the HTTP request
 
 
-            try
-            {
+         /*   try
+            {*/
 
                 List<int> olderOrders = new();
                 //gets all the routes on the date and deletes. return the orders now freed up. 
@@ -1614,7 +1614,7 @@ namespace RoutingData.Controllers
                 // Convert data input to type for Python input
                 CalculatingRoutesDTO calcRoute = await FrontDataToPythonDataAsync(routeRequest, routeDepot, dictionaryOrderDetails);
 
-                List<Vehicle> vehicles = await scopedContext.Vehicles
+             /*   List<Vehicle> vehicles = await scopedContext.Vehicles
                     .Where(vehicle => vehicle.Status == Vehicle.VEHICLE_STATUSES[0])//all active vehicles
                     .ToListAsync();
 
@@ -1682,7 +1682,7 @@ namespace RoutingData.Controllers
             }
 
             scopedContext.Entry(calculation).State = EntityState.Modified;
-            await scopedContext.SaveChangesAsync();
+            await scopedContext.SaveChangesAsync();*/
 
 
         }
