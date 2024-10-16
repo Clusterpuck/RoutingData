@@ -1620,6 +1620,9 @@ namespace RoutingData.Controllers
 
                 // Make the request to the Python backend
                 RouteRequestListDTO routeRequestListDTO = await PythonRequest(calcRoute, calculation);
+                //Save the python output data here. To ensure Calc completion is saved. 
+                scopedContext.Entry(calculation).State = EntityState.Modified;
+                await scopedContext.SaveChangesAsync();
 
                 Console.WriteLine("Returned object from Python is " + routeRequestListDTO.ToString());
 
