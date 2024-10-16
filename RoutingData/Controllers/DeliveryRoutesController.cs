@@ -1617,13 +1617,15 @@ namespace RoutingData.Controllers
                     .Where(vehicle => vehicle.Status == Vehicle.VEHICLE_STATUSES[0])//all active vehicles
                     .ToListAsync();
 
-                //string jsonContent = JsonConvert.SerializeObject(calcRoute);
+                string jsonContent = JsonConvert.SerializeObject(calcRoute);
 
                 // Log the JSON payload
-                //calculation.PythonPayload = $"Payload sent to python: {jsonContent}";
+                calculation.PythonPayload = $"Payload sent to python: {jsonContent}";
                 // Make the request to the Python backend
                 RouteRequestListDTO routeRequestListDTO = await PythonRequest(calcRoute);
                 //Save the python output data here. To ensure Calc completion is saved. 
+                calculation.Status = Calculation.CALCULATION_STATUS[0]; // "COMPLETED"
+                calculation.EndTime = DateTime.Now;
 
                 Console.WriteLine("Returned object from Python is " + routeRequestListDTO.ToString());
 
@@ -1677,6 +1679,9 @@ namespace RoutingData.Controllers
                 scopedContext.Entry(calculation).State = EntityState.Modified;
                 await scopedContext.SaveChangesAsync();
             }
+
+            scopedContext.Entry(calculation).State = EntityState.Modified;
+            await scopedContext.SaveChangesAsync();
 
 
         }
