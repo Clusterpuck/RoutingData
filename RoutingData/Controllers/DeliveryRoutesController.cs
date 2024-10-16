@@ -1330,7 +1330,7 @@ namespace RoutingData.Controllers
         /// <param name="routesIn"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn)
+        private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn, Calculation calcData)
         {
           
 
@@ -1347,6 +1347,7 @@ namespace RoutingData.Controllers
                     // Log the JSON payload
                     Console.WriteLine("JSON Payload Sent to Python:");
                     Console.WriteLine(jsonContent);
+                    calcData.PythonPayload = $"Payload sent to python: {jsonContent}";
 
                     var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
@@ -1618,7 +1619,7 @@ namespace RoutingData.Controllers
                     .ToListAsync();
 
                 // Make the request to the Python backend
-                RouteRequestListDTO routeRequestListDTO = await PythonRequest(calcRoute);
+                RouteRequestListDTO routeRequestListDTO = await PythonRequest(calcRoute, calculation);
 
                 Console.WriteLine("Returned object from Python is " + routeRequestListDTO.ToString());
 
