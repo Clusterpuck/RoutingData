@@ -26,7 +26,7 @@ namespace RoutingData.Models
         public Boolean UsedQuantum { get; set; }
         public Boolean UsedMapBox { get; set; }
         public Boolean UsedXMeans { get; set; }
-        public int DepotID { get; set; }
+       // public int DepotID { get; set; }
 
     }
 }

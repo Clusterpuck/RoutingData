@@ -1641,10 +1641,14 @@ namespace RoutingData.Controllers
             finally
             {
                 _context.Entry(calculation).State = EntityState.Modified;
+                // Exclude the CalculationNumber from being updated
+                _context.Entry(calculation).Property(c => c.CalculationNumber).IsModified = false;
                 await _context.SaveChangesAsync();
             }
 
             _context.Entry(calculation).State = EntityState.Modified;
+            // Exclude the CalculationNumber from being updated
+            _context.Entry(calculation).Property(c => c.CalculationNumber).IsModified = false;
             await _context.SaveChangesAsync();
             return response;
 
