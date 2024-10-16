@@ -1347,7 +1347,6 @@ namespace RoutingData.Controllers
                     // Log the JSON payload
                     Console.WriteLine("JSON Payload Sent to Python:");
                     Console.WriteLine(jsonContent);
-                    calcData.PythonPayload = $"Payload sent to python: {jsonContent}";
 
                     var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
