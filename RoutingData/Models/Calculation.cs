@@ -14,6 +14,8 @@ namespace RoutingData.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int CalculationNumber { get; set; } // Auto-incrementing integer field
         public String Status { get; set; } = CALCULATION_STATUS[1]; //each new calc should always start as calculating
+
+        [Column(TypeName = "TEXT")] //needed to store the long string
         public String PythonPayload { get; set; } = "";
         public DateTime StartTime { get; set; } = DateTime.Now;
         public DateTime EndTime { get; set; }
