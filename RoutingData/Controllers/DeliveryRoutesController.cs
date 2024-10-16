@@ -1330,7 +1330,7 @@ namespace RoutingData.Controllers
         /// <param name="routesIn"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn, Calculation calcData)
+        private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn)
         {
           
 
@@ -1618,11 +1618,13 @@ namespace RoutingData.Controllers
                     .Where(vehicle => vehicle.Status == Vehicle.VEHICLE_STATUSES[0])//all active vehicles
                     .ToListAsync();
 
+                string jsonContent = JsonConvert.SerializeObject(calcRoute);
+
+                // Log the JSON payload
+                calculation.PythonPayload = $"Payload sent to python: {jsonContent}";
                 // Make the request to the Python backend
-                RouteRequestListDTO routeRequestListDTO = await PythonRequest(calcRoute, calculation);
+                RouteRequestListDTO routeRequestListDTO = await PythonRequest(calcRoute);
                 //Save the python output data here. To ensure Calc completion is saved. 
-                scopedContext.Entry(calculation).State = EntityState.Modified;
-                await scopedContext.SaveChangesAsync();
 
                 Console.WriteLine("Returned object from Python is " + routeRequestListDTO.ToString());
 
