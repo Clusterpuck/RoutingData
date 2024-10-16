@@ -1339,6 +1339,7 @@ namespace RoutingData.Controllers
             //string pythonBackendUrl = "http://127.0.0.1:8000/generate-routes";
             using (var httpClient = new HttpClient())
             {
+                httpClient.Timeout = TimeSpan.FromMinutes(300);
                 try
                 {
                     // Serialize the object to JSON
