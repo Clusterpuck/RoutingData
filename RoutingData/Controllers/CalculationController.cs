@@ -89,6 +89,8 @@ namespace RoutingData.Controllers
             }
 
             _context.Entry(calculation).State = EntityState.Modified;
+            // Exclude the CalculationNumber from being updated
+            _context.Entry(calculation).Property(c => c.CalculationNumber).IsModified = false;
             await _context.SaveChangesAsync();
 
             // Return the created calculation object, including its unique ID
