@@ -1330,7 +1330,7 @@ namespace RoutingData.Controllers
         /// <param name="routesIn"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private async Task<RouteRequestListDTO> PythonRequest(CalculatingRoutesDTO routesIn)
+        private async Task<int> PythonRequest(CalculatingRoutesDTO routesIn)
         {
           
 
@@ -1369,10 +1369,10 @@ namespace RoutingData.Controllers
                     {
                         // Read and deserialize the response content
                         string responseContent = await response.Content.ReadAsStringAsync();
-                        RouteRequestListDTO routeResponse = JsonConvert.DeserializeObject<RouteRequestListDTO>(responseContent);
+                        int dataBack = JsonConvert.DeserializeObject<int>(responseContent);
 
                         // Return the deserialized response
-                        return routeResponse;
+                        return dataBack;
                     }
                     else
                     {
@@ -1555,19 +1555,13 @@ namespace RoutingData.Controllers
             _context.Calculations.Add(calculation);
             await _context.SaveChangesAsync();
             //Runs the full calculation asynchronously, not awaited on purpose. 
-            Task.Run(async () =>
-            {
-                using (var scope = _serviceScopeFactory.CreateScope())
-                {
-                    var scopedContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    Calculation scopedCalc = await scopedContext.Calculations.FindAsync(calculation.ID);
-                    await ProcessRouteCalculation(routeRequest, scopedCalc, routeDepot, scopedContext);
-                }
-            });
+            
+            int dataBack = await ProcessRouteCalculation(routeRequest, calculation, routeDepot);
+            
             var response = new RequestAcceptedDTO
             {
                 RequestID = calculation.ID,
-                Message = "Your request has been accepted and is being processed."
+                Message = $"Your request has been accepted and is being processed. {dataBack}"
             };
             return Accepted(response);
         }
@@ -1582,8 +1576,8 @@ namespace RoutingData.Controllers
         /// <param name="routeDepot"></param>
         /// <param name="scopedContext"></param>
         /// <returns></returns>
-        private async Task ProcessRouteCalculation( RouteRequest routeRequest, Calculation calculation, 
-                                                RoutingData.Models.Location routeDepot, ApplicationDbContext scopedContext  )
+        private async Task<int> ProcessRouteCalculation( RouteRequest routeRequest, Calculation calculation, 
+                                                RoutingData.Models.Location routeDepot )
         {//TODO add a notes or message detail to the calculation object to store these error values as they can't be returned with the HTTP request
 
 
@@ -1592,7 +1586,7 @@ namespace RoutingData.Controllers
 
                 List<int> olderOrders = new();
                 //gets all the routes on the date and deletes. return the orders now freed up. 
-                int newVehicles = await RemoveExistingRoutes(routeRequest.DeliveryDate, olderOrders, routeRequest.Depot, scopedContext);
+                int newVehicles = await RemoveExistingRoutes(routeRequest.DeliveryDate, olderOrders, routeRequest.Depot, _context);
 
                 //vehicles freed up from route now included in the new request
                 routeRequest.NumVehicle += newVehicles;
@@ -1602,7 +1596,7 @@ namespace RoutingData.Controllers
 
                 //Creates a dictionary from the datbase of order details required
                 DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
-                await dictionaryOrderDetails.GetOrderDetails(scopedContext);
+                await dictionaryOrderDetails.GetOrderDetails(_context);
                 //Update calculation data here if orders were recalculated
                 if (olderOrders != null && olderOrders.Count > 0) {
                     calculation.MaxVehicles = routeRequest.NumVehicle;
@@ -1614,18 +1608,17 @@ namespace RoutingData.Controllers
                 // Convert data input to type for Python input
                 CalculatingRoutesDTO calcRoute = await FrontDataToPythonDataAsync(routeRequest, routeDepot, dictionaryOrderDetails);
 
-             /*   List<Vehicle> vehicles = await scopedContext.Vehicles
-                    .Where(vehicle => vehicle.Status == Vehicle.VEHICLE_STATUSES[0])//all active vehicles
-                    .ToListAsync();
 
                 string jsonContent = JsonConvert.SerializeObject(calcRoute);
 
                 // Log the JSON payload
                 calculation.PythonPayload = $"Payload sent to python: {jsonContent}";
                 // Make the request to the Python backend
-                RouteRequestListDTO routeRequestListDTO = await PythonRequest(calcRoute);
+                int response = await PythonRequest(calcRoute);
+                return response;
+            
                 //Save the python output data here. To ensure Calc completion is saved. 
-                calculation.Status = Calculation.CALCULATION_STATUS[0]; // "COMPLETED"
+             /*   calculation.Status = Calculation.CALCULATION_STATUS[0]; // "COMPLETED"
                 calculation.EndTime = DateTime.Now;
 
                 Console.WriteLine("Returned object from Python is " + routeRequestListDTO.ToString());
