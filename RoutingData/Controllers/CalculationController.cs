@@ -51,6 +51,16 @@ namespace RoutingData.Controllers
                 return BadRequest("No calculations were running");
             }
 
+            calculation.Status = Calculation.CALCULATION_STATUS[0];//set calculation to completed
+            calculation.EndTime = DateTime.Now;
+            Location depot = await _context.Locations.FindAsync(calculation.DepotID);
+
+            if( depot == null )
+            {//if id doesn't match, just grab any depot 
+                //TODO fix this for a more secure response
+                depot = await _context.Locations.FirstOrDefaultAsync(location => location.IsDepot);
+            }
+
             //Creates a dictionary from the datbase of order details required
             DictionaryOrderDetails dictionaryOrderDetails = new DictionaryOrderDetails();
             await dictionaryOrderDetails.GetOrderDetails(_context);
@@ -58,10 +68,6 @@ namespace RoutingData.Controllers
             List<Vehicle> vehicles = await _context.Vehicles
                    .Where(vehicle => vehicle.Status == Vehicle.VEHICLE_STATUSES[0])//all active vehicles
                    .ToListAsync();
-
-            calculation.Status = Calculation.CALCULATION_STATUS[0];
-            calculation.EndTime = DateTime.Now;
-
             Console.WriteLine("Returned object from Python is " + calcResult.ToString());
 
             // Convert routeRequestListDTO to CalcRouteOutput
@@ -70,13 +76,13 @@ namespace RoutingData.Controllers
             foreach (var route in allRoutesCalced)
             {
                 route.DeliveryDate = calculation.DeliveryDate;
-               // route.Depot = routeDepot;
+                route.Depot = depot;
             }
 
 
             try
             {
-                await AssignPosAndDeliveryAsync(allRoutesCalced, _context);
+                await AssignPosAndDeliveryAsync(allRoutesCalced);
                 // Mark the calculation as completed and update the end time
                 calculation.Status = Calculation.CALCULATION_STATUS[0]; // "COMPLETED"
                 calculation.EndTime = DateTime.Now;
@@ -107,19 +113,19 @@ namespace RoutingData.Controllers
         /// </summary>
         /// <param name="allRoutesCalced"></param>
         /// <returns></returns>
-        private async Task AssignPosAndDeliveryAsync(List<CalcRouteOutput> allRoutesCalced, ApplicationDbContext scopedContext)
+        private async Task AssignPosAndDeliveryAsync(List<CalcRouteOutput> allRoutesCalced)
         {
             Console.WriteLine("Entering Assign Position and Delivery");
             // Fetch all necessary data from the database
 
-            var ordersDict = await scopedContext.Orders.
+            var ordersDict = await _context.Orders.
                 Where(order => order.Status == Order.ORDER_STATUSES[0]).
                 ToDictionaryAsync(o => o.Id);
-            var drivers = await scopedContext.Accounts.
+            var drivers = await _context.Accounts.
                 Where(account => (account.Role == Account.ACCOUNT_ROLES[0] && //Driver roles only 
                     account.Status == Account.ACCOUNT_STATUSES[0])). //Active Drivers only
                 ToListAsync();
-            var vehicles = await scopedContext.Vehicles.
+            var vehicles = await _context.Vehicles.
                 Where(vehicle => vehicle.Status == Vehicle.VEHICLE_STATUSES[0]).//Active vehicles only
                 ToListAsync();
 
@@ -140,8 +146,8 @@ namespace RoutingData.Controllers
                 };
 
                 // Add the new route to the database and save it to generate the ID
-                scopedContext.DeliveryRoutes.Add(newRoute);
-                await scopedContext.SaveChangesAsync();
+                _context.DeliveryRoutes.Add(newRoute);
+                await _context.SaveChangesAsync();
                 //save route id to return object
                 allRoutesCalced[i].DeliveryRouteID = newRoute.Id;
 
@@ -168,7 +174,7 @@ namespace RoutingData.Controllers
                 }
 
                 // Save all updated orders in the current route
-                await scopedContext.SaveChangesAsync();
+                await _context.SaveChangesAsync();
             }
 
             Console.WriteLine("Routes and orders updated successfully.");
@@ -200,17 +206,17 @@ namespace RoutingData.Controllers
                 CalcRouteOutput routeForFrontend = new CalcRouteOutput();
                 List<OrderDetailsDTO> routeDetails = new List<OrderDetailsDTO>();
                 routeForFrontend.VehicleId = vehicles[i].LicensePlate;
-                //For loops generates an ordered and detailed list of routes for each vehicle
+                //For loops generates an ordered and detailed list of orders for each vehicle
                 foreach (int orderID in route)
                 {
                     OrderDetailsDTO referenceDetails = orderDetailsDict[orderID];
                     routeDetails.Add(referenceDetails);
-                    Console.WriteLine("Added order detail of " + referenceDetails.Address);
+                    //Console.WriteLine("Added order detail of " + referenceDetails.Address);
                 }
                 //Vehicle ID assigned by front end after recieving route. 
                 routeForFrontend.Orders = routeDetails;
                 allRoutesCalced.Add(routeForFrontend);
-                Console.WriteLine("Added a route to front end output " + routeForFrontend.ToString());
+                //Console.WriteLine("Added a route to front end output " + routeForFrontend.ToString());
             }
             return allRoutesCalced;
 
@@ -239,34 +245,7 @@ namespace RoutingData.Controllers
             return calculation;
         }
 
-        // PUT: api/Calculation/{id}
-        // Updates the specified calculation object
-       /* [HttpPut("{id}")]
-        [Authorize]
-        public async Task<IActionResult> PutCalculation(string id, Calculation updatedCalculation)
-        {
-            if (id != updatedCalculation.ID)
-            {
-                return BadRequest();
-            }
-
-            var existingCalculation = await _context.Calculations.FindAsync(id);
-            if (existingCalculation == null)
-            {
-                return NotFound();
-            }
-
-            // Update the properties as needed
-            existingCalculation.Status = updatedCalculation.Status;
-            existingCalculation.EndTime = updatedCalculation.EndTime; 
-            // No other properties should change
-
-            // Save changes to the database
-            _context.Entry(existingCalculation).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return NoContent(); // Return 204 No Content
-        }*/
+     
     }
 }
 

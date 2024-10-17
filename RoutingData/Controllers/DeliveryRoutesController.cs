@@ -1666,6 +1666,7 @@ namespace RoutingData.Controllers
             calculationDetail.UsedMapBox = routeRequest.Distance.Equals("mapbox");
             calculationDetail.UsedXMeans = routeRequest.Type.Equals("xmeans");
             calculationDetail.DeliveryDate = routeRequest.DeliveryDate.Date;
+            calculationDetail.DepotID = routeRequest.Depot;
             return calculationDetail;
 
         }
